@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(req: NextRequest) {
   try {
     const { action, question, answers, model } = await req.json();
-    const selectedModel = model || "gpt-3.5-turbo";
+    const selectedModel = model || "claude-3-5-sonnet-20241022";
 
-    console.log("[OpenAI] Using model:", selectedModel);
+    console.log("[Anthropic] Using model:", selectedModel);
 
     if (!action || !question) {
       return NextResponse.json(
@@ -19,25 +19,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (action === "clarify") {
-      // Prompt do generowania pytań doprecyzowujących
-      const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Nie odpowiadaj jeszcze na pytanie.\n\nPytanie użytkownika: ${question}`;
-      const completion = await openai.chat.completions.create({
+    async function callAnthropic(prompt: string) {
+      const msg = await anthropic.messages.create({
         model: selectedModel,
+        max_tokens: 1000,
         messages: [
           {
             role: "user",
-            content: clarifyPrompt,
+            content: prompt,
           },
         ],
-        max_tokens: 256,
       });
-      const content = completion.choices[0]?.message?.content || "";
-      // Rozbij na linie, wyczyść puste
+
+      // Wyciągnij tekst z odpowiedzi Claude
+      const textBlock = msg.content.find((block) => block.type === "text");
+      return textBlock?.text || "";
+    }
+
+    if (action === "clarify") {
+      const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Wypisz tylko pytania, bez żadnych wstępów, podsumowań ani podziękowań. Każde pytanie w osobnej linii.\n\nPytanie użytkownika: ${question}`;
+      const content = await callAnthropic(clarifyPrompt);
       const questions = content
         .split("\n")
         .map((q: string) => q.replace(/^\d+\.?\s*/, "").trim())
-        .filter((q) => q.length > 0);
+        .filter((q: string) => q.length > 0);
       return NextResponse.json({ questions });
     }
 
@@ -49,28 +54,19 @@ export async function POST(req: NextRequest) {
         );
       }
       const answerSummary = answers
-        .map((a, i) => `Pytanie: ${i + 1}\nOdpowiedź: ${a}`)
+        .map((a: string, i: number) => `Pytanie: ${i + 1}\nOdpowiedź: ${a}`)
         .join("\n\n");
       const improvePrompt = `Na podstawie poniższego pytania użytkownika oraz odpowiedzi na pytania precyzujące, wygeneruj ulepszony prompt do AI:\n\nPytanie użytkownika:\n${question}\n\nOdpowiedzi:\n${answerSummary}\n\nWygeneruj najlepszy możliwy prompt.`;
-      const completion = await openai.chat.completions.create({
-        model: selectedModel,
-        messages: [
-          {
-            role: "user",
-            content: improvePrompt,
-          },
-        ],
-        max_tokens: 256,
-      });
-      const prompt = completion.choices[0]?.message?.content?.trim() || "";
+      const content = await callAnthropic(improvePrompt);
+      const prompt = content?.trim() || "";
       return NextResponse.json({ prompt });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Error calling OpenAI:", error);
+    console.error("Error calling Anthropic:", error);
     return NextResponse.json(
-      { error: "Failed to get response from GPT" },
+      { error: "Failed to get response from Anthropic" },
       { status: 500 }
     );
   }

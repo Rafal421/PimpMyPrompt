@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const grok = new OpenAI({
+  apiKey: process.env.GROK_API_KEY,
+  baseURL: "https://api.x.ai/v1",
 });
 
 export async function POST(req: NextRequest) {
   try {
     const { action, question, answers, model } = await req.json();
-    const selectedModel = model || "gpt-3.5-turbo";
+    const selectedModel = model || "grok-beta";
 
-    console.log("[OpenAI] Using model:", selectedModel);
+    console.log("[Grok] Using model:", selectedModel);
 
     if (!action || !question) {
       return NextResponse.json(
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (action === "clarify") {
       // Prompt do generowania pytań doprecyzowujących
       const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Nie odpowiadaj jeszcze na pytanie.\n\nPytanie użytkownika: ${question}`;
-      const completion = await openai.chat.completions.create({
+      const completion = await grok.chat.completions.create({
         model: selectedModel,
         messages: [
           {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
       const questions = content
         .split("\n")
         .map((q: string) => q.replace(/^\d+\.?\s*/, "").trim())
-        .filter((q) => q.length > 0);
+        .filter((q: string) => q.length > 0);
       return NextResponse.json({ questions });
     }
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         .map((a, i) => `Pytanie: ${i + 1}\nOdpowiedź: ${a}`)
         .join("\n\n");
       const improvePrompt = `Na podstawie poniższego pytania użytkownika oraz odpowiedzi na pytania precyzujące, wygeneruj ulepszony prompt do AI:\n\nPytanie użytkownika:\n${question}\n\nOdpowiedzi:\n${answerSummary}\n\nWygeneruj najlepszy możliwy prompt.`;
-      const completion = await openai.chat.completions.create({
+      const completion = await grok.chat.completions.create({
         model: selectedModel,
         messages: [
           {
@@ -68,9 +69,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Error calling OpenAI:", error);
+    console.error("Error calling Grok:", error);
     return NextResponse.json(
-      { error: "Failed to get response from GPT" },
+      { error: "Failed to get response from Grok" },
       { status: 500 }
     );
   }
