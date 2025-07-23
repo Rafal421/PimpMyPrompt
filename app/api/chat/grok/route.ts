@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import {
+  parseQuestionsWithOptions,
+  createClarifyPrompt,
+  createImprovePrompt,
+} from "@/lib/ai-helpers";
 
 const grok = new OpenAI({
   apiKey: process.env.GROK_API_KEY,
@@ -21,8 +26,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "clarify") {
-      // Prompt do generowania pytań doprecyzowujących
-      const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Nie odpowiadaj jeszcze na pytanie.\n\nPytanie użytkownika: ${question}`;
+      const clarifyPrompt = `Jako asystent AI, wygeneruj 3-5 pytań doprecyzowujących z 3 opcjami odpowiedzi każde, aby lepiej zrozumieć intencję użytkownika.
+
+Format odpowiedzi:
+PYTANIE 1: [treść pytania]
+A) [opcja A]
+B) [opcja B] 
+C) [opcja C]
+
+PYTANIE 2: [treść pytania]
+A) [opcja A]
+B) [opcja B]
+C) [opcja C]
+
+Pytanie użytkownika: ${question}`;
       const completion = await grok.chat.completions.create({
         model: selectedModel,
         messages: [
@@ -31,14 +48,11 @@ export async function POST(req: NextRequest) {
             content: clarifyPrompt,
           },
         ],
-        max_tokens: 256,
+        max_tokens: 512,
       });
       const content = completion.choices[0]?.message?.content || "";
-      // Rozbij na linie, wyczyść puste
-      const questions = content
-        .split("\n")
-        .map((q: string) => q.replace(/^\d+\.?\s*/, "").trim())
-        .filter((q: string) => q.length > 0);
+      // Parse the structured response
+      const questions = parseQuestionsWithOptions(content);
       return NextResponse.json({ questions });
     }
 

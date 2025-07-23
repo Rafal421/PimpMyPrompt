@@ -35,13 +35,23 @@ export default function ChatClient({ user }: { user: any }) {
   const [clarifyingIndex, setClarifyingIndex] = useState(0);
   const [originalQuestion, setOriginalQuestion] = useState<string>("");
   const [improvedPrompt, setImprovedPrompt] = useState<string>("");
+  const [currentQuestionOptions, setCurrentQuestionOptions] = useState<
+    string[]
+  >([]);
+  const [customAnswer, setCustomAnswer] = useState<string>("");
+  const [questionsData, setQuestionsData] = useState<any[]>([]);
 
   // API helper functions
-  const createChat = async (user_id: string, title: string) => {
+  const createChat = async (
+    user_id: string,
+    title: string,
+    usedModel: string
+  ) => {
+    const chatTitle = `${title} (${usedModel})`;
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, title }),
+      body: JSON.stringify({ user_id, title: chatTitle }),
     });
     const data = await res.json();
     return data.chat.id;
@@ -79,7 +89,14 @@ export default function ChatClient({ user }: { user: any }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...payload, model }),
     });
-    return await response.json();
+    const data = await response.json();
+
+    // For clarify action, questions now come with their own options
+    if (action === "clarify" && data.questions) {
+      return { questionsWithOptions: data.questions };
+    }
+
+    return data;
   };
 
   // Effects
@@ -130,6 +147,9 @@ export default function ChatClient({ user }: { user: any }) {
     setImprovedPrompt("");
     setChatId(null);
     setSelectedChatId(null);
+    setCurrentQuestionOptions([]);
+    setCustomAnswer("");
+    setQuestionsData([]);
   };
 
   const handleChatSelect = (chat: any) => {
@@ -147,7 +167,7 @@ export default function ChatClient({ user }: { user: any }) {
 
     // Create new chat if needed
     if (!currentChatId) {
-      currentChatId = await createChat(user.id, input);
+      currentChatId = await createChat(user.id, input, model);
       setChatId(currentChatId);
     }
 
@@ -161,9 +181,8 @@ export default function ChatClient({ user }: { user: any }) {
     try {
       if (phase === "init") {
         await handleInitialQuestion(input, currentChatId);
-      } else if (phase === "clarifying") {
-        await handleClarifyingAnswer(input, currentChatId);
       }
+      // Remove old clarifying phase handling since we use buttons now
     } catch (error) {
       console.error("Error handling message:", error);
       setMessages((prev) => [
@@ -183,35 +202,77 @@ export default function ChatClient({ user }: { user: any }) {
     setInput("");
 
     const data = await callProvider("clarify", { question });
-    const questions = data.questions || [];
+    const questionsWithOptions = data.questionsWithOptions || [];
 
-    setClarifyingQuestions(questions);
-    setPhase("clarifying");
-    setClarifyingIndex(0);
-    setClarifyingAnswers([]);
+    if (questionsWithOptions.length > 0) {
+      setQuestionsData(questionsWithOptions);
+      setClarifyingQuestions(questionsWithOptions.map((q: any) => q.question));
+      setPhase("clarifying");
+      setClarifyingIndex(0);
+      setClarifyingAnswers([]);
+      setCurrentQuestionOptions(questionsWithOptions[0].options);
 
-    if (questions[0] && currentChatId) {
-      setMessages((prev) => [...prev, { from: "bot", text: questions[0] }]);
-      await sendMessageToServer(currentChatId, user.id, "bot", questions[0]);
+      // Show first question
+      const firstQuestion = questionsWithOptions[0].question;
+      setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
+
+      if (currentChatId) {
+        await sendMessageToServer(currentChatId, user.id, "bot", firstQuestion);
+      }
     }
   };
 
-  const handleClarifyingAnswer = async (
-    answer: string,
-    currentChatId: string | null
-  ) => {
-    const newAnswers = [...clarifyingAnswers, answer];
-    setClarifyingAnswers(newAnswers);
-    setInput("");
+  const handleOptionSelect = async (selectedAnswer: string) => {
+    if (!chatId || isBotResponding) return;
 
+    setIsBotResponding(true);
+
+    // Add user's answer to messages and server
+    setMessages((prev) => [...prev, { from: "user", text: selectedAnswer }]);
+    await sendMessageToServer(chatId, user.id, "user", selectedAnswer);
+
+    const newAnswers = [...clarifyingAnswers, selectedAnswer];
+    setClarifyingAnswers(newAnswers);
+
+    await proceedToNextQuestion(newAnswers);
+    setIsBotResponding(false);
+  };
+
+  const handleCustomAnswerSubmit = async () => {
+    if (!customAnswer.trim() || !chatId || isBotResponding) return;
+
+    setIsBotResponding(true);
+
+    // Add user's custom answer to messages and server
+    setMessages((prev) => [...prev, { from: "user", text: customAnswer }]);
+    await sendMessageToServer(chatId, user.id, "user", customAnswer);
+
+    const newAnswers = [...clarifyingAnswers, customAnswer];
+    setClarifyingAnswers(newAnswers);
+    setCustomAnswer("");
+
+    await proceedToNextQuestion(newAnswers);
+    setIsBotResponding(false);
+  };
+
+  const proceedToNextQuestion = async (newAnswers: string[]) => {
     if (clarifyingIndex + 1 < clarifyingQuestions.length) {
-      // Ask next question
-      const nextQ = clarifyingQuestions[clarifyingIndex + 1];
-      if (nextQ && currentChatId) {
-        setMessages((prev) => [...prev, { from: "bot", text: nextQ }]);
-        await sendMessageToServer(currentChatId, user.id, "bot", nextQ);
+      // Show next question
+      const nextIndex = clarifyingIndex + 1;
+      const nextQuestion = clarifyingQuestions[nextIndex];
+
+      setClarifyingIndex(nextIndex);
+
+      // Use stored questions data for options
+      if (questionsData[nextIndex]) {
+        setCurrentQuestionOptions(questionsData[nextIndex].options);
       }
-      setClarifyingIndex(clarifyingIndex + 1);
+
+      setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
+
+      if (chatId) {
+        await sendMessageToServer(chatId, user.id, "bot", nextQuestion);
+      }
     } else {
       // Generate improved prompt
       setPhase("improving");
@@ -227,14 +288,14 @@ export default function ChatClient({ user }: { user: any }) {
         { from: "bot", text: data.prompt },
       ]);
 
-      if (currentChatId) {
+      if (chatId) {
         await sendMessageToServer(
-          currentChatId,
+          chatId,
           user.id,
           "bot",
           "🧠 Ulepszony prompt:"
         );
-        await sendMessageToServer(currentChatId, user.id, "bot", data.prompt);
+        await sendMessageToServer(chatId, user.id, "bot", data.prompt);
       }
 
       setPhase("done");
@@ -283,6 +344,51 @@ export default function ChatClient({ user }: { user: any }) {
               <b>{msg.from === "user" ? "Ty" : "AI"}:</b> {msg.text}
             </div>
           ))}
+
+          {/* Show answer options when in clarifying phase */}
+          {phase === "clarifying" && (
+            <div className="mt-4 p-4 bg-gray-700 rounded">
+              <h4 className="font-semibold mb-3">Wybierz odpowiedź:</h4>
+              <div className="space-y-2">
+                {currentQuestionOptions.map((option, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleOptionSelect(option)}
+                    className="w-full text-left p-3 bg-gray-600 hover:bg-gray-500 rounded transition-colors disabled:opacity-50"
+                    disabled={isBotResponding}
+                  >
+                    {String.fromCharCode(65 + idx)}. {option}
+                  </button>
+                ))}
+
+                {/* Custom answer option */}
+                <div className="mt-4 pt-3 border-t border-gray-600">
+                  <label className="block text-sm font-medium mb-2">
+                    D. Lub wpisz swoją odpowiedź:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      value={customAnswer}
+                      onChange={(e) => setCustomAnswer(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleCustomAnswerSubmit()
+                      }
+                      className="flex-1 px-3 py-2 rounded bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Twoja odpowiedź..."
+                      disabled={isBotResponding}
+                    />
+                    <button
+                      onClick={handleCustomAnswerSubmit}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors disabled:opacity-50"
+                      disabled={isBotResponding || !customAnswer.trim()}
+                    >
+                      Wyślij
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         {/* Provider and Model Selection */}
         <div className="flex gap-4 p-4 bg-gray-900 border-b border-gray-700">
@@ -352,16 +458,21 @@ export default function ChatClient({ user }: { user: any }) {
             placeholder={
               phase === "init"
                 ? "Zadaj pytanie do AI..."
-                : phase === "clarifying"
-                ? "Odpowiedz na pytanie doprecyzowujące..."
                 : "Nowa sesja lub podgląd historii"
             }
-            disabled={isBotResponding || phase === "done"}
+            disabled={
+              isBotResponding || phase === "done" || phase === "clarifying"
+            }
           />
           <button
             onClick={handleSend}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isBotResponding || !input.trim() || phase === "done"}
+            disabled={
+              isBotResponding ||
+              !input.trim() ||
+              phase === "done" ||
+              phase === "clarifying"
+            }
           >
             {isBotResponding ? "Czekaj..." : "Wyślij"}
           </button>

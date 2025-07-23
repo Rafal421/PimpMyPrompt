@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import {
+  parseQuestionsWithOptions,
+  createClarifyPrompt,
+  createImprovePrompt,
+} from "@/lib/ai-helpers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,8 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "clarify") {
-      // Prompt do generowania pytań doprecyzowujących
-      const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Nie odpowiadaj jeszcze na pytanie.\n\nPytanie użytkownika: ${question}`;
+      const clarifyPrompt = createClarifyPrompt(question);
       const completion = await openai.chat.completions.create({
         model: selectedModel,
         messages: [
@@ -30,14 +34,11 @@ export async function POST(req: NextRequest) {
             content: clarifyPrompt,
           },
         ],
-        max_tokens: 256,
+        max_tokens: 512,
       });
       const content = completion.choices[0]?.message?.content || "";
-      // Rozbij na linie, wyczyść puste
-      const questions = content
-        .split("\n")
-        .map((q: string) => q.replace(/^\d+\.?\s*/, "").trim())
-        .filter((q) => q.length > 0);
+      // Parse the structured response
+      const questions = parseQuestionsWithOptions(content);
       return NextResponse.json({ questions });
     }
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       const answerSummary = answers
         .map((a, i) => `Pytanie: ${i + 1}\nOdpowiedź: ${a}`)
         .join("\n\n");
-      const improvePrompt = `Na podstawie poniższego pytania użytkownika oraz odpowiedzi na pytania precyzujące, wygeneruj ulepszony prompt do AI:\n\nPytanie użytkownika:\n${question}\n\nOdpowiedzi:\n${answerSummary}\n\nWygeneruj najlepszy możliwy prompt.`;
+      const improvePrompt = createImprovePrompt(question, answers);
       const completion = await openai.chat.completions.create({
         model: selectedModel,
         messages: [

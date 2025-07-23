@@ -1,5 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Helper function to parse questions with options
+function parseQuestionsWithOptions(content: string) {
+  const questions = [];
+  const lines = content.split("\n");
+  let currentQuestion = null;
+  let currentOptions = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Check if line starts with "PYTANIE" followed by number and colon
+    if (trimmedLine.match(/^PYTANIE\s+\d+:/)) {
+      // Save previous question if exists
+      if (currentQuestion && currentOptions.length > 0) {
+        questions.push({
+          question: currentQuestion,
+          options: [...currentOptions],
+        });
+      }
+      // Start new question
+      currentQuestion = trimmedLine.replace(/^PYTANIE\s+\d+:\s*/, "");
+      currentOptions = [];
+    }
+    // Check if line is an option (A), B), C))
+    else if (trimmedLine.match(/^[A-C]\)/)) {
+      const option = trimmedLine.replace(/^[A-C]\)\s*/, "");
+      if (option) {
+        currentOptions.push(option);
+      }
+    }
+  }
+
+  // Don't forget the last question
+  if (currentQuestion && currentOptions.length > 0) {
+    questions.push({
+      question: currentQuestion,
+      options: [...currentOptions],
+    });
+  }
+
+  return questions;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { action, question, answers, model } = await req.json();
@@ -35,12 +78,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "clarify") {
-      const clarifyPrompt = `Jako asystent AI, zadaj kilka (3-5) precyzujących pytań użytkownikowi, aby lepiej zrozumieć jego intencję. Wypisz tylko pytania, bez żadnych wstępów, podsumowań ani podziękowań. Każde pytanie w osobnej linii.\n\nPytanie użytkownika: ${question}`;
+      const clarifyPrompt = `Jako asystent AI, wygeneruj 3-5 pytań doprecyzowujących z 3 opcjami odpowiedzi każde, aby lepiej zrozumieć intencję użytkownika.
+
+Format odpowiedzi:
+PYTANIE 1: [treść pytania]
+A) [opcja A]
+B) [opcja B] 
+C) [opcja C]
+
+PYTANIE 2: [treść pytania]
+A) [opcja A]
+B) [opcja B]
+C) [opcja C]
+
+Pytanie użytkownika: ${question}`;
       const content = await callGemini(clarifyPrompt);
-      const questions = content
-        .split("\n")
-        .map((q: string) => q.replace(/^\d+\.?\s*/, "").trim())
-        .filter((q: string) => q.length > 0);
+      // Parse the structured response
+      const questions = parseQuestionsWithOptions(content);
       return NextResponse.json({ questions });
     }
 
