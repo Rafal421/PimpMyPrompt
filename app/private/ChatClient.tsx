@@ -1,6 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { logout } from "@/app/login/actions";
+import {
+  QUESTION_PROVIDERS,
+  RESPONSE_PROVIDERS,
+  getQuestionProviderById,
+} from "@/lib/ai-config";
+import { createClarifyPrompt, createImprovePrompt } from "@/lib/ai-helpers";
+
+const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
 type Provider =
   | "openai"
@@ -9,37 +17,116 @@ type Provider =
   | "gemini"
   | "anthropic"
   | "grok";
-type Phase = "init" | "clarifying" | "improving" | "done";
 
-export default function ChatClient({ user }: { user: any }) {
-  // Chat state
-  const [messages, setMessages] = useState([
+type Phase = "init" | "clarifying" | "model-selection" | "improving" | "done";
+
+interface Message {
+  from: "user" | "bot";
+  text: string;
+}
+
+interface QuestionData {
+  question: string;
+  options: string[];
+}
+
+interface ProviderConfig {
+  id: string;
+  name: string;
+  icon: string;
+  models: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
+  recommendedModel: string;
+}
+
+// Provider tile component for model selection
+function ProviderTile({
+  providerConfig,
+  onSelect,
+  disabled,
+}: {
+  providerConfig: ProviderConfig;
+  onSelect: (provider: Provider, model: string) => void;
+  disabled: boolean;
+}) {
+  const [selectedModel, setSelectedModel] = useState(
+    providerConfig.recommendedModel
+  );
+
+  return (
+    <div className="bg-gray-600 rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-xl">{providerConfig.icon}</span>
+        <h5 className="font-medium text-white">{providerConfig.name}</h5>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm text-gray-300">Model:</label>
+        <select
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={disabled}
+        >
+          {providerConfig.models.map((modelOption) => (
+            <option key={modelOption.id} value={modelOption.id}>
+              {modelOption.name}
+              {modelOption.id === providerConfig.recommendedModel
+                ? " (Zalecany)"
+                : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <button
+        onClick={() => onSelect(providerConfig.id as Provider, selectedModel)}
+        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors disabled:opacity-50"
+        disabled={disabled}
+      >
+        Wybierz {providerConfig.name}
+      </button>
+
+      <div className="text-xs text-gray-400">
+        {providerConfig.models.find((m) => m.id === selectedModel)?.description}
+      </div>
+    </div>
+  );
+}
+
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface Chat {
+  id: string;
+  title: string;
+}
+
+export default function ChatClient({ user }: { user: User }) {
+  // State consolidation
+  const [messages, setMessages] = useState<Message[]>([
     { from: "bot", text: "Zadaj pytanie, a pomogę Ci je doprecyzować!" },
   ]);
   const [input, setInput] = useState("");
   const [isBotResponding, setIsBotResponding] = useState(false);
-
-  // Chat management
   const [chatId, setChatId] = useState<string | null>(null);
-  const [chats, setChats] = useState<any[]>([]);
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
-  // AI Provider settings
-  const [provider, setProvider] = useState<Provider>("openai");
-  const [model, setModel] = useState<string>("gpt-3.5-turbo");
-
-  // Pimp My Prompt flow
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [provider, setProvider] = useState<Provider>("anthropic");
   const [phase, setPhase] = useState<Phase>("init");
   const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
   const [clarifyingAnswers, setClarifyingAnswers] = useState<string[]>([]);
   const [clarifyingIndex, setClarifyingIndex] = useState(0);
-  const [originalQuestion, setOriginalQuestion] = useState<string>("");
-  const [improvedPrompt, setImprovedPrompt] = useState<string>("");
+  const [originalQuestion, setOriginalQuestion] = useState("");
   const [currentQuestionOptions, setCurrentQuestionOptions] = useState<
     string[]
   >([]);
-  const [customAnswer, setCustomAnswer] = useState<string>("");
-  const [questionsData, setQuestionsData] = useState<any[]>([]);
+  const [customAnswer, setCustomAnswer] = useState("");
+  const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
 
   // API helper functions
   const createChat = async (
@@ -47,11 +134,10 @@ export default function ChatClient({ user }: { user: any }) {
     title: string,
     usedModel: string
   ) => {
-    const chatTitle = `${title} (${usedModel})`;
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, title: chatTitle }),
+      body: JSON.stringify({ user_id, title: `${title} (${usedModel})` }),
     });
     const data = await res.json();
     return data.chat.id;
@@ -63,40 +149,56 @@ export default function ChatClient({ user }: { user: any }) {
     from: string,
     content: string
   ) => {
-    await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, user_id, from, content }),
-    });
+    try {
+      await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, user_id, from, content }),
+      });
+    } catch (error) {
+      console.error("Error sending message to server:", error);
+    }
   };
 
-  const getProviderEndpoint = (provider: Provider): string => {
-    const endpoints = {
+  const getProviderEndpoint = (provider: Provider) =>
+    ({
       openai: "/api/chat/openai",
       perplexity: "/api/chat/perplexity",
       deepseek: "/api/chat/deepseek",
       gemini: "/api/chat/gemini",
       anthropic: "/api/chat/anthropic",
       grok: "/api/chat/grok",
-    };
-    return endpoints[provider];
-  };
+    }[provider]);
 
-  const callProvider = async (action: "clarify" | "improve", payload: any) => {
-    const endpoint = getProviderEndpoint(provider);
+  const callProvider = async (
+    action: "clarify" | "improve",
+    payload: { question: string; answers?: string[] }
+  ) => {
+    const questionProvider = getQuestionProviderById(provider);
+    const endpoint =
+      action === "clarify"
+        ? questionProvider?.endpoint || "/api/chat/anthropic"
+        : getProviderEndpoint(provider);
+    const modelToUse =
+      action === "clarify"
+        ? questionProvider?.model || DEFAULT_MODEL
+        : questionProvider?.model || DEFAULT_MODEL;
+
+    const promptContent =
+      action === "clarify"
+        ? createClarifyPrompt(payload.question)
+        : createImprovePrompt(payload.question, payload.answers || []);
+
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...payload, model }),
+      body: JSON.stringify({ message: promptContent, model: modelToUse }),
     });
     const data = await response.json();
 
-    // For clarify action, questions now come with their own options
-    if (action === "clarify" && data.questions) {
-      return { questionsWithOptions: data.questions };
-    }
-
-    return data;
+    return action === "clarify" && data.questions
+      ? { questionsWithOptions: data.questions }
+      : data;
   };
 
   // Effects
@@ -109,32 +211,8 @@ export default function ChatClient({ user }: { user: any }) {
     fetchChats();
   }, [user.id]);
 
-  // Auto-select model based on provider
-  useEffect(() => {
-    const modelMap = {
-      deepseek: "deepseek-chat",
-      openai: "gpt-3.5-turbo",
-      perplexity: "sonar-pro",
-      gemini: "gemini-2.5-flash-lite-preview-06-17",
-      anthropic: "claude-3-5-sonnet-20241022",
-      grok: "grok-beta",
-    };
-    setModel(modelMap[provider]);
-  }, [provider]);
-
-  // Chat management functions
-  const fetchChatHistory = async (chatId: string) => {
-    const res = await fetch(`/api/messages?chat_id=${chatId}`);
-    const data = await res.json();
-    setMessages(
-      data.messages.map((msg: any) => ({
-        from: msg.from === "user" ? "user" : "bot",
-        text: msg.content,
-      }))
-    );
-  };
-
-  const handleNewSession = () => {
+  // Utility functions
+  const resetSession = () => {
     setMessages([
       { from: "bot", text: "Zadaj pytanie, a pomogę Ci je doprecyzować!" },
     ]);
@@ -144,19 +222,29 @@ export default function ChatClient({ user }: { user: any }) {
     setClarifyingAnswers([]);
     setClarifyingIndex(0);
     setOriginalQuestion("");
-    setImprovedPrompt("");
     setChatId(null);
-    setSelectedChatId(null);
     setCurrentQuestionOptions([]);
     setCustomAnswer("");
     setQuestionsData([]);
   };
 
-  const handleChatSelect = (chat: any) => {
-    setSelectedChatId(chat.id);
-    if (chat.id) fetchChatHistory(chat.id);
-    setChatId(chat.id);
-    setPhase("done"); // Set to done to show history view
+  const fetchChatHistory = async (chatId: string) => {
+    const res = await fetch(`/api/messages?chat_id=${chatId}`);
+    const data = await res.json();
+    setMessages(
+      data.messages.map((msg: { from: string; content: string }) => ({
+        from: msg.from === "user" ? "user" : "bot",
+        text: msg.content,
+      }))
+    );
+  };
+
+  const handleChatSelectForViewing = (chat: Chat) => {
+    if (chat.id) {
+      fetchChatHistory(chat.id);
+      setChatId(chat.id);
+      setPhase("done");
+    }
   };
 
   // Main message handling
@@ -164,10 +252,10 @@ export default function ChatClient({ user }: { user: any }) {
     if (!input.trim() || isBotResponding) return;
 
     let currentChatId = chatId;
-
-    // Create new chat if needed
     if (!currentChatId) {
-      currentChatId = await createChat(user.id, input, model);
+      const questionProvider = getQuestionProviderById(provider);
+      const currentModel = questionProvider?.model || DEFAULT_MODEL;
+      currentChatId = await createChat(user.id, input, currentModel);
       setChatId(currentChatId);
     }
 
@@ -182,7 +270,6 @@ export default function ChatClient({ user }: { user: any }) {
       if (phase === "init") {
         await handleInitialQuestion(input, currentChatId);
       }
-      // Remove old clarifying phase handling since we use buttons now
     } catch (error) {
       console.error("Error handling message:", error);
       setMessages((prev) => [
@@ -206,7 +293,9 @@ export default function ChatClient({ user }: { user: any }) {
 
     if (questionsWithOptions.length > 0) {
       setQuestionsData(questionsWithOptions);
-      setClarifyingQuestions(questionsWithOptions.map((q: any) => q.question));
+      setClarifyingQuestions(
+        questionsWithOptions.map((q: QuestionData) => q.question)
+      );
       setPhase("clarifying");
       setClarifyingIndex(0);
       setClarifyingAnswers([]);
@@ -222,83 +311,91 @@ export default function ChatClient({ user }: { user: any }) {
     }
   };
 
-  const handleOptionSelect = async (selectedAnswer: string) => {
+  const handleAnswerSubmit = async (answer: string) => {
+    if (!chatId || isBotResponding || !answer.trim()) return;
+
+    setIsBotResponding(true);
+    setMessages((prev) => [...prev, { from: "user", text: answer }]);
+    await sendMessageToServer(chatId, user.id, "user", answer);
+
+    const newAnswers = [...clarifyingAnswers, answer];
+    setClarifyingAnswers(newAnswers);
+
+    setCustomAnswer("");
+
+    await proceedToNextQuestion();
+    setIsBotResponding(false);
+  };
+
+  const handleModelSelect = async (
+    selectedProvider: Provider,
+    selectedModel: string
+  ) => {
     if (!chatId || isBotResponding) return;
 
     setIsBotResponding(true);
+    const choiceText = `Wybieram: ${selectedProvider.toUpperCase()} (${selectedModel})`;
 
-    // Add user's answer to messages and server
-    setMessages((prev) => [...prev, { from: "user", text: selectedAnswer }]);
-    await sendMessageToServer(chatId, user.id, "user", selectedAnswer);
+    setMessages((prev) => [...prev, { from: "user", text: choiceText }]);
+    await sendMessageToServer(chatId, user.id, "user", choiceText);
 
-    const newAnswers = [...clarifyingAnswers, selectedAnswer];
-    setClarifyingAnswers(newAnswers);
+    setPhase("improving");
 
-    await proceedToNextQuestion(newAnswers);
+    const endpoint = getProviderEndpoint(selectedProvider);
+    const improvePrompt = createImprovePrompt(
+      originalQuestion,
+      clarifyingAnswers
+    );
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: improvePrompt, model: selectedModel }),
+    });
+    const data = await response.json();
+
+    const prompt = data.response || data.content;
+
+    setMessages((prev) => [
+      ...prev,
+      { from: "bot", text: "🧠 Ulepszony prompt:" },
+      { from: "bot", text: prompt },
+    ]);
+
+    if (chatId) {
+      await sendMessageToServer(chatId, user.id, "bot", "🧠 Ulepszony prompt:");
+      await sendMessageToServer(chatId, user.id, "bot", prompt);
+    }
+
+    setPhase("done");
     setIsBotResponding(false);
   };
 
-  const handleCustomAnswerSubmit = async () => {
-    if (!customAnswer.trim() || !chatId || isBotResponding) return;
+  const proceedToNextQuestion = async () => {
+    const nextIndex = clarifyingIndex + 1;
 
-    setIsBotResponding(true);
-
-    // Add user's custom answer to messages and server
-    setMessages((prev) => [...prev, { from: "user", text: customAnswer }]);
-    await sendMessageToServer(chatId, user.id, "user", customAnswer);
-
-    const newAnswers = [...clarifyingAnswers, customAnswer];
-    setClarifyingAnswers(newAnswers);
-    setCustomAnswer("");
-
-    await proceedToNextQuestion(newAnswers);
-    setIsBotResponding(false);
-  };
-
-  const proceedToNextQuestion = async (newAnswers: string[]) => {
-    if (clarifyingIndex + 1 < clarifyingQuestions.length) {
-      // Show next question
-      const nextIndex = clarifyingIndex + 1;
+    if (nextIndex < clarifyingQuestions.length) {
       const nextQuestion = clarifyingQuestions[nextIndex];
-
       setClarifyingIndex(nextIndex);
 
-      // Use stored questions data for options
       if (questionsData[nextIndex]) {
         setCurrentQuestionOptions(questionsData[nextIndex].options);
       }
 
       setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
-
       if (chatId) {
         await sendMessageToServer(chatId, user.id, "bot", nextQuestion);
       }
     } else {
-      // Generate improved prompt
-      setPhase("improving");
-      const data = await callProvider("improve", {
-        question: originalQuestion,
-        answers: newAnswers,
-      });
+      // All questions answered - go to model selection
+      setPhase("model-selection");
+      const selectionMessage =
+        "Świetnie! Teraz wybierz model AI, który ma wygenerować finalną odpowiedź:";
 
-      setImprovedPrompt(data.prompt);
-      setMessages((prev) => [
-        ...prev,
-        { from: "bot", text: "🧠 Ulepszony prompt:" },
-        { from: "bot", text: data.prompt },
-      ]);
-
+      setMessages((prev) => [...prev, { from: "bot", text: selectionMessage }]);
       if (chatId) {
-        await sendMessageToServer(
-          chatId,
-          user.id,
-          "bot",
-          "🧠 Ulepszony prompt:"
-        );
-        await sendMessageToServer(chatId, user.id, "bot", data.prompt);
+        await sendMessageToServer(chatId, user.id, "bot", selectionMessage);
       }
-
-      setPhase("done");
     }
   };
 
@@ -312,9 +409,9 @@ export default function ChatClient({ user }: { user: any }) {
             <li
               key={chat.id}
               className={`hover:bg-gray-800 rounded px-2 py-1 cursor-pointer transition-colors ${
-                selectedChatId === chat.id ? "bg-gray-700" : ""
+                chatId === chat.id ? "bg-gray-700" : ""
               }`}
-              onClick={() => handleChatSelect(chat)}
+              onClick={() => handleChatSelectForViewing(chat)}
             >
               {chat.title || "Bez tytułu"}
             </li>
@@ -326,7 +423,7 @@ export default function ChatClient({ user }: { user: any }) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
           <span className="text-white">
-            Hello <span className="font-semibold">{user.email}</span>
+            Hello <span className="font-semibold">{user.email || "User"}</span>
           </span>
           <form action={logout}>
             <button
@@ -353,7 +450,7 @@ export default function ChatClient({ user }: { user: any }) {
                 {currentQuestionOptions.map((option, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleOptionSelect(option)}
+                    onClick={() => handleAnswerSubmit(option)}
                     className="w-full text-left p-3 bg-gray-600 hover:bg-gray-500 rounded transition-colors disabled:opacity-50"
                     disabled={isBotResponding}
                   >
@@ -361,24 +458,26 @@ export default function ChatClient({ user }: { user: any }) {
                   </button>
                 ))}
 
-                {/* Custom answer option */}
                 <div className="mt-4 pt-3 border-t border-gray-600">
                   <label className="block text-sm font-medium mb-2">
-                    D. Lub wpisz swoją odpowiedź:
+                    {String.fromCharCode(65 + currentQuestionOptions.length)}.
+                    Lub wpisz swoją odpowiedź:
                   </label>
                   <div className="flex gap-2">
                     <input
                       value={customAnswer}
                       onChange={(e) => setCustomAnswer(e.target.value)}
                       onKeyDown={(e) =>
-                        e.key === "Enter" && handleCustomAnswerSubmit()
+                        e.key === "Enter" &&
+                        customAnswer.trim() &&
+                        handleAnswerSubmit(customAnswer)
                       }
                       className="flex-1 px-3 py-2 rounded bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Twoja odpowiedź..."
                       disabled={isBotResponding}
                     />
                     <button
-                      onClick={handleCustomAnswerSubmit}
+                      onClick={() => handleAnswerSubmit(customAnswer)}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors disabled:opacity-50"
                       disabled={isBotResponding || !customAnswer.trim()}
                     >
@@ -389,64 +488,51 @@ export default function ChatClient({ user }: { user: any }) {
               </div>
             </div>
           )}
+
+          {/* Show model selection when in model-selection phase */}
+          {phase === "model-selection" && (
+            <div className="mt-4 p-4 bg-gray-700 rounded">
+              <h4 className="font-semibold mb-3">
+                Wybierz model AI do finalnej odpowiedzi:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {RESPONSE_PROVIDERS.map((providerConfig) => (
+                  <ProviderTile
+                    key={providerConfig.id}
+                    providerConfig={providerConfig}
+                    onSelect={handleModelSelect}
+                    disabled={isBotResponding}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        {/* Provider and Model Selection */}
-        <div className="flex gap-4 p-4 bg-gray-900 border-b border-gray-700">
-          <label className="flex items-center gap-2">
-            Provider:
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value as Provider)}
-              className="px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={phase !== "init"}
-            >
-              <option value="openai">OpenAI</option>
-              <option value="perplexity">Perplexity</option>
-              <option value="deepseek">DeepSeek</option>
-              <option value="gemini">Gemini</option>
-              <option value="anthropic">Anthropic</option>
-              <option value="grok">Grok</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2">
-            Model:
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={phase !== "init"}
-            >
-              {provider === "openai" && (
-                <>
-                  <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                  <option value="gpt-4">gpt-4</option>
-                  <option value="gpt-4o">gpt-4o</option>
-                </>
-              )}
-              {provider === "perplexity" && (
-                <>
-                  <option value="sonar-pro">sonar-pro</option>
-                  <option value="sonar">sonar</option>
-                </>
-              )}
-              {provider === "deepseek" && (
-                <option value="deepseek-chat">deepseek-chat</option>
-              )}
-              {provider === "gemini" && (
-                <option value="gemini-2.5-flash-lite-preview-06-17">
-                  gemini-2.5-flash-lite-preview-06-17
-                </option>
-              )}
-              {provider === "anthropic" && (
-                <option value="claude-3-5-sonnet-20241022">
-                  claude-3-5-sonnet-20241022
-                </option>
-              )}
-              {provider === "grok" && (
-                <option value="grok-beta">grok-beta</option>
-              )}
-            </select>
-          </label>
+        {/* Provider Selection for Questions */}
+        <div className="p-4 bg-gray-900 border-b border-gray-700">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2">
+              Provider do pytań:
+              <select
+                value={provider}
+                onChange={(e) => setProvider(e.target.value as Provider)}
+                className="px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={phase !== "init"}
+              >
+                {QUESTION_PROVIDERS.map((questionProvider) => (
+                  <option key={questionProvider.id} value={questionProvider.id}>
+                    {questionProvider.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="text-sm text-gray-300">
+              Model:{" "}
+              <span className="text-blue-400 font-mono">
+                {getQuestionProviderById(provider)?.model || DEFAULT_MODEL}
+              </span>
+            </div>
+          </div>
         </div>
         {/* Input Area */}
         <div className="p-4 border-t border-gray-700 flex items-center gap-3 bg-gray-900">
@@ -461,7 +547,10 @@ export default function ChatClient({ user }: { user: any }) {
                 : "Nowa sesja lub podgląd historii"
             }
             disabled={
-              isBotResponding || phase === "done" || phase === "clarifying"
+              isBotResponding ||
+              phase === "done" ||
+              phase === "clarifying" ||
+              phase === "model-selection"
             }
           />
           <button
@@ -471,14 +560,15 @@ export default function ChatClient({ user }: { user: any }) {
               isBotResponding ||
               !input.trim() ||
               phase === "done" ||
-              phase === "clarifying"
+              phase === "clarifying" ||
+              phase === "model-selection"
             }
           >
             {isBotResponding ? "Czekaj..." : "Wyślij"}
           </button>
           {phase === "done" && (
             <button
-              onClick={handleNewSession}
+              onClick={resetSession}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
             >
               Nowa sesja

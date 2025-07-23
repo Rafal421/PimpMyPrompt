@@ -44,6 +44,13 @@ export function parseQuestionsWithOptions(content: string) {
   return questions;
 }
 
+// Token limits configuration
+export const TOKEN_LIMITS = {
+  CLARIFY: 512,
+  IMPROVE: 512,
+  GENERAL: 1000, // For general message processing (Anthropic, Gemini, DeepSeek)
+} as const;
+
 // Template for clarification prompt with structured output
 export function createClarifyPrompt(question: string): string {
   return `Jako asystent AI, wygeneruj 3-5 pytań doprecyzowujących z 3 opcjami odpowiedzi każde, aby lepiej zrozumieć intencję użytkownika.
