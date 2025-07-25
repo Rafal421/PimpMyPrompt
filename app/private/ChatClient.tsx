@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Check,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
@@ -339,6 +340,35 @@ export default function ChatClient({ user }: { user: User }) {
     }
   };
 
+  const handleDeleteChat = async (
+    chatIdToDelete: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation(); // Prevent triggering chat selection
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatIdToDelete, user_id: user.id }),
+      });
+
+      if (res.ok) {
+        // Remove chat from local state
+        setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
+
+        // If the deleted chat was currently selected, reset session
+        if (chatIdToDelete === chatId) {
+          resetSession();
+        }
+      } else {
+        console.error("Failed to delete chat");
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+
   // Main message handling
   const handleSend = async () => {
     if (!input.trim() || isBotResponding) return;
@@ -438,14 +468,9 @@ export default function ChatClient({ user }: { user: User }) {
     const data = await response.json();
     const prompt = data.response || data.content;
 
-    setMessages((prev) => [
-      ...prev,
-      { from: "bot", text: "🧠 Ulepszony prompt:" },
-      { from: "bot", text: prompt },
-    ]);
+    setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
 
     if (chatId) {
-      await sendMessageToServer(chatId, user.id, "bot", "🧠 Ulepszony prompt:");
       await sendMessageToServer(chatId, user.id, "bot", prompt);
     }
 
@@ -520,29 +545,41 @@ export default function ChatClient({ user }: { user: User }) {
           </h3>
           <div className="space-y-3">
             {chats.map((chat) => (
-              <button
+              <div
                 key={chat.id}
-                className={`w-full text-left p-4 rounded-xl transition-all duration-200 group border ${
+                className={`relative group w-full rounded-xl transition-all duration-200 border ${
                   chatId === chat.id
                     ? "bg-gray-800/50 border-gray-700/50"
                     : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50"
                 }`}
-                onClick={() => handleChatSelectForViewing(chat)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-4 h-4 text-gray-400 group-hover:text-gray-300" />
+                <button
+                  className="w-full text-left p-4 rounded-xl"
+                  onClick={() => handleChatSelectForViewing(chat)}
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChat(chat.id, e);
+                      }}
+                      title="Usuń chat"
+                    >
+                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden transition-all duration-200" />
+                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block transition-all duration-200" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
+                        {chat.title || "Bez tytułu"}
+                      </p>
+                      <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
+                        Ostatnia rozmowa
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
-                      {chat.title || "Bez tytułu"}
-                    </p>
-                    <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
-                      Ostatnia rozmowa
-                    </p>
-                  </div>
-                </div>
-              </button>
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -619,7 +656,7 @@ export default function ChatClient({ user }: { user: User }) {
                 </select>
               </div>
               <div className="text-xs text-gray-400 bg-gray-900/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-700/50 font-mono">
-                {getQuestionProviderById(provider)?.model || DEFAULT_MODEL}
+                {getQuestionProviderById(provider)?.modleName || DEFAULT_MODEL}
               </div>
             </div>
           </div>
@@ -797,7 +834,7 @@ export default function ChatClient({ user }: { user: User }) {
                   placeholder={
                     phase === "init"
                       ? "Zadaj pytanie do AI..."
-                      : "Nowa sesja lub podgląd historii"
+                      : "Rozpocznij nową sesję lub przeglądaj historię..."
                   }
                   disabled={
                     isBotResponding ||
@@ -806,30 +843,29 @@ export default function ChatClient({ user }: { user: User }) {
                     phase === "model-selection"
                   }
                 />
-                <button
-                  onClick={handleSend}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                  disabled={
-                    isBotResponding ||
-                    !input.trim() ||
-                    phase === "done" ||
-                    phase === "clarifying" ||
-                    phase === "model-selection"
-                  }
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+                {phase === "done" ? (
+                  <button
+                    onClick={resetSession}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Nowa Sesja
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSend}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={
+                      isBotResponding ||
+                      !input.trim() ||
+                      phase === "clarifying" ||
+                      phase === "model-selection"
+                    }
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-
-              {phase === "done" && (
-                <button
-                  onClick={resetSession}
-                  className="px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
-                >
-                  <Plus className="w-4 h-4" />
-                  Nowa sesja
-                </button>
-              )}
             </div>
 
             <p className="text-xs text-gray-500 mt-4 text-center">

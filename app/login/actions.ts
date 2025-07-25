@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { createClient } from "@/utils/supabase/server";
 
-// Zod schemas for validation
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -31,10 +30,20 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
-export async function login(formData: FormData) {
+type ValidationError = {
+  field: string;
+  message: string;
+};
+
+type ActionResult = {
+  success?: boolean;
+  error?: string;
+  fieldErrors?: ValidationError[];
+};
+
+export async function login(formData: FormData): Promise<ActionResult | void> {
   const supabase = await createClient();
 
-  // Validate input data
   const rawData = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -43,8 +52,18 @@ export async function login(formData: FormData) {
   const validation = loginSchema.safeParse(rawData);
 
   if (!validation.success) {
-    const errors = validation.error.errors.map((err) => err.message).join(", ");
-    return { error: errors };
+    const fieldErrors: ValidationError[] = validation.error.errors.map(
+      (err) => ({
+        field: err.path[0] as string,
+        message: err.message,
+      })
+    );
+
+    return {
+      success: false,
+      fieldErrors,
+      error: "Please fix the errors below",
+    };
   }
 
   const data = validation.data;
@@ -52,17 +71,15 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    // Błędy autoryzacji - wyświetl w formularzu
     if (
       error.message.includes("Invalid login credentials") ||
       error.message.includes("Email not confirmed") ||
       error.message.includes("Invalid email or password") ||
       error.status === 400
     ) {
-      return { error: error.message };
+      return { success: false, error: error.message };
     }
 
-    // Błędy sieciowe/serwerowe - przekieruj na stronę error
     redirect(`/error?message=Server error occurred`);
   }
 
@@ -70,10 +87,9 @@ export async function login(formData: FormData) {
   redirect("/private");
 }
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData): Promise<ActionResult | void> {
   const supabase = await createClient();
 
-  // Validate input data
   const rawData = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -83,8 +99,18 @@ export async function signup(formData: FormData) {
   const validation = signupSchema.safeParse(rawData);
 
   if (!validation.success) {
-    const errors = validation.error.errors.map((err) => err.message).join(", ");
-    return { error: errors };
+    const fieldErrors: ValidationError[] = validation.error.errors.map(
+      (err) => ({
+        field: err.path[0] as string,
+        message: err.message,
+      })
+    );
+
+    return {
+      success: false,
+      fieldErrors,
+      error: "Please fix the errors below",
+    };
   }
 
   const { email, password } = validation.data;
@@ -92,7 +118,6 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
-    // Błędy walidacji/autoryzacji - wyświetl w formularzu
     if (
       error.message.includes("User already registered") ||
       error.message.includes("Password should be") ||
@@ -101,10 +126,9 @@ export async function signup(formData: FormData) {
       error.status === 400 ||
       error.status === 422
     ) {
-      return { error: error.message };
+      return { success: false, error: error.message };
     }
 
-    // Błędy sieciowe/serwerowe - przekieruj na stronę error
     redirect(`/error?message=Registration error occurred`);
   }
 

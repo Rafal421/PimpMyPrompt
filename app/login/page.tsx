@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { redirect } from "next/navigation";
 import { login, signup } from "./actions";
-import { z } from "zod";
 import {
   Card,
   CardContent,
@@ -16,30 +15,31 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, AlertCircle, Check, Bot } from "lucide-react";
 
-// Zod schemas for client-side validation
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+type ValidationError = {
+  field: string;
+  message: string;
+};
 
-const signupSchema = z
-  .object({
-    email: z.string().email("Invalid email address"),
-    password: z
-      .string()
-      .min(6, "Password must be at least 6 characters long")
-      .max(100, "Password cannot be more than 100 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(
-        /[!@#$%^&*(),.?":{}|<>]/,
-        "Password must contain at least one special character"
-      ),
-    confirmPassword: z.string().min(1, "Password confirmation is required"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+type ActionResult = {
+  success?: boolean;
+  error?: string;
+  fieldErrors?: ValidationError[];
+};
+
+// Client-side validation helpers (basic validation for UX)
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidPassword = (password: string) => {
+  return {
+    minLength: password.length >= 6,
+    hasUppercase: /[A-Z]/.test(password),
+    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    isValid:
+      password.length >= 6 &&
+      /[A-Z]/.test(password) &&
+      /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+};
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -74,37 +74,39 @@ export default function AuthPage() {
     setError(null);
     setValidationErrors({});
 
-    // Client-side validation
-    const rawData = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-    };
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const clientErrors: Record<string, string> = {};
 
-    const validation = loginSchema.safeParse(rawData);
+    if (!email) clientErrors.email = "Email jest wymagany";
+    else if (!isValidEmail(email))
+      clientErrors.email = "Nieprawidłowy format email";
 
-    if (!validation.success) {
-      const errors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
-      });
-      setValidationErrors(errors);
+    if (!password) clientErrors.password = "Hasło jest wymagane";
+
+    if (Object.keys(clientErrors).length > 0) {
+      setValidationErrors(clientErrors);
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = (await login(formData)) as { error?: string } | undefined;
-      if (result?.error) {
+      const result = (await login(formData)) as ActionResult | void;
+      if (result?.fieldErrors) {
+        const errors: Record<string, string> = {};
+        result.fieldErrors.forEach(({ field, message }) => {
+          errors[field] = message;
+        });
+        setValidationErrors(errors);
+        setIsLoading(false);
+      } else if (result?.error) {
         setError(result.error);
         setIsLoading(false);
       }
-      // If no error, redirect happens in the action
     } catch (error) {
-      // To catch unexpected errors and network issues
       console.error("Login error:", error);
-      redirect(`/error?message=Unexpected login error occurred`);
+      setError("Unexpected error occurred");
+      setIsLoading(false);
     }
   }
 
@@ -113,30 +115,48 @@ export default function AuthPage() {
     setError(null);
     setValidationErrors({});
 
-    // Client-side validation
-    const rawData = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-      confirmPassword: formData.get("confirmPassword") as string,
-    };
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    const clientErrors: Record<string, string> = {};
 
-    const validation = signupSchema.safeParse(rawData);
+    if (!email) clientErrors.email = "Email jest wymagany";
+    else if (!isValidEmail(email))
+      clientErrors.email = "Nieprawidłowy format email";
 
-    if (!validation.success) {
-      const errors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
-      });
-      setValidationErrors(errors);
+    if (!password) clientErrors.password = "Hasło jest wymagane";
+    else if (!isValidPassword(password).isValid) {
+      clientErrors.password = "Hasło nie spełnia wymagań";
+    }
+
+    if (!confirmPassword)
+      clientErrors.confirmPassword = "Potwierdzenie hasła jest wymagane";
+    else if (password !== confirmPassword) {
+      clientErrors.confirmPassword = "Hasła nie są identyczne";
+    }
+
+    if (Object.keys(clientErrors).length > 0) {
+      setValidationErrors(clientErrors);
       setIsLoading(false);
       return;
     }
 
-    const result = (await signup(formData)) as { error?: string } | undefined;
-    if (result?.error) {
-      setError(result.error);
+    try {
+      const result = (await signup(formData)) as ActionResult | void;
+      if (result?.fieldErrors) {
+        const errors: Record<string, string> = {};
+        result.fieldErrors.forEach(({ field, message }) => {
+          errors[field] = message;
+        });
+        setValidationErrors(errors);
+        setIsLoading(false);
+      } else if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      setError("Unexpected error occurred");
       setIsLoading(false);
     }
   }
