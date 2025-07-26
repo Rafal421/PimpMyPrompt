@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Check, Bot, CheckCircle } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
-import { AuthInput } from "@/components/ui_auth/AuthInput";
+import { AuthInput } from "@/components/auth/AuthInput";
 
 // Main authentication component with login/signup forms
 export default function OptimizedAuthPage() {

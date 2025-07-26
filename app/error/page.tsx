@@ -33,10 +33,10 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
             <AlertCircle className="h-6 w-6 text-red-400" />
           </div>
           <CardTitle className="text-xl font-bold text-white">
-            Błąd uwierzytelniania
+            Authentication Error
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Wystąpił problem podczas próby logowania
+            There was a problem during login attempt
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
@@ -49,7 +49,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
           >
             <Link href="/login">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Powrót do logowania
+              Back to Login
             </Link>
           </Button>
         </CardContent>

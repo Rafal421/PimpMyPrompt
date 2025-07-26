@@ -1,25 +1,25 @@
 "use client";
-import { useState, useEffect } from "react";
-import { logout } from "@/app/login/actions";
+import { useState, useEffect, useRef } from "react";
 import {
   QUESTION_PROVIDERS,
   RESPONSE_PROVIDERS,
   getQuestionProviderById,
 } from "@/lib/ai-config";
-import { createClarifyPrompt, createImprovePrompt } from "@/lib/ai-helpers";
+import { createImprovePrompt } from "@/lib/ai-helpers";
+import ChatSidePanel, {
+  ChatSidePanelHandle,
+} from "@/components/private/ChatSidePanel";
+import QuestionBlock from "@/components/private/QuestionBlock";
+import ChatMessages from "@/components/private/ChatMessages";
+import { useQuestionGenerator } from "@/components/private/QuestionGenerator";
 import {
   Send,
-  Plus,
-  MessageSquare,
   Settings,
-  LogOut,
-  UserIcon,
-  Bot,
   Sparkles,
   ChevronDown,
   Check,
   ArrowRight,
-  Trash2,
+  Plus,
 } from "lucide-react";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
@@ -126,7 +126,7 @@ function ProviderTile({
                 }
                 {selectedModel === providerConfig.recommendedModel && (
                   <span className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-medium">
-                    Zalecany
+                    Recommended
                   </span>
                 )}
               </span>
@@ -183,7 +183,7 @@ function ProviderTile({
             disabled={disabled}
           >
             <Sparkles className="w-4 h-4" />
-            Wybierz
+            Select
             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -197,20 +197,16 @@ interface User {
   email?: string;
 }
 
-interface Chat {
-  id: string;
-  title: string;
-}
-
 export default function ChatClient({ user }: { user: User }) {
+  const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+
   // State consolidation
   const [messages, setMessages] = useState<Message[]>([
-    { from: "bot", text: "Zadaj pytanie, a pomogę Ci je doprecyzować!" },
+    { from: "bot", text: "Ask a question and I'll help you refine it!" },
   ]);
   const [input, setInput] = useState("");
   const [isBotResponding, setIsBotResponding] = useState(false);
   const [chatId, setChatId] = useState<string | null>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
   const [provider, setProvider] = useState<Provider>("anthropic");
   const [phase, setPhase] = useState<Phase>("init");
   const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
@@ -223,38 +219,6 @@ export default function ChatClient({ user }: { user: User }) {
   const [customAnswer, setCustomAnswer] = useState("");
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
 
-  // API helper functions
-  const createChat = async (
-    user_id: string,
-    title: string,
-    usedModel: string
-  ) => {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, title: `${title} (${usedModel})` }),
-    });
-    const data = await res.json();
-    return data.chat.id;
-  };
-
-  const sendMessageToServer = async (
-    chat_id: string,
-    user_id: string,
-    from: string,
-    content: string
-  ) => {
-    try {
-      await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, user_id, from, content }),
-      });
-    } catch (error) {
-      console.error("Error sending message to server:", error);
-    }
-  };
-
   const getProviderEndpoint = (provider: Provider) =>
     ({
       openai: "/api/chat/openai",
@@ -265,49 +229,17 @@ export default function ChatClient({ user }: { user: User }) {
       grok: "/api/chat/grok",
     }[provider]);
 
-  const callProvider = async (
-    action: "clarify" | "improve",
-    payload: { question: string; answers?: string[] }
-  ) => {
-    const questionProvider = getQuestionProviderById(provider);
-    const endpoint =
-      action === "clarify"
-        ? questionProvider?.endpoint || "/api/chat/anthropic"
-        : getProviderEndpoint(provider);
-    const modelToUse =
-      action === "clarify"
-        ? questionProvider?.model || DEFAULT_MODEL
-        : questionProvider?.model || DEFAULT_MODEL;
-    const promptContent =
-      action === "clarify"
-        ? createClarifyPrompt(payload.question)
-        : createImprovePrompt(payload.question, payload.answers || []);
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: promptContent, model: modelToUse }),
-    });
-    const data = await response.json();
-    return action === "clarify" && data.questions
-      ? { questionsWithOptions: data.questions }
-      : data;
-  };
-
-  // Effects
-  useEffect(() => {
-    const fetchChats = async () => {
-      const res = await fetch(`/api/chat?user_id=${user.id}`);
-      const data = await res.json();
-      setChats(data.chats || []);
-    };
-    fetchChats();
-  }, [user.id]);
+  // Use the question generator hook
+  const { generateClarifyingQuestions } = useQuestionGenerator({
+    provider,
+    getQuestionProviderById,
+    getProviderEndpoint: (p: string) => getProviderEndpoint(p as Provider),
+  });
 
   // Utility functions
   const resetSession = () => {
     setMessages([
-      { from: "bot", text: "Zadaj pytanie, a pomogę Ci je doprecyzować!" },
+      { from: "bot", text: "Ask a question and I'll help you refine it!" },
     ]);
     setInput("");
     setPhase("init");
@@ -321,54 +253,6 @@ export default function ChatClient({ user }: { user: User }) {
     setQuestionsData([]);
   };
 
-  const fetchChatHistory = async (chatId: string) => {
-    const res = await fetch(`/api/messages?chat_id=${chatId}`);
-    const data = await res.json();
-    setMessages(
-      data.messages.map((msg: { from: string; content: string }) => ({
-        from: msg.from === "user" ? "user" : "bot",
-        text: msg.content,
-      }))
-    );
-  };
-
-  const handleChatSelectForViewing = (chat: Chat) => {
-    if (chat.id) {
-      fetchChatHistory(chat.id);
-      setChatId(chat.id);
-      setPhase("done");
-    }
-  };
-
-  const handleDeleteChat = async (
-    chatIdToDelete: string,
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation(); // Prevent triggering chat selection
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatIdToDelete, user_id: user.id }),
-      });
-
-      if (res.ok) {
-        // Remove chat from local state
-        setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
-
-        // If the deleted chat was currently selected, reset session
-        if (chatIdToDelete === chatId) {
-          resetSession();
-        }
-      } else {
-        console.error("Failed to delete chat");
-      }
-    } catch (error) {
-      console.error("Error deleting chat:", error);
-    }
-  };
-
   // Main message handling
   const handleSend = async () => {
     if (!input.trim() || isBotResponding) return;
@@ -377,14 +261,16 @@ export default function ChatClient({ user }: { user: User }) {
     if (!currentChatId) {
       const questionProvider = getQuestionProviderById(provider);
       const currentModel = questionProvider?.model || DEFAULT_MODEL;
-      currentChatId = await createChat(user.id, input, currentModel);
+      currentChatId =
+        (await chatSidePanelRef.current?.createChat(input, currentModel)) ||
+        null;
       setChatId(currentChatId);
     }
 
     setIsBotResponding(true);
     setMessages((prev) => [...prev, { from: "user", text: input }]);
     if (currentChatId) {
-      await sendMessageToServer(currentChatId, user.id, "user", input);
+      await chatSidePanelRef.current?.sendMessage(currentChatId, "user", input);
     }
 
     try {
@@ -395,7 +281,7 @@ export default function ChatClient({ user }: { user: User }) {
       console.error("Error handling message:", error);
       setMessages((prev) => [
         ...prev,
-        { from: "bot", text: "Wystąpił błąd. Spróbuj ponownie." },
+        { from: "bot", text: "An error occurred. Please try again." },
       ]);
     }
     setIsBotResponding(false);
@@ -407,24 +293,39 @@ export default function ChatClient({ user }: { user: User }) {
   ) => {
     setOriginalQuestion(question);
     setInput("");
-    const data = await callProvider("clarify", { question });
-    const questionsWithOptions = data.questionsWithOptions || [];
 
-    if (questionsWithOptions.length > 0) {
-      setQuestionsData(questionsWithOptions);
-      setClarifyingQuestions(
-        questionsWithOptions.map((q: QuestionData) => q.question)
-      );
-      setPhase("clarifying");
-      setClarifyingIndex(0);
-      setClarifyingAnswers([]);
-      setCurrentQuestionOptions(questionsWithOptions[0].options);
+    try {
+      const questionsWithOptions = await generateClarifyingQuestions(question);
 
-      const firstQuestion = questionsWithOptions[0].question;
-      setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
-      if (currentChatId) {
-        await sendMessageToServer(currentChatId, user.id, "bot", firstQuestion);
+      if (questionsWithOptions.length > 0) {
+        setQuestionsData(questionsWithOptions);
+        setClarifyingQuestions(
+          questionsWithOptions.map((q: QuestionData) => q.question)
+        );
+        setPhase("clarifying");
+        setClarifyingIndex(0);
+        setClarifyingAnswers([]);
+        setCurrentQuestionOptions(questionsWithOptions[0].options);
+
+        const firstQuestion = questionsWithOptions[0].question;
+        setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
+        if (currentChatId) {
+          await chatSidePanelRef.current?.sendMessage(
+            currentChatId,
+            "bot",
+            firstQuestion
+          );
+        }
       }
+    } catch (error) {
+      console.error("Error generating questions:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "An error occurred while generating clarifying questions. Please try again.",
+        },
+      ]);
     }
   };
 
@@ -433,7 +334,7 @@ export default function ChatClient({ user }: { user: User }) {
 
     setIsBotResponding(true);
     setMessages((prev) => [...prev, { from: "user", text: answer }]);
-    await sendMessageToServer(chatId, user.id, "user", answer);
+    await chatSidePanelRef.current?.sendMessage(chatId, "user", answer);
 
     const newAnswers = [...clarifyingAnswers, answer];
     setClarifyingAnswers(newAnswers);
@@ -449,9 +350,9 @@ export default function ChatClient({ user }: { user: User }) {
     if (!chatId || isBotResponding) return;
 
     setIsBotResponding(true);
-    const choiceText = `Wybieram: ${selectedProvider.toUpperCase()} (${selectedModel})`;
+    const choiceText = `I choose: ${selectedProvider.toUpperCase()} (${selectedModel})`;
     setMessages((prev) => [...prev, { from: "user", text: choiceText }]);
-    await sendMessageToServer(chatId, user.id, "user", choiceText);
+    await chatSidePanelRef.current?.sendMessage(chatId, "user", choiceText);
 
     setPhase("improving");
     const endpoint = getProviderEndpoint(selectedProvider);
@@ -460,21 +361,34 @@ export default function ChatClient({ user }: { user: User }) {
       clarifyingAnswers
     );
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: improvePrompt, model: selectedModel }),
-    });
-    const data = await response.json();
-    const prompt = data.response || data.content;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: improvePrompt, model: selectedModel }),
+      });
+      const data = await response.json();
+      const prompt = data.response || data.content;
 
-    setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
+      setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
 
-    if (chatId) {
-      await sendMessageToServer(chatId, user.id, "bot", prompt);
+      if (chatId) {
+        await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
+      }
+
+      setPhase("done");
+    } catch (error) {
+      console.error("Error generating improved prompt:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "An error occurred while generating the improved prompt. Please try again.",
+        },
+      ]);
+      setPhase("model-selection");
     }
 
-    setPhase("done");
     setIsBotResponding(false);
   };
 
@@ -488,15 +402,23 @@ export default function ChatClient({ user }: { user: User }) {
       }
       setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
       if (chatId) {
-        await sendMessageToServer(chatId, user.id, "bot", nextQuestion);
+        await chatSidePanelRef.current?.sendMessage(
+          chatId,
+          "bot",
+          nextQuestion
+        );
       }
     } else {
       setPhase("model-selection");
       const selectionMessage =
-        "Świetnie! Teraz wybierz model AI, który ma wygenerować finalną odpowiedź:";
+        "Great! Now choose the AI model that should generate the final response:";
       setMessages((prev) => [...prev, { from: "bot", text: selectionMessage }]);
       if (chatId) {
-        await sendMessageToServer(chatId, user.id, "bot", selectionMessage);
+        await chatSidePanelRef.current?.sendMessage(
+          chatId,
+          "bot",
+          selectionMessage
+        );
       }
     }
   };
@@ -515,101 +437,15 @@ export default function ChatClient({ user }: { user: User }) {
       </div>
 
       {/* Sidebar */}
-      <div className="relative z-10 w-72 bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-800/50">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-white font-bold text-lg">AI Assistant</h2>
-              <p className="text-gray-400 text-sm">Prompt Enhancement</p>
-            </div>
-          </div>
-
-          <button
-            onClick={resetSession}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 group shadow-lg hover:shadow-xl"
-          >
-            <Plus className="w-5 h-5" />
-            Nowa rozmowa
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-0.5 transition-transform" />
-          </button>
-        </div>
-
-        {/* Chat History */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Ostatnie czaty
-          </h3>
-          <div className="space-y-3">
-            {chats.map((chat) => (
-              <div
-                key={chat.id}
-                className={`relative group w-full rounded-xl transition-all duration-200 border ${
-                  chatId === chat.id
-                    ? "bg-gray-800/50 border-gray-700/50"
-                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50"
-                }`}
-              >
-                <div
-                  className="w-full text-left p-4 rounded-xl cursor-pointer"
-                  onClick={() => handleChatSelectForViewing(chat)}
-                >
-                  <div className="flex items-center gap-3">
-                    <button
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteChat(chat.id, e);
-                      }}
-                      title="Usuń chat"
-                    >
-                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden transition-all duration-200" />
-                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block transition-all duration-200" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
-                        {chat.title || "Bez tytułu"}
-                      </p>
-                      <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
-                        Ostatnia rozmowa
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* User Section */}
-        <div className="p-4 border-t border-gray-800/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <UserIcon className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {user.email || "User"}
-                </p>
-                <p className="text-xs text-gray-400">Online</p>
-              </div>
-            </div>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-200"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
+      <ChatSidePanel
+        ref={chatSidePanelRef}
+        user={user}
+        chatId={chatId}
+        setChatId={setChatId}
+        setMessages={setMessages}
+        setPhase={setPhase}
+        onResetSession={resetSession}
+      />
 
       {/* Main Chat Area */}
       <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm">
@@ -618,17 +454,17 @@ export default function ChatClient({ user }: { user: User }) {
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">
-                Zbuduj przyszłość{" "}
+                Build the future of{" "}
                 <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                  AI promptów
+                  AI prompts
                 </span>
               </h1>
               <p className="text-gray-400">
-                Wszystko czego potrzebujesz do tworzenia{" "}
+                Everything you need to create{" "}
                 <span className="text-white font-semibold">
-                  idealnych promptów AI
+                  perfect AI prompts
                 </span>{" "}
-                z precyzją.
+                with precision.
               </p>
             </div>
 
@@ -664,111 +500,18 @@ export default function ChatClient({ user }: { user: User }) {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto overflow-x-visible">
-          <div className="max-w-5xl mx-auto p-6 space-y-8">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex gap-4 ${
-                  msg.from === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                {msg.from === "bot" && (
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Bot className="w-5 h-5 text-white" />
-                  </div>
-                )}
+          <ChatMessages messages={messages} isBotResponding={isBotResponding} />
 
-                <div
-                  className={`max-w-2xl ${
-                    msg.from === "user" ? "order-first" : ""
-                  }`}
-                >
-                  <div
-                    className={`px-6 py-4 rounded-2xl shadow-lg ${
-                      msg.from === "user"
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white ml-auto"
-                        : "bg-black/40 backdrop-blur-sm border border-gray-800/50 text-gray-100"
-                    }`}
-                  >
-                    <p className="leading-relaxed whitespace-pre-wrap font-medium !m-0 !mt-0 !mb-0 !ml-0 !mr-0">
-                      {msg.text}
-                    </p>
-                  </div>
-                </div>
-
-                {msg.from === "user" && (
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <UserIcon className="w-5 h-5 text-white" />
-                  </div>
-                )}
-              </div>
-            ))}
-
+          <div className="max-w-5xl mx-auto p-6">
             {/* Answer Options */}
             {phase === "clarifying" && (
-              <div className="bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-2xl p-8 shadow-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <Sparkles className="w-6 h-6 text-blue-400" />
-                  <h4 className="text-2xl font-bold text-white">
-                    Wybierz odpowiedź
-                  </h4>
-                </div>
-
-                <div className="space-y-4">
-                  {currentQuestionOptions.map((option, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAnswerSubmit(option)}
-                      className="w-full text-left p-4 bg-gray-900/50 backdrop-blur-sm hover:bg-gray-800/50 border border-gray-800/50 hover:border-gray-700/50 rounded-xl transition-all duration-300 disabled:opacity-50 group"
-                      disabled={isBotResponding}
-                    >
-                      <div className="flex items-start gap-4">
-                        <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 group-hover:scale-110 transition-transform">
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span className="text-gray-200 group-hover:text-white font-medium leading-relaxed">
-                          {option}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-
-                  <div className="pt-6 border-t border-gray-800/50">
-                    <div className="flex items-start gap-4 mb-4">
-                      <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        {String.fromCharCode(
-                          65 + currentQuestionOptions.length
-                        )}
-                      </span>
-                      <span className="text-gray-200 font-semibold">
-                        Lub wpisz swoją odpowiedź:
-                      </span>
-                    </div>
-                    <div className="flex gap-3 ml-12">
-                      <input
-                        value={customAnswer}
-                        onChange={(e) => setCustomAnswer(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          customAnswer.trim() &&
-                          handleAnswerSubmit(customAnswer)
-                        }
-                        className="flex-1 px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 hover:border-gray-700/50 transition-all duration-200"
-                        placeholder="Twoja odpowiedź..."
-                        disabled={isBotResponding}
-                      />
-                      <button
-                        onClick={() => handleAnswerSubmit(customAnswer)}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all duration-300 disabled:opacity-50 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl"
-                        disabled={isBotResponding || !customAnswer.trim()}
-                      >
-                        <Send className="w-4 h-4" />
-                        Wyślij
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <QuestionBlock
+                currentQuestionOptions={currentQuestionOptions}
+                customAnswer={customAnswer}
+                setCustomAnswer={setCustomAnswer}
+                onAnswerSubmit={handleAnswerSubmit}
+                isBotResponding={isBotResponding}
+              />
             )}
 
             {/* Model Selection */}
@@ -776,11 +519,10 @@ export default function ChatClient({ user }: { user: User }) {
               <div className="space-y-8">
                 <div className="text-center">
                   <h3 className="text-4xl font-bold text-white mb-4">
-                    Co zawierają modele AI?
+                    What do AI models contain?
                   </h3>
                   <p className="text-xl text-gray-400">
-                    Wszystko czego potrzebujesz do generowania idealnych
-                    odpowiedzi.
+                    Everything you need to generate perfect responses.
                   </p>
                 </div>
 
@@ -793,28 +535,6 @@ export default function ChatClient({ user }: { user: User }) {
                       disabled={isBotResponding}
                     />
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Loading indicator */}
-            {isBotResponding && (
-              <div className="flex gap-4 justify-start">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl px-6 py-4 shadow-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                  </div>
                 </div>
               </div>
             )}
@@ -833,8 +553,8 @@ export default function ChatClient({ user }: { user: User }) {
                   className="w-full px-6 py-4 pr-14 bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 hover:border-gray-700/50 transition-all duration-200 text-lg font-medium"
                   placeholder={
                     phase === "init"
-                      ? "Zadaj pytanie do AI..."
-                      : "Rozpocznij nową sesję lub przeglądaj historię..."
+                      ? "Ask AI a question..."
+                      : "Start a new session or browse history..."
                   }
                   disabled={
                     isBotResponding ||
@@ -849,7 +569,7 @@ export default function ChatClient({ user }: { user: User }) {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    Nowa Sesja
+                    New Session
                   </button>
                 ) : (
                   <button
@@ -869,7 +589,7 @@ export default function ChatClient({ user }: { user: User }) {
             </div>
 
             <p className="text-xs text-gray-500 mt-4 text-center">
-              AI może popełniać błędy. Sprawdź ważne informacje.
+              AI can make mistakes. Verify important information.
             </p>
           </div>
         </div>

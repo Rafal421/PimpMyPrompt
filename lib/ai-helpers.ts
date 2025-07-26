@@ -1,15 +1,30 @@
 // Helper function to parse questions with options from AI responses
 export function parseQuestionsWithOptions(content: string) {
   const questions = [];
-  const lines = content.split("\n");
+  const lines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
   let currentQuestion = null;
   let currentOptions = [];
 
   for (const line of lines) {
     const trimmedLine = line.trim();
 
-    // Check if line starts with "PYTANIE" or "**PYTANIE" followed by number and colon
-    if (trimmedLine.match(/^(\*\*)?PYTANIE\s+\d+(\*\*)?:/)) {
+    // Enhanced question detection - support multiple formats
+    const questionPatterns = [
+      /^(\*\*)?QUESTION\s+\d+(\*\*)?:/i,
+      /^(\d+\.\s*)/, // 1. Question format
+      /^(\*\*)?Q\d+(\*\*)?:/i, // Q1: format
+      /^Question\s*\d*/i, // Question 1 format
+      /^\d+\)\s*/, // 1) Question format
+    ];
+
+    const isQuestion = questionPatterns.some((pattern) =>
+      pattern.test(trimmedLine)
+    );
+
+    if (isQuestion) {
       // Save previous question if exists
       if (currentQuestion && currentOptions.length > 0) {
         questions.push({
@@ -17,19 +32,42 @@ export function parseQuestionsWithOptions(content: string) {
           options: [...currentOptions],
         });
       }
-      // Start new question - remove PYTANIE X: or **PYTANIE X**: prefix
-      currentQuestion = trimmedLine.replace(
-        /^(\*\*)?PYTANIE\s+\d+(\*\*)?:\s*/,
-        ""
-      );
+
+      // Start new question - clean up the line
+      currentQuestion = trimmedLine
+        .replace(/^(\*\*)?QUESTION\s+\d+(\*\*)?:\s*/i, "")
+        .replace(/^(\d+\.\s*)/, "")
+        .replace(/^(\*\*)?Q\d+(\*\*)?:\s*/i, "")
+        .replace(/^Question\s*\d*:?\s*/i, "")
+        .replace(/^\d+\)\s*/, "")
+        .trim();
+
       currentOptions = [];
     }
-    // Check if line is an option (A), B), C))
-    else if (trimmedLine.match(/^[A-C]\)/)) {
-      const option = trimmedLine.replace(/^[A-C]\)\s*/, "");
+    // Enhanced option detection
+    else if (trimmedLine.match(/^[A-F]\)/) || trimmedLine.match(/^[a-f]\)/)) {
+      const option = trimmedLine.replace(/^[A-Fa-f]\)\s*/, "").trim();
       if (option) {
         currentOptions.push(option);
       }
+    }
+    // Also handle lines that might have extra formatting like **A)** or *A)*
+    else if (trimmedLine.match(/^(\*\*?)?[A-Fa-f]\)(\*\*?)?/)) {
+      const option = trimmedLine
+        .replace(/^(\*\*?)?[A-Fa-f]\)(\*\*?)?\s*/, "")
+        .trim();
+      if (option) {
+        currentOptions.push(option);
+      }
+    }
+    // If we have a current question and this line doesn't look like an option marker,
+    // it might be a continuation of the question
+    else if (
+      currentQuestion &&
+      !trimmedLine.match(/^[A-Fa-f]\)/) &&
+      currentOptions.length === 0
+    ) {
+      currentQuestion += " " + trimmedLine;
     }
   }
 
@@ -53,38 +91,67 @@ export const TOKEN_LIMITS = {
 
 // Template for clarification prompt with structured output
 export function createClarifyPrompt(question: string): string {
-  return `Jako asystent AI, wygeneruj 3-5 pytań doprecyzowujących z 3 opcjami odpowiedzi każde, aby lepiej zrozumieć intencję użytkownika.
+  return `You are an expert AI assistant specialized in prompt optimization. Analyze the user's question and generate **exactly 3-5 precise clarifying questions** to eliminate ambiguity and better understand their intent.
 
-Format odpowiedzi:
-PYTANIE 1: [treść pytania]
-A) [opcja A]
-B) [opcja B] 
-C) [opcja C]
+**CRITICAL REQUIREMENTS:**
+- Each question MUST have exactly 3 answer options labeled A), B), C)
+- Questions must address specific ambiguities or missing context
+- Use the EXACT format shown below
+- Be concise and directly relevant
+- Avoid generic questions
 
-PYTANIE 2: [treść pytania]
-A) [opcja A]
-B) [opcja B]
-C) [opcja C]
+**OUTPUT FORMAT (follow exactly):**
 
-Pytanie użytkownika: ${question}`;
+QUESTION 1: [Your first specific clarifying question]
+A) [First clear option]
+B) [Second clear option] 
+C) [Third clear option]
+
+QUESTION 2: [Your second specific clarifying question]
+A) [First clear option]
+B) [Second clear option]
+C) [Third clear option]
+
+QUESTION 3: [Your third specific clarifying question]
+A) [First clear option]
+B) [Second clear option]
+C) [Third clear option]
+
+[Continue with QUESTION 4 and QUESTION 5 if needed]
+
+**User's original question:**
+"${question}"
+
+Generate clarifying questions that will help create the most effective AI prompt possible.`;
 }
 
-// Template for improvement prompt
 export function createImprovePrompt(
   question: string,
   answers: string[]
 ): string {
-  const answerSummary = answers
-    .map((a: string, i: number) => `Pytanie: ${i + 1}\nOdpowiedź: ${a}`)
-    .join("\n\n");
+  const answersFormatted = answers
+    .map((answer, index) => `${index + 1}. ${answer}`)
+    .join("\n");
 
-  return `Na podstawie poniższego pytania użytkownika oraz odpowiedzi na pytania precyzujące, wygeneruj ulepszony prompt do AI:
+  return `You are an expert prompt engineer. Create an optimized, professional AI prompt based on the user's original question and their clarifying answers.
 
-Pytanie użytkownika:
+**GOAL:** Transform the input into a clear, specific, and highly effective prompt that will generate the best possible AI response.
+
+**OPTIMIZATION CRITERIA:**
+- Clear and unambiguous language
+- Specific context and requirements
+- Professional structure
+- Actionable instructions
+- Eliminates all identified ambiguities
+
+**ORIGINAL QUESTION:**
 ${question}
 
-Odpowiedzi:
-${answerSummary}
+**CLARIFYING ANSWERS:**
+${answersFormatted}
 
-Wygeneruj najlepszy możliwy prompt.`;
+**INSTRUCTIONS:**
+Create the final optimized prompt that incorporates all clarifying information. Make it specific, contextual, and ready to use with any AI system. 
+
+Respond with ONLY the final improved prompt - no explanations or meta-commentary.`;
 }
