@@ -108,7 +108,7 @@ export function useAuthForm() {
       return (
         email.length > 0 &&
         password.length > 0 &&
-        !validateEmailReal(email) &&
+        validateEmailReal(email) === null &&
         Object.keys(validationErrors).filter((key) => validationErrors[key])
           .length === 0
       );

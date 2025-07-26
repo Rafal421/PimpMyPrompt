@@ -10,19 +10,19 @@ import {
   type ActionResult,
 } from "@/lib/validation";
 
-// Error messages mapping for better UX
+// Error messages in English for better UX
 const ERROR_MESSAGES = {
-  INVALID_CREDENTIALS: "Nieprawidłowy email lub hasło",
-  EMAIL_NOT_CONFIRMED: "Sprawdź swoją skrzynkę email i potwierdź konto",
-  USER_EXISTS: "Użytkownik z tym emailem już istnieje",
-  WEAK_PASSWORD: "Hasło jest zbyt słabe",
-  INVALID_EMAIL: "Nieprawidłowy format email",
-  SERVER_ERROR: "Wystąpił błąd serwera. Spróbuj ponownie.",
-  RATE_LIMIT: "Zbyt wiele prób. Spróbuj ponownie za chwilę.",
+  INVALID_CREDENTIALS: "Invalid email or password",
+  EMAIL_NOT_CONFIRMED: "Please check your email and confirm your account",
+  USER_EXISTS: "User with this email already exists",
+  WEAK_PASSWORD: "Password is too weak",
+  INVALID_EMAIL: "Invalid email format",
+  SERVER_ERROR: "Server error occurred. Please try again.",
+  RATE_LIMIT: "Too many attempts. Please try again later.",
 } as const;
 
-const mapSupabaseError = (error: any): string => {
-  const message = error.message?.toLowerCase() || "";
+const mapSupabaseError = (error: unknown): string => {
+  const message = (error as { message?: string })?.message?.toLowerCase() || "";
 
   if (
     message.includes("invalid login credentials") ||
@@ -50,7 +50,7 @@ const mapSupabaseError = (error: any): string => {
     return ERROR_MESSAGES.INVALID_EMAIL;
   }
 
-  if (error.status === 429) {
+  if ((error as { status?: number })?.status === 429) {
     return ERROR_MESSAGES.RATE_LIMIT;
   }
 
@@ -78,7 +78,7 @@ export async function login(formData: FormData): Promise<ActionResult | void> {
     return {
       success: false,
       fieldErrors,
-      error: "Popraw błędy poniżej",
+      error: "Please fix the errors below",
     };
   }
 
@@ -103,13 +103,19 @@ export async function login(formData: FormData): Promise<ActionResult | void> {
 
       // Log unexpected errors for debugging
       console.error("Unexpected login error:", error);
-      redirect(`/error?message=${encodeURIComponent("Wystąpił błąd serwera")}`);
+      redirect(`/error?message=${encodeURIComponent("Server error occurred")}`);
     }
 
     // Success - revalidate and redirect
     revalidatePath("/private", "layout");
     redirect("/private");
   } catch (error) {
+    // Check if error is a Next.js redirect (not a real error)
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      // Re-throw redirect errors to let Next.js handle them
+      throw error;
+    }
+
     console.error("Login error:", error);
     return {
       success: false,
@@ -140,7 +146,7 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
     return {
       success: false,
       fieldErrors,
-      error: "Popraw błędy poniżej",
+      error: "Please fix the errors below",
     };
   }
 
@@ -175,7 +181,7 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
       console.error("Unexpected signup error:", error);
       redirect(
         `/error?message=${encodeURIComponent(
-          "Wystąpił błąd podczas rejestracji"
+          "Error occurred during registration"
         )}`
       );
     }
@@ -186,6 +192,12 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
       message: "Sprawdź swoją skrzynkę email aby potwierdzić konto",
     };
   } catch (error) {
+    // Check if error is a Next.js redirect (not a real error)
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      // Re-throw redirect errors to let Next.js handle them
+      throw error;
+    }
+
     console.error("Signup error:", error);
     return {
       success: false,
