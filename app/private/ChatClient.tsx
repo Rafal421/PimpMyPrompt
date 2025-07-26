@@ -553,8 +553,8 @@ export default function ChatClient({ user }: { user: User }) {
                     : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50"
                 }`}
               >
-                <button
-                  className="w-full text-left p-4 rounded-xl"
+                <div
+                  className="w-full text-left p-4 rounded-xl cursor-pointer"
                   onClick={() => handleChatSelectForViewing(chat)}
                 >
                   <div className="flex items-center gap-3">
@@ -578,7 +578,7 @@ export default function ChatClient({ user }: { user: User }) {
                       </p>
                     </div>
                   </div>
-                </button>
+                </div>
               </div>
             ))}
           </div>

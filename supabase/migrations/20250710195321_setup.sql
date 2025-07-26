@@ -21,8 +21,12 @@ create policy "Users can view their own chats" on public.chats
   for select using (auth.uid() = user_id);
 create policy "Users can insert their own chats" on public.chats
   for insert with check (auth.uid() = user_id);
+create policy "Users can delete their own chats" on public.chats
+  for delete using (auth.uid() = user_id);
 
 create policy "Users can view their own messages" on public.messages
   for select using (auth.uid() = user_id);
 create policy "Users can insert their own messages" on public.messages
   for insert with check (auth.uid() = user_id);
+create policy "Users can delete their own messages" on public.messages
+  for delete using (auth.uid() = user_id);
