@@ -229,12 +229,12 @@ export const RESPONSE_PROVIDERS = [
     models: [
       {
         id: "deepseek-chat",
-        name: "DeepSeek Chat",
+        name: " Chat",
         description: "Main model for general conversations",
       },
       {
         id: "deepseek-coder",
-        name: "DeepSeek Coder",
+        name: "Coder",
         description: "For coding tasks",
       },
     ],

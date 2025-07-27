@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import { logout } from "@/app/login/actions";
+import type { User, Chat, Message, Phase } from "@/lib/types";
 import {
   Plus,
   MessageSquare,
@@ -16,21 +17,6 @@ import {
   ArrowRight,
   Trash2,
 } from "lucide-react";
-
-interface User {
-  id: string;
-  email?: string;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-}
-
-interface Message {
-  from: "user" | "bot";
-  text: string;
-}
 
 export interface ChatSidePanelHandle {
   createChat: (title: string, usedModel: string) => Promise<string | null>;
@@ -47,11 +33,7 @@ interface ChatSidePanelProps {
   chatId: string | null;
   setChatId: React.Dispatch<React.SetStateAction<string | null>>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  setPhase: React.Dispatch<
-    React.SetStateAction<
-      "init" | "clarifying" | "model-selection" | "improving" | "done"
-    >
-  >;
+  setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   onResetSession: () => void;
   onChatCreated?: (chatId: string) => void;
   onCreateChat?: (title: string, usedModel: string) => Promise<string | null>;

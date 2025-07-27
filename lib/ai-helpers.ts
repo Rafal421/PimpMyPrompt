@@ -14,10 +14,10 @@ export function parseQuestionsWithOptions(content: string) {
     // Enhanced question detection - support multiple formats
     const questionPatterns = [
       /^(\*\*)?QUESTION\s+\d+(\*\*)?:/i,
-      /^(\d+\.\s*)/, // 1. Question format
-      /^(\*\*)?Q\d+(\*\*)?:/i, // Q1: format
-      /^Question\s*\d*/i, // Question 1 format
-      /^\d+\)\s*/, // 1) Question format
+      /^(\d+\.\s*)/,
+      /^(\*\*)?Q\d+(\*\*)?:/i,
+      /^Question\s*\d*/i,
+      /^\d+\)\s*/,
     ];
 
     const isQuestion = questionPatterns.some((pattern) =>
@@ -59,10 +59,7 @@ export function parseQuestionsWithOptions(content: string) {
       if (option) {
         currentOptions.push(option);
       }
-    }
-    // If we have a current question and this line doesn't look like an option marker,
-    // it might be a continuation of the question
-    else if (
+    } else if (
       currentQuestion &&
       !trimmedLine.match(/^[A-Fa-f]\)/) &&
       currentOptions.length === 0
@@ -99,6 +96,7 @@ export function createClarifyPrompt(question: string): string {
 - Use the EXACT format shown below
 - Be concise and directly relevant
 - Avoid generic questions
+- RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
 
 **OUTPUT FORMAT (follow exactly):**
 
@@ -112,12 +110,7 @@ A) [First clear option]
 B) [Second clear option]
 C) [Third clear option]
 
-QUESTION 3: [Your third specific clarifying question]
-A) [First clear option]
-B) [Second clear option]
-C) [Third clear option]
-
-[Continue with QUESTION 4 and QUESTION 5 if needed]
+[Continue with QUESTION 3 and QUESTION 5 if needed]
 
 **User's original question:**
 "${question}"
@@ -143,6 +136,7 @@ export function createImprovePrompt(
 - Professional structure
 - Actionable instructions
 - Eliminates all identified ambiguities
+- RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
 
 **ORIGINAL QUESTION:**
 ${question}
