@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Check, Bot, CheckCircle } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
+import { Background } from "@/components/ui/background";
 import { AuthInput } from "@/components/auth/AuthInput";
 
 // Main authentication component with login/signup forms
@@ -110,11 +111,7 @@ export default function OptimizedAuthPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 overflow-hidden relative">
       {/* Animated gradient background with floating blobs */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.05),transparent_50%)]" />
-      </div>
+      <Background />
 
       <Card className="relative z-10 w-full max-w-md bg-black/40 backdrop-blur-md border border-gray-800/50 shadow-2xl">
         <CardHeader className="space-y-1 text-center">

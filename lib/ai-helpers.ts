@@ -96,7 +96,7 @@ export function createClarifyPrompt(question: string): string {
 - Use the EXACT format shown below
 - Be concise and directly relevant
 - Avoid generic questions
-- RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
+- IMPORTANT RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
 
 **OUTPUT FORMAT (follow exactly):**
 
@@ -137,6 +137,8 @@ export function createImprovePrompt(
 - Actionable instructions
 - Eliminates all identified ambiguities
 - RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
+- IMPORTANT RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
+
 
 **ORIGINAL QUESTION:**
 ${question}

@@ -30,6 +30,8 @@ export default function ChatInput({
     isBotResponding ||
     phase === "done" ||
     phase === "clarifying" ||
+    phase === "improving" ||
+    phase === "final-response" ||
     phase === "model-selection";
 
   const getPlaceholderText = () => {
@@ -68,6 +70,8 @@ export default function ChatInput({
                   isBotResponding ||
                   !input.trim() ||
                   phase === "clarifying" ||
+                  phase === "improving" ||
+                  phase === "final-response" ||
                   phase === "model-selection"
                 }
               >

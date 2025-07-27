@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft } from "lucide-react";
+import { Background } from "@/components/ui/background";
 
 interface ErrorPageProps {
   searchParams: Promise<{ message?: string }>;
@@ -21,11 +22,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       {/* Animated background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.05),transparent_50%)]" />
-      </div>
+      <Background />
 
       <Card className="relative z-10 w-full max-w-md bg-black/40 backdrop-blur-md border border-gray-800/50 shadow-2xl">
         <CardHeader className="text-center">

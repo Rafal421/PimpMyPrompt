@@ -11,8 +11,9 @@ export type Provider =
 export type Phase =
   | "init"
   | "clarifying"
-  | "model-selection"
   | "improving"
+  | "model-selection"
+  | "final-response"
   | "done";
 
 export interface Message {

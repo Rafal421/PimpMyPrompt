@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { QUESTION_PROVIDERS, getQuestionProviderById } from "@/lib/ai-config";
+import { useState, useRef } from "react";
+import { getQuestionProviderById } from "@/lib/ai-config";
 import { createImprovePrompt } from "@/lib/ai-helpers";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
 import ChatSidePanel, {
@@ -12,6 +12,7 @@ import ProviderSelector from "@/components/private/ProviderSelector";
 import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { useQuestionGenerator } from "@/components/private/QuestionGenerator";
+import { Background } from "@/components/ui/background";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
@@ -31,6 +32,7 @@ export default function ChatClient({ user }: { user: User }) {
   const [clarifyingAnswers, setClarifyingAnswers] = useState<string[]>([]);
   const [clarifyingIndex, setClarifyingIndex] = useState(0);
   const [originalQuestion, setOriginalQuestion] = useState("");
+  const [improvedPrompt, setImprovedPrompt] = useState("");
   const [currentQuestionOptions, setCurrentQuestionOptions] = useState<
     string[]
   >([]);
@@ -65,6 +67,7 @@ export default function ChatClient({ user }: { user: User }) {
     setClarifyingAnswers([]);
     setClarifyingIndex(0);
     setOriginalQuestion("");
+    setImprovedPrompt("");
     setChatId(null);
     setCurrentQuestionOptions([]);
     setCustomAnswer("");
@@ -165,36 +168,84 @@ export default function ChatClient({ user }: { user: User }) {
     selectedProvider: Provider,
     selectedModel: string
   ) => {
-    if (!chatId || isBotResponding) return;
+    if (!chatId || isBotResponding || !improvedPrompt) return;
 
     setIsBotResponding(true);
     const choiceText = `I choose: ${selectedProvider.toUpperCase()} (${selectedModel})`;
     setMessages((prev) => [...prev, { from: "user", text: choiceText }]);
     await chatSidePanelRef.current?.sendMessage(chatId, "user", choiceText);
 
-    setPhase("improving");
+    setPhase("final-response");
     const endpoint = getProviderEndpoint(selectedProvider);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: improvedPrompt, model: selectedModel }),
+      });
+      const data = await response.json();
+      const finalResponse = data.response || data.content;
+
+      setMessages((prev) => [...prev, { from: "bot", text: finalResponse }]);
+
+      if (chatId) {
+        await chatSidePanelRef.current?.sendMessage(
+          chatId,
+          "bot",
+          finalResponse
+        );
+      }
+
+      setPhase("done");
+    } catch (error) {
+      console.error("Error generating final response:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "An error occurred while generating the final response. Please try again.",
+        },
+      ]);
+      setPhase("model-selection");
+    }
+
+    setIsBotResponding(false);
+  };
+
+  const generateImprovedPrompt = async () => {
+    if (!chatId) return;
+
+    setPhase("improving");
+
+    // Get the current provider and model from the question provider
+    const questionProvider = getQuestionProviderById(provider);
+    const currentEndpoint = getProviderEndpoint(provider);
+    const currentModel = questionProvider?.model || DEFAULT_MODEL;
+
     const improvePrompt = createImprovePrompt(
       originalQuestion,
       clarifyingAnswers
     );
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(currentEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: improvePrompt, model: selectedModel }),
+        body: JSON.stringify({ message: improvePrompt, model: currentModel }),
       });
       const data = await response.json();
       const prompt = data.response || data.content;
 
+      setImprovedPrompt(prompt);
       setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
 
       if (chatId) {
         await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
       }
 
-      setPhase("done");
+      // Now show model selection for the final response
+      setPhase("model-selection");
     } catch (error) {
       console.error("Error generating improved prompt:", error);
       setMessages((prev) => [
@@ -204,10 +255,8 @@ export default function ChatClient({ user }: { user: User }) {
           text: "An error occurred while generating the improved prompt. Please try again.",
         },
       ]);
-      setPhase("model-selection");
+      setPhase("clarifying");
     }
-
-    setIsBotResponding(false);
   };
 
   const proceedToNextQuestion = async () => {
@@ -227,32 +276,15 @@ export default function ChatClient({ user }: { user: User }) {
         );
       }
     } else {
-      setPhase("model-selection");
-      const selectionMessage =
-        "Great! Now choose the AI model that should generate the final response:";
-      setMessages((prev) => [...prev, { from: "bot", text: selectionMessage }]);
-      if (chatId) {
-        await chatSidePanelRef.current?.sendMessage(
-          chatId,
-          "bot",
-          selectionMessage
-        );
-      }
+      // All questions answered, now generate improved prompt automatically
+      await generateImprovedPrompt();
     }
   };
 
   return (
     <div className="flex h-screen bg-black overflow-hidden">
       {/* Animated background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.05),transparent_50%)]" />
-
-        {/* Animated blobs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
+      <Background />
 
       {/* Sidebar */}
       <ChatSidePanel

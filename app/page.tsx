@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, ArrowRight, Wand2, Bot } from "lucide-react";
+import { Background } from "@/components/ui/background";
 
 // Data for steps
 const steps = [
@@ -101,10 +102,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black relative">
       {/* Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-      </div>
+      <Background />
 
       {/* Navigation */}
       <nav className="absolute top-0 left-0 right-0 z-30 p-6 flex justify-between items-center">
