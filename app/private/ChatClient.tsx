@@ -19,7 +19,7 @@ const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 export default function ChatClient({ user }: { user: User }) {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
 
-  // State consolidation
+  // Core state
   const [messages, setMessages] = useState<Message[]>([
     { from: "bot", text: "Ask a question and I'll help you refine it!" },
   ]);
@@ -28,50 +28,52 @@ export default function ChatClient({ user }: { user: User }) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [provider, setProvider] = useState<Provider>("anthropic");
   const [phase, setPhase] = useState<Phase>("init");
-  const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
-  const [clarifyingAnswers, setClarifyingAnswers] = useState<string[]>([]);
-  const [clarifyingIndex, setClarifyingIndex] = useState(0);
+
+  // Question flow state
   const [originalQuestion, setOriginalQuestion] = useState("");
   const [improvedPrompt, setImprovedPrompt] = useState("");
-  const [currentQuestionOptions, setCurrentQuestionOptions] = useState<
-    string[]
-  >([]);
-  const [customAnswer, setCustomAnswer] = useState("");
+  const [clarifyingAnswers, setClarifyingAnswers] = useState<string[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
+  const [customAnswer, setCustomAnswer] = useState("");
 
-  const getProviderEndpoint = (provider: Provider) =>
-    ({
-      openai: "/api/chat/openai",
-      perplexity: "/api/chat/perplexity",
-      deepseek: "/api/chat/deepseek",
-      gemini: "/api/chat/gemini",
-      anthropic: "/api/chat/anthropic",
-      grok: "/api/chat/grok",
-    }[provider]);
+  // Simple API helper
+  const callAPI = async (
+    message: string,
+    targetProvider: Provider,
+    model: string
+  ) => {
+    const endpoint = `/api/chat/${targetProvider}`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, model }),
+    });
+    const data = await response.json();
+    return data.response || data.content;
+  };
 
   // Use the question generator hook
   const { generateClarifyingQuestions } = useQuestionGenerator({
     provider,
     getQuestionProviderById,
-    getProviderEndpoint: (p: string) => getProviderEndpoint(p as Provider),
+    getProviderEndpoint: (p: string) => `/api/chat/${p}`,
   });
 
-  // Utility functions
+  // Reset session
   const resetSession = () => {
     setMessages([
       { from: "bot", text: "Ask a question and I'll help you refine it!" },
     ]);
     setInput("");
     setPhase("init");
-    setClarifyingQuestions([]);
-    setClarifyingAnswers([]);
-    setClarifyingIndex(0);
     setOriginalQuestion("");
     setImprovedPrompt("");
-    setChatId(null);
-    setCurrentQuestionOptions([]);
-    setCustomAnswer("");
+    setClarifyingAnswers([]);
+    setCurrentQuestionIndex(0);
     setQuestionsData([]);
+    setCustomAnswer("");
+    setChatId(null);
   };
 
   // Main message handling
@@ -96,7 +98,7 @@ export default function ChatClient({ user }: { user: User }) {
 
     try {
       if (phase === "init") {
-        await handleInitialQuestion(input, currentChatId);
+        await startQuestionFlow(input, currentChatId);
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -108,7 +110,8 @@ export default function ChatClient({ user }: { user: User }) {
     setIsBotResponding(false);
   };
 
-  const handleInitialQuestion = async (
+  // Start question flow
+  const startQuestionFlow = async (
     question: string,
     currentChatId: string | null
   ) => {
@@ -120,13 +123,9 @@ export default function ChatClient({ user }: { user: User }) {
 
       if (questionsWithOptions.length > 0) {
         setQuestionsData(questionsWithOptions);
-        setClarifyingQuestions(
-          questionsWithOptions.map((q: QuestionData) => q.question)
-        );
         setPhase("clarifying");
-        setClarifyingIndex(0);
+        setCurrentQuestionIndex(0);
         setClarifyingAnswers([]);
-        setCurrentQuestionOptions(questionsWithOptions[0].options);
 
         const firstQuestion = questionsWithOptions[0].question;
         setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
@@ -176,16 +175,13 @@ export default function ChatClient({ user }: { user: User }) {
     await chatSidePanelRef.current?.sendMessage(chatId, "user", choiceText);
 
     setPhase("final-response");
-    const endpoint = getProviderEndpoint(selectedProvider);
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: improvedPrompt, model: selectedModel }),
-      });
-      const data = await response.json();
-      const finalResponse = data.response || data.content;
+      const finalResponse = await callAPI(
+        improvedPrompt,
+        selectedProvider,
+        selectedModel
+      );
 
       setMessages((prev) => [...prev, { from: "bot", text: finalResponse }]);
 
@@ -213,29 +209,21 @@ export default function ChatClient({ user }: { user: User }) {
     setIsBotResponding(false);
   };
 
+  // Generate improved prompt
   const generateImprovedPrompt = async () => {
     if (!chatId) return;
 
     setPhase("improving");
 
-    // Get the current provider and model from the question provider
     const questionProvider = getQuestionProviderById(provider);
-    const currentEndpoint = getProviderEndpoint(provider);
     const currentModel = questionProvider?.model || DEFAULT_MODEL;
-
     const improvePrompt = createImprovePrompt(
       originalQuestion,
       clarifyingAnswers
     );
 
     try {
-      const response = await fetch(currentEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: improvePrompt, model: currentModel }),
-      });
-      const data = await response.json();
-      const prompt = data.response || data.content;
+      const prompt = await callAPI(improvePrompt, provider, currentModel);
 
       setImprovedPrompt(prompt);
       setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
@@ -244,7 +232,6 @@ export default function ChatClient({ user }: { user: User }) {
         await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
       }
 
-      // Now show model selection for the final response
       setPhase("model-selection");
     } catch (error) {
       console.error("Error generating improved prompt:", error);
@@ -259,14 +246,14 @@ export default function ChatClient({ user }: { user: User }) {
     }
   };
 
+  // Move to next question or finish
   const proceedToNextQuestion = async () => {
-    const nextIndex = clarifyingIndex + 1;
-    if (nextIndex < clarifyingQuestions.length) {
-      const nextQuestion = clarifyingQuestions[nextIndex];
-      setClarifyingIndex(nextIndex);
-      if (questionsData[nextIndex]) {
-        setCurrentQuestionOptions(questionsData[nextIndex].options);
-      }
+    const nextIndex = currentQuestionIndex + 1;
+
+    if (nextIndex < questionsData.length) {
+      setCurrentQuestionIndex(nextIndex);
+      const nextQuestion = questionsData[nextIndex].question;
+
       setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
       if (chatId) {
         await chatSidePanelRef.current?.sendMessage(
@@ -276,7 +263,6 @@ export default function ChatClient({ user }: { user: User }) {
         );
       }
     } else {
-      // All questions answered, now generate improved prompt automatically
       await generateImprovedPrompt();
     }
   };
@@ -334,9 +320,11 @@ export default function ChatClient({ user }: { user: User }) {
 
           <div className="max-w-5xl mx-auto p-6">
             {/* Answer Options */}
-            {phase === "clarifying" && (
+            {phase === "clarifying" && questionsData[currentQuestionIndex] && (
               <QuestionBlock
-                currentQuestionOptions={currentQuestionOptions}
+                currentQuestionOptions={
+                  questionsData[currentQuestionIndex].options
+                }
                 customAnswer={customAnswer}
                 setCustomAnswer={setCustomAnswer}
                 onAnswerSubmit={handleAnswerSubmit}

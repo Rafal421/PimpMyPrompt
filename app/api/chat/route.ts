@@ -6,7 +6,7 @@ const errorResponse = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
 // Helper function for validation
-const validateRequired = (fields: Record<string, any>) => {
+const validateRequired = (fields: Record<string, unknown>) => {
   for (const [key, value] of Object.entries(fields)) {
     if (!value?.toString().trim()) {
       return `Missing required field: ${key}`;

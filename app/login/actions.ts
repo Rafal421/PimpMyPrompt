@@ -10,7 +10,6 @@ import {
   type ActionResult,
 } from "@/lib/validation";
 
-// Error messages in English for better UX
 const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
   EMAIL_NOT_CONFIRMED: "Please check your email and confirm your account",
@@ -88,7 +87,6 @@ export async function login(formData: FormData): Promise<ActionResult | void> {
     const { error } = await supabase.auth.signInWithPassword(data);
 
     if (error) {
-      // Handle known authentication errors
       if (
         error.status === 400 ||
         error.message.includes("Invalid login credentials") ||
@@ -101,18 +99,14 @@ export async function login(formData: FormData): Promise<ActionResult | void> {
         };
       }
 
-      // Log unexpected errors for debugging
       console.error("Unexpected login error:", error);
       redirect(`/error?message=${encodeURIComponent("Server error occurred")}`);
     }
 
-    // Success - revalidate and redirect
     revalidatePath("/private", "layout");
     redirect("/private");
   } catch (error) {
-    // Check if error is a Next.js redirect (not a real error)
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      // Re-throw redirect errors to let Next.js handle them
       throw error;
     }
 
@@ -162,7 +156,6 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
     });
 
     if (error) {
-      // Handle known registration errors
       if (
         error.status === 400 ||
         error.status === 422 ||
@@ -177,7 +170,6 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
         };
       }
 
-      // Log unexpected errors for debugging
       console.error("Unexpected signup error:", error);
       redirect(
         `/error?message=${encodeURIComponent(
@@ -186,15 +178,12 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
       );
     }
 
-    // Success - return success result instead of redirect
     return {
       success: true,
       message: "Sprawdź swoją skrzynkę email aby potwierdzić konto",
     };
   } catch (error) {
-    // Check if error is a Next.js redirect (not a real error)
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      // Re-throw redirect errors to let Next.js handle them
       throw error;
     }
 

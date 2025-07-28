@@ -165,7 +165,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
     };
 
     // Expose functions for parent component
-    const handleCreateChat = async (title: string, usedModel: string) => {
+    const handleCreateChat = useCallback(async (title: string, usedModel: string) => {
       // Use passed function or internal one
       const newChatId = onCreateChat
         ? await onCreateChat(title, usedModel)
@@ -179,9 +179,9 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
         }
       }
       return newChatId;
-    };
+    }, [onCreateChat, onChatCreated, user.id, fetchChats, setChatId]);
 
-    const handleSendMessage = async (
+    const handleSendMessage = useCallback(async (
       chat_id: string,
       from: string,
       content: string
@@ -190,7 +190,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
       return onSendMessage
         ? onSendMessage(chat_id, from, content)
         : sendMessageToServer(chat_id, user.id, from, content);
-    };
+    }, [onSendMessage, user.id]);
 
     // Expose functions to parent component
     useImperativeHandle(
