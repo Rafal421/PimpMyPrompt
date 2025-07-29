@@ -165,32 +165,34 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
     };
 
     // Expose functions for parent component
-    const handleCreateChat = useCallback(async (title: string, usedModel: string) => {
-      // Use passed function or internal one
-      const newChatId = onCreateChat
-        ? await onCreateChat(title, usedModel)
-        : await createChat(user.id, title, usedModel);
+    const handleCreateChat = useCallback(
+      async (title: string, usedModel: string) => {
+        // Use passed function or internal one
+        const newChatId = onCreateChat
+          ? await onCreateChat(title, usedModel)
+          : await createChat(user.id, title, usedModel);
 
-      if (newChatId) {
-        setChatId(newChatId);
-        fetchChats(); // Refresh chat list
-        if (onChatCreated) {
-          onChatCreated(newChatId);
+        if (newChatId) {
+          setChatId(newChatId);
+          fetchChats(); // Refresh chat list
+          if (onChatCreated) {
+            onChatCreated(newChatId);
+          }
         }
-      }
-      return newChatId;
-    }, [onCreateChat, onChatCreated, user.id, fetchChats, setChatId]);
+        return newChatId;
+      },
+      [onCreateChat, onChatCreated, user.id, fetchChats, setChatId]
+    );
 
-    const handleSendMessage = useCallback(async (
-      chat_id: string,
-      from: string,
-      content: string
-    ) => {
-      // Use passed function or internal one
-      return onSendMessage
-        ? onSendMessage(chat_id, from, content)
-        : sendMessageToServer(chat_id, user.id, from, content);
-    }, [onSendMessage, user.id]);
+    const handleSendMessage = useCallback(
+      async (chat_id: string, from: string, content: string) => {
+        // Use passed function or internal one
+        return onSendMessage
+          ? onSendMessage(chat_id, from, content)
+          : sendMessageToServer(chat_id, user.id, from, content);
+      },
+      [onSendMessage, user.id]
+    );
 
     // Expose functions to parent component
     useImperativeHandle(

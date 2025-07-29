@@ -1,4 +1,3 @@
-// app/login/OptimizedLoginPage.tsx - Optimized login page
 "use client";
 
 import { useCallback, useState } from "react";
