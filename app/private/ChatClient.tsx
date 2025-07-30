@@ -11,7 +11,7 @@ import ChatMessages from "@/components/private/ChatMessages";
 import ProviderSelector from "@/components/private/ProviderSelector";
 import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
-import { useQuestionGenerator } from "@/components/private/QuestionGenerator";
+import { useQuestionGenerator } from "@/hooks/private/sidePanel/useQuestionGenerator";
 import { Background } from "@/components/ui/background";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 
@@ -37,7 +37,7 @@ export default function ChatClient({ user }: { user: User }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
-  const messagesEndRef = useAutoScroll(messages, 100);
+  const messagesEndRef = useAutoScroll(messages, 500);
 
   // Simple API helper
   const callAPI = async (
@@ -52,7 +52,15 @@ export default function ChatClient({ user }: { user: User }) {
       body: JSON.stringify({ message, model }),
     });
     const data = await response.json();
-    return data.response || data.content;
+
+    console.log("API response:", data);
+    return (
+      data.response ||
+      data.content ||
+      data.text ||
+      (Array.isArray(data.choices) && data.choices[0]?.message?.content) ||
+      (typeof data === "string" ? data : JSON.stringify(data))
+    );
   };
 
   // Use the question generator hook
