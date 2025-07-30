@@ -1,5 +1,5 @@
 // lib/services/api/chatService.ts
-import type { User, Chat, Message } from "@/lib/types";
+import type { User, Chat, Message, Provider } from "@/lib/types";
 
 export class ChatService {
   async fetchChats(userId: string): Promise<Chat[]> {
@@ -37,6 +37,29 @@ export class ChatService {
       from: msg.from === "user" ? "user" : "bot",
       text: msg.content,
     }));
+  }
+
+  async getLLMResponse(
+    message: string,
+    targetProvider: Provider,
+    model: string
+  ): Promise<string> {
+    const endpoint = `/api/chat/${targetProvider}`;
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, model }),
+    });
+    const data = await response.json();
+
+    console.log("API response:", data);
+    return (
+      data.response ||
+      data.content ||
+      data.text ||
+      (Array.isArray(data.choices) && data.choices[0]?.message?.content) ||
+      (typeof data === "string" ? data : JSON.stringify(data))
+    );
   }
 }
 

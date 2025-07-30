@@ -1,23 +1,17 @@
+// hooks/private/mainPanel/useChat.ts
 "use client";
 import { useState, useRef } from "react";
 import { getQuestionProviderById } from "@/lib/ai-config";
 import { createImprovePrompt } from "@/lib/ai-helpers";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
-import ChatSidePanel, {
-  ChatSidePanelHandle,
-} from "@/components/private/ChatSidePanel";
-import QuestionBlock from "@/components/private/QuestionBlock";
-import ChatMessages from "@/components/private/ChatMessages";
-import ProviderSelector from "@/components/private/ProviderSelector";
-import ModelSelection from "@/components/private/ModelSelection";
-import ChatInput from "@/components/private/ChatInput";
 import { useQuestionGenerator } from "@/hooks/private/sidePanel/useQuestionGenerator";
-import { Background } from "@/components/ui/background";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { chatService } from "@/lib/services/api/chatService";
+import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
-export default function ChatClient({ user }: { user: User }) {
+export const useChat = ({ user }: { user: User }) => {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
 
   // Core state
@@ -38,30 +32,6 @@ export default function ChatClient({ user }: { user: User }) {
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
   const messagesEndRef = useAutoScroll(messages, 500);
-
-  // Simple API helper
-  const callAPI = async (
-    message: string,
-    targetProvider: Provider,
-    model: string
-  ) => {
-    const endpoint = `/api/chat/${targetProvider}`;
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, model }),
-    });
-    const data = await response.json();
-
-    console.log("API response:", data);
-    return (
-      data.response ||
-      data.content ||
-      data.text ||
-      (Array.isArray(data.choices) && data.choices[0]?.message?.content) ||
-      (typeof data === "string" ? data : JSON.stringify(data))
-    );
-  };
 
   // Use the question generator hook
   const { generateClarifyingQuestions } = useQuestionGenerator({
@@ -186,7 +156,7 @@ export default function ChatClient({ user }: { user: User }) {
     setPhase("final-response");
 
     try {
-      const finalResponse = await callAPI(
+      const finalResponse = await chatService.getLLMResponse(
         improvedPrompt,
         selectedProvider,
         selectedModel
@@ -232,7 +202,11 @@ export default function ChatClient({ user }: { user: User }) {
     );
 
     try {
-      const prompt = await callAPI(improvePrompt, provider, currentModel);
+      const prompt = await chatService.getLLMResponse(
+        improvePrompt,
+        provider,
+        currentModel
+      );
 
       setImprovedPrompt(prompt);
       setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
@@ -276,94 +250,27 @@ export default function ChatClient({ user }: { user: User }) {
     }
   };
 
-  return (
-    <div className="flex h-screen bg-black overflow-hidden">
-      {/* Animated background */}
-      <Background />
-
-      {/* Sidebar */}
-      <ChatSidePanel
-        ref={chatSidePanelRef}
-        user={user}
-        chatId={chatId}
-        setChatId={setChatId}
-        setMessages={setMessages}
-        setPhase={setPhase}
-        onResetSession={resetSession}
-      />
-
-      {/* Main Chat Area */}
-      <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm">
-        {/* Header */}
-        <div className="bg-black/40 backdrop-blur-md border-b border-gray-800/50 p-6">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Build the future of{" "}
-                <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                  AI prompts
-                </span>
-              </h1>
-              <p className="text-gray-400">
-                Everything you need to create{" "}
-                <span className="text-white font-semibold">
-                  perfect AI prompts
-                </span>{" "}
-                with precision.
-              </p>
-            </div>
-
-            {/* Provider Selection */}
-            <ProviderSelector
-              provider={provider}
-              setProvider={setProvider}
-              phase={phase}
-              defaultModel={DEFAULT_MODEL}
-            />
-          </div>
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-visible">
-          <ChatMessages messages={messages} isBotResponding={isBotResponding} />
-
-          <div className="max-w-5xl mx-auto p-6">
-            {/* Answer Options */}
-            {phase === "clarifying" && questionsData[currentQuestionIndex] && (
-              <QuestionBlock
-                currentQuestionOptions={
-                  questionsData[currentQuestionIndex].options
-                }
-                customAnswer={customAnswer}
-                setCustomAnswer={setCustomAnswer}
-                onAnswerSubmit={handleAnswerSubmit}
-                isBotResponding={isBotResponding}
-              />
-            )}
-
-            {/* Model Selection */}
-            {phase === "model-selection" && (
-              <ModelSelection
-                onModelSelect={handleModelSelect}
-                isBotResponding={isBotResponding}
-              />
-            )}
-          </div>
-
-          {/* Invisible div for auto-scroll - this is the target */}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          onSend={handleSend}
-          onResetSession={resetSession}
-          isBotResponding={isBotResponding}
-          phase={phase}
-        />
-      </div>
-    </div>
-  );
-}
+  return {
+    chatSidePanelRef,
+    messages,
+    setMessages,
+    input,
+    setInput,
+    isBotResponding,
+    chatId,
+    setChatId,
+    provider,
+    setProvider,
+    phase,
+    setPhase,
+    questionsData,
+    currentQuestionIndex,
+    customAnswer,
+    setCustomAnswer,
+    messagesEndRef,
+    resetSession,
+    handleSend,
+    handleAnswerSubmit,
+    handleModelSelect,
+  };
+};
