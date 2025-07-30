@@ -1,12 +1,9 @@
 // hooks/private/sidePanel/useHandleQuestionGeneration.ts
 import { useQuestionGenerator } from "./useQuestionGenerator";
-import type { QuestionData } from "@/lib/types";
+import type { QuestionData, Provider } from "@/lib/types";
 
 interface UseHandleQuestionGenerationProps {
-  provider: string;
-  getQuestionProviderById: (
-    provider: string
-  ) => { endpoint?: string; model?: string } | undefined;
+  provider: Provider;
   getProviderEndpoint: (provider: string) => string;
   onQuestionsGenerated: (questions: QuestionData[]) => void;
   onError: (error: string) => void;
@@ -14,14 +11,12 @@ interface UseHandleQuestionGenerationProps {
 
 export function useHandleQuestionGeneration({
   provider,
-  getQuestionProviderById,
   getProviderEndpoint,
   onQuestionsGenerated,
   onError,
 }: UseHandleQuestionGenerationProps) {
   const { generateClarifyingQuestions } = useQuestionGenerator({
     provider,
-    getQuestionProviderById,
     getProviderEndpoint,
   });
 

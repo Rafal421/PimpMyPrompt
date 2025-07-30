@@ -1,59 +1,60 @@
 import { useCallback } from "react";
-import { createClarifyPrompt, createImprovePrompt } from "@/lib/ai-helpers";
-import type { QuestionData } from "@/lib/types";
+import { createImprovePrompt } from "@/lib/ai-helpers";
+import { apiServices } from "@/lib/services/api";
+import type { QuestionData, Provider } from "@/lib/types";
 
 interface UseQuestionGeneratorProps {
-  provider: string;
-  getQuestionProviderById: (
-    provider: string
-  ) => { endpoint?: string; model?: string } | undefined;
+  provider: Provider;
   getProviderEndpoint: (provider: string) => string;
 }
 
 export function useQuestionGenerator({
   provider,
-  getQuestionProviderById,
   getProviderEndpoint,
 }: UseQuestionGeneratorProps) {
-  const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
-
   const callProvider = useCallback(
     async (
       action: "clarify" | "improve",
       payload: { question: string; answers?: string[] }
     ) => {
-      const questionProvider = getQuestionProviderById(provider);
-      const endpoint =
-        action === "clarify"
-          ? questionProvider?.endpoint || "/api/chat/anthropic"
-          : getProviderEndpoint(provider);
+      if (action === "clarify") {
+        // Użycie nowego serwisu do generowania pytań
+        return apiServices.questions.generateClarifying(
+          payload.question,
+          provider
+        );
+      }
 
-      const modelToUse = questionProvider?.model || DEFAULT_MODEL;
-      const promptContent =
-        action === "clarify"
-          ? createClarifyPrompt(payload.question)
-          : createImprovePrompt(payload.question, payload.answers || []);
+      // Logika dla 'improve' pozostaje na razie taka sama,
+      // ale można ją również przenieść do serwisu w przyszłości
+      const endpoint = getProviderEndpoint(provider);
+      const promptContent = createImprovePrompt(
+        payload.question,
+        payload.answers || []
+      );
 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: promptContent, model: modelToUse }),
+        body: JSON.stringify({ message: promptContent }), // Model jest teraz obsługiwany po stronie serwera
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "API call failed");
+      }
 
-      return action === "clarify" && data.questions
-        ? { questionsWithOptions: data.questions }
-        : data;
+      return response.json();
     },
-    [provider, getQuestionProviderById, getProviderEndpoint]
+    [provider, getProviderEndpoint]
   );
 
   const generateClarifyingQuestions = useCallback(
     async (question: string): Promise<QuestionData[]> => {
       try {
-        const data = await callProvider("clarify", { question });
-        return data.questionsWithOptions || [];
+        // callProvider zwraca teraz bezpośrednio QuestionData[] dla akcji 'clarify'
+        const questions = await callProvider("clarify", { question });
+        return questions || [];
       } catch (error) {
         console.error("Error generating clarifying questions:", error);
         return [];

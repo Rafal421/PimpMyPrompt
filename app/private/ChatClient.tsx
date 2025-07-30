@@ -66,7 +66,6 @@ export default function ChatClient({ user }: { user: User }) {
   // Use the question generator hook
   const { generateClarifyingQuestions } = useQuestionGenerator({
     provider,
-    getQuestionProviderById,
     getProviderEndpoint: (p: string) => `/api/chat/${p}`,
   });
 
