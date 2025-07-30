@@ -1,0 +1,43 @@
+// lib/services/api/chatService.ts
+import type { User, Chat, Message } from "@/lib/types";
+
+export class ChatService {
+  async fetchChats(userId: string): Promise<Chat[]> {
+    const res = await fetch(`/api/chat?user_id=${userId}`);
+    if (!res.ok) throw new Error("Failed to fetch chats");
+    const data = await res.json();
+    return data.chats || [];
+  }
+
+  async createChat(userId: string, title: string): Promise<string> {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, title }),
+    });
+    if (!res.ok) throw new Error("Failed to create chat");
+    const data = await res.json();
+    return data.chat.id;
+  }
+
+  async deleteChat(chatId: string, userId: string): Promise<void> {
+    const res = await fetch("/api/chat", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId }),
+    });
+    if (!res.ok) throw new Error("Failed to delete chat");
+  }
+
+  async fetchChatHistory(chatId: string): Promise<Message[]> {
+    const res = await fetch(`/api/messages?chat_id=${chatId}`);
+    if (!res.ok) throw new Error("Failed to fetch chat history");
+    const data = await res.json();
+    return data.messages.map((msg: { from: string; content: string }) => ({
+      from: msg.from === "user" ? "user" : "bot",
+      text: msg.content,
+    }));
+  }
+}
+
+export const chatService = new ChatService();

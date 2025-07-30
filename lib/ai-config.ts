@@ -146,11 +146,6 @@ export const RESPONSE_PROVIDERS = [
         description: "Cheapest - for mass processing",
       },
       {
-        id: "gemini-2.0-flash",
-        name: "Gemini 2.0 Flash",
-        description: "New features - good for real-time conversations",
-      },
-      {
         id: "gemini-1.5-flash-8b",
         name: "Gemini 1.5 Flash 8B",
         description: "Very fast - for simple tasks",

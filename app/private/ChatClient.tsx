@@ -13,6 +13,7 @@ import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { useQuestionGenerator } from "@/components/private/QuestionGenerator";
 import { Background } from "@/components/ui/background";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
@@ -36,6 +37,7 @@ export default function ChatClient({ user }: { user: User }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
+  const messagesEndRef = useAutoScroll(messages, 100);
 
   // Simple API helper
   const callAPI = async (
@@ -340,6 +342,9 @@ export default function ChatClient({ user }: { user: User }) {
               />
             )}
           </div>
+
+          {/* Invisible div for auto-scroll - this is the target */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
