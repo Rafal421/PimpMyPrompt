@@ -51,7 +51,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
     };
 
     return (
-      <div className="relative z-10 w-72 bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
+      <div className="relative z-10 w-72 h-full bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-800/50">
           <div className="flex items-center gap-3 mb-6">
