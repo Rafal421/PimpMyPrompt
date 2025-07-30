@@ -1,13 +1,14 @@
 // hooks/private/mainPanel/useChat.ts
 "use client";
 import { useState, useRef } from "react";
-import { getQuestionProviderById } from "@/lib/ai-config";
-import { createImprovePrompt } from "@/lib/ai-helpers";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
-import { useQuestionGenerator } from "@/hooks/private/sidePanel/useQuestionGenerator";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
-import { chatService } from "@/lib/services/api/chatService";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { getQuestionProviderById } from "@/lib/ai-config";
+
+import { createQuestionFlow } from "./useQuestionFlow";
+import { createPromptImprover } from "./usePromptImprover";
+import { createModelSelection } from "./useModelSelection";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
@@ -33,10 +34,42 @@ export const useChat = ({ user }: { user: User }) => {
   const [customAnswer, setCustomAnswer] = useState("");
   const messagesEndRef = useAutoScroll(messages, 500);
 
-  // Use the question generator hook
-  const { generateClarifyingQuestions } = useQuestionGenerator({
+  // Create logic handlers by passing state and setters
+  const { generateImprovedPrompt } = createPromptImprover({
+    originalQuestion,
+    clarifyingAnswers,
     provider,
-    getProviderEndpoint: (p: string) => `/api/chat/${p}`,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    setPhase,
+    setImprovedPrompt,
+  });
+
+  const { startQuestionFlow, handleAnswerSubmit } = createQuestionFlow({
+    provider,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    setPhase,
+    generateImprovedPrompt,
+    setOriginalQuestion,
+    setInput,
+    setQuestionsData,
+    setCurrentQuestionIndex,
+    setClarifyingAnswers,
+    setCustomAnswer,
+    clarifyingAnswers,
+    questionsData,
+    currentQuestionIndex,
+  });
+
+  const { handleModelSelect } = createModelSelection({
+    improvedPrompt,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    setPhase,
   });
 
   // Reset session
@@ -89,165 +122,21 @@ export const useChat = ({ user }: { user: User }) => {
     setIsBotResponding(false);
   };
 
-  // Start question flow
-  const startQuestionFlow = async (
-    question: string,
-    currentChatId: string | null
-  ) => {
-    setOriginalQuestion(question);
-    setInput("");
-
-    try {
-      const questionsWithOptions = await generateClarifyingQuestions(question);
-
-      if (questionsWithOptions.length > 0) {
-        setQuestionsData(questionsWithOptions);
-        setPhase("clarifying");
-        setCurrentQuestionIndex(0);
-        setClarifyingAnswers([]);
-
-        const firstQuestion = questionsWithOptions[0].question;
-        setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
-        if (currentChatId) {
-          await chatSidePanelRef.current?.sendMessage(
-            currentChatId,
-            "bot",
-            firstQuestion
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error generating questions:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          from: "bot",
-          text: "An error occurred while generating clarifying questions. Please try again.",
-        },
-      ]);
-    }
-  };
-
-  const handleAnswerSubmit = async (answer: string) => {
-    if (!chatId || isBotResponding || !answer.trim()) return;
-
+  const wrappedHandleAnswerSubmit = async (answer: string) => {
+    if (isBotResponding) return;
     setIsBotResponding(true);
-    setMessages((prev) => [...prev, { from: "user", text: answer }]);
-    await chatSidePanelRef.current?.sendMessage(chatId, "user", answer);
-
-    const newAnswers = [...clarifyingAnswers, answer];
-    setClarifyingAnswers(newAnswers);
-    setCustomAnswer("");
-    await proceedToNextQuestion();
+    await handleAnswerSubmit(answer);
     setIsBotResponding(false);
   };
 
-  const handleModelSelect = async (
+  const wrappedHandleModelSelect = async (
     selectedProvider: Provider,
     selectedModel: string
   ) => {
-    if (!chatId || isBotResponding || !improvedPrompt) return;
-
+    if (isBotResponding) return;
     setIsBotResponding(true);
-    const choiceText = `I choose: ${selectedProvider.toUpperCase()} (${selectedModel})`;
-    setMessages((prev) => [...prev, { from: "user", text: choiceText }]);
-    await chatSidePanelRef.current?.sendMessage(chatId, "user", choiceText);
-
-    setPhase("final-response");
-
-    try {
-      const finalResponse = await chatService.getLLMResponse(
-        improvedPrompt,
-        selectedProvider,
-        selectedModel
-      );
-
-      setMessages((prev) => [...prev, { from: "bot", text: finalResponse }]);
-
-      if (chatId) {
-        await chatSidePanelRef.current?.sendMessage(
-          chatId,
-          "bot",
-          finalResponse
-        );
-      }
-
-      setPhase("done");
-    } catch (error) {
-      console.error("Error generating final response:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          from: "bot",
-          text: "An error occurred while generating the final response. Please try again.",
-        },
-      ]);
-      setPhase("model-selection");
-    }
-
+    await handleModelSelect(selectedProvider, selectedModel);
     setIsBotResponding(false);
-  };
-
-  // Generate improved prompt
-  const generateImprovedPrompt = async () => {
-    if (!chatId) return;
-
-    setPhase("improving");
-
-    const questionProvider = getQuestionProviderById(provider);
-    const currentModel = questionProvider?.model || DEFAULT_MODEL;
-    const improvePrompt = createImprovePrompt(
-      originalQuestion,
-      clarifyingAnswers
-    );
-
-    try {
-      const prompt = await chatService.getLLMResponse(
-        improvePrompt,
-        provider,
-        currentModel
-      );
-
-      setImprovedPrompt(prompt);
-      setMessages((prev) => [...prev, { from: "bot", text: prompt }]);
-
-      if (chatId) {
-        await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
-      }
-
-      setPhase("model-selection");
-    } catch (error) {
-      console.error("Error generating improved prompt:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          from: "bot",
-          text: "An error occurred while generating the improved prompt. Please try again.",
-        },
-      ]);
-      setPhase("clarifying");
-    }
-  };
-
-  // Move to next question or finish
-  const proceedToNextQuestion = async () => {
-    const nextIndex = currentQuestionIndex + 1;
-
-    if (nextIndex < questionsData.length) {
-      setCurrentQuestionIndex(nextIndex);
-      const nextQuestion = questionsData[nextIndex].question;
-
-      setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
-      if (chatId) {
-        await chatSidePanelRef.current?.sendMessage(
-          chatId,
-          "bot",
-          nextQuestion
-        );
-      }
-    } else {
-      await generateImprovedPrompt();
-    }
   };
 
   return {
@@ -270,7 +159,7 @@ export const useChat = ({ user }: { user: User }) => {
     messagesEndRef,
     resetSession,
     handleSend,
-    handleAnswerSubmit,
-    handleModelSelect,
+    handleAnswerSubmit: wrappedHandleAnswerSubmit,
+    handleModelSelect: wrappedHandleModelSelect,
   };
 };

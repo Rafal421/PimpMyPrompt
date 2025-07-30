@@ -50,6 +50,7 @@ export default function ChatClient({ user }: { user: User }) {
         setMessages={setMessages}
         setPhase={setPhase}
         onResetSession={resetSession}
+        isBotResponding={isBotResponding}
       />
 
       {/* Main Chat Area */}

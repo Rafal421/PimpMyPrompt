@@ -30,6 +30,7 @@ interface ChatSidePanelProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   onResetSession: () => void;
+  isBotResponding: boolean;
   onChatCreated?: (chatId: string) => void;
 }
 
@@ -45,6 +46,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
 
     const handleDeleteChat = (chatIdToDelete: string, e: React.MouseEvent) => {
       e.stopPropagation();
+      if (props.isBotResponding) return;
       deleteChat(chatIdToDelete);
     };
 
@@ -64,7 +66,8 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
 
           <button
             onClick={props.onResetSession}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 group shadow-lg hover:shadow-xl"
+            disabled={props.isBotResponding}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold transition-all duration-300 group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -89,13 +92,16 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
               >
                 <div
                   className="w-full text-left p-4 rounded-xl cursor-pointer"
-                  onClick={() => selectChat(chat)}
+                  onClick={() =>
+                    !props.isBotResponding && selectChat(chat)
+                  }
                 >
                   <div className="flex items-center gap-3">
                     <button
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200"
+                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
                       onClick={(e) => handleDeleteChat(chat.id, e)}
                       title="Delete chat"
+                      disabled={props.isBotResponding}
                     >
                       <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden transition-all duration-200" />
                       <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block transition-all duration-200" />
