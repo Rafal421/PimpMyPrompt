@@ -66,13 +66,23 @@ export default function QuestionBlock({
             </span>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 ml-0 sm:ml-12">
-            <input
+            <textarea
               value={customAnswer}
               onChange={(e) => setCustomAnswer(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 px-3 py-3 sm:px-4 bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 hover:border-gray-700/50 transition-all duration-200 text-base"
+              rows={1}
+              className="flex-1 px-3 py-3 sm:px-4 bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 hover:border-gray-700/50 transition-all duration-200 text-base resize-none overflow-hidden min-h-[48px]"
               placeholder="Your answer..."
               disabled={isBotResponding}
+              style={{
+                height: 'auto',
+                minHeight: '48px'
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
             />
             <button
               onClick={handleCustomAnswerSubmit}

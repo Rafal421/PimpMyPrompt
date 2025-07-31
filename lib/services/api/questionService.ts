@@ -34,13 +34,19 @@ export class QuestionService {
     const data = await response.json();
     const content = data.response || data.content;
 
+    console.log("API Response data:", data);
+    console.log("Extracted content:", content);
+
     if (!content) {
       throw new Error("No content in response");
     }
 
     const questionsWithOptions = parseQuestionsWithOptions(content);
+    
+    console.log("Parsed questions:", questionsWithOptions);
 
     if (questionsWithOptions.length === 0) {
+      console.error("Failed to parse questions from content:", content);
       throw new Error("No valid questions generated");
     }
 

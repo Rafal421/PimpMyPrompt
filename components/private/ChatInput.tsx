@@ -38,7 +38,7 @@ export default function ChatInput({
     if (phase === "init") {
       return "Ask AI a question...";
     }
-    return "Start a new session or browse history...";
+    return "New session or browse history...";
   };
 
   return (

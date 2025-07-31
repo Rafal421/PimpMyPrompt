@@ -55,7 +55,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-800/50">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -67,11 +67,11 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
           <button
             onClick={props.onResetSession}
             disabled={props.isBotResponding}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold transition-all duration-300 group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
+            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
           >
             <Plus className="w-5 h-5" />
             New Chat
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-4 h-4 ml-auto" />
           </button>
         </div>
 
@@ -81,13 +81,13 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             Recent Chats
           </h3>
           <div className="space-y-3">
-            {chats.map((chat) => (
+            {chats.map((chat, index) => (
               <div
                 key={chat.id}
-                className={`relative group w-full rounded-xl transition-all duration-200 border ${
+                className={`relative group w-full rounded-xl border ${
                   props.chatId === chat.id
-                    ? "bg-gray-800/50 border-gray-700/50"
-                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50"
+                    ? "bg-gray-800/50 border-gray-700/50 shadow-lg"
+                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50 hover:shadow-md"
                 }`}
               >
                 <div
@@ -98,13 +98,13 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
                 >
                   <div className="flex items-center gap-3">
                     <button
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
+                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
                       onClick={(e) => handleDeleteChat(chat.id, e)}
                       title="Delete chat"
                       disabled={props.isBotResponding}
                     >
-                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden transition-all duration-200" />
-                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block transition-all duration-200" />
+                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden" />
+                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block" />
                     </button>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
@@ -125,7 +125,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
         <div className="p-4 border-t border-gray-800/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                 <UserIcon className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -138,7 +138,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             <form action={logout}>
               <button
                 type="submit"
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
