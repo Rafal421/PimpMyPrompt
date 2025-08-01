@@ -21,8 +21,6 @@ async function withErrorHandling<T>(
   try {
     return await operation();
   } catch (error) {
-    console.error(`API Error in ${context}:`, error);
-
     if (error instanceof ApiError) {
       throw error;
     }

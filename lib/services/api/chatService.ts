@@ -50,9 +50,17 @@ export class ChatService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, model }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage =
+        errorData.error ||
+        `Error from ${targetProvider} API (${response.status})`;
+      throw new Error(errorMessage);
+    }
+
     const data = await response.json();
 
-    console.log("API response:", data);
     return (
       data.response ||
       data.content ||

@@ -5,6 +5,19 @@ import {
 import { getQuestionProviderById } from "@/lib/ai-config";
 import type { Provider, QuestionData } from "@/lib/types";
 
+const invalidContentIndicators = [
+  "impossible",
+  "no discernible meaning",
+  "no relevant questions",
+  "invalid",
+  "meaningless",
+  "too short",
+  "lacks context",
+  "provide more information",
+  "not enough context",
+  "insufficient information",
+];
+
 export class QuestionService {
   async generateClarifyingQuestions(
     question: string,
@@ -34,20 +47,26 @@ export class QuestionService {
     const data = await response.json();
     const content = data.response || data.content;
 
-    console.log("API Response data:", data);
-    console.log("Extracted content:", content);
-
     if (!content) {
       throw new Error("No content in response");
     }
 
     const questionsWithOptions = parseQuestionsWithOptions(content);
-    
-    console.log("Parsed questions:", questionsWithOptions);
 
     if (questionsWithOptions.length === 0) {
-      console.error("Failed to parse questions from content:", content);
-      throw new Error("No valid questions generated");
+      if (
+        invalidContentIndicators.some((indicator) =>
+          content.toLowerCase().includes(indicator)
+        )
+      ) {
+        throw new Error(
+          "The question provided doesn't contain enough context for clarification. Please provide a more specific and detailed question."
+        );
+      }
+
+      throw new Error(
+        "Unable to generate clarifying questions. Please try rephrasing your question with more detail."
+      );
     }
 
     return questionsWithOptions;

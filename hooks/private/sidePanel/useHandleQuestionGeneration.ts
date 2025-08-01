@@ -29,7 +29,6 @@ export function useHandleQuestionGeneration({
         onError("No clarifying questions were generated.");
       }
     } catch (error) {
-      console.error("Question generation failed:", error);
       onError("Failed to generate clarifying questions. Please try again.");
     }
   };

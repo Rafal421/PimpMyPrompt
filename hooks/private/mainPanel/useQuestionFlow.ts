@@ -19,6 +19,7 @@ interface QuestionFlowLogicProps {
   clarifyingAnswers: string[];
   questionsData: QuestionData[];
   currentQuestionIndex: number;
+  onError?: (error: any, context?: string) => void;
 }
 
 export const createQuestionFlow = ({
@@ -37,6 +38,7 @@ export const createQuestionFlow = ({
   clarifyingAnswers,
   questionsData,
   currentQuestionIndex,
+  onError,
 }: QuestionFlowLogicProps) => {
   const { generateClarifyingQuestions } = useQuestionGenerator({
     provider,
@@ -70,14 +72,17 @@ export const createQuestionFlow = ({
         }
       }
     } catch (error) {
-      console.error("Error generating questions:", error);
+      onError?.(error, "generating clarifying questions");
+
+      // Add error message to chat instead of breaking the flow
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "An error occurred while generating clarifying questions. Please try again.",
+          text: "I encountered a problem while generating clarifying questions. Please try rephrasing your question or try again.",
         },
       ]);
+      // Stay in current phase, let user try again
     }
   };
 

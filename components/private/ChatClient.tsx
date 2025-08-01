@@ -8,20 +8,23 @@ import ProviderSelector from "@/components/private/ProviderSelector";
 import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
+import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
+import { useErrorToast } from "@/hooks/useErrorToast";
 import { Menu, X } from "lucide-react";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
 export default function ChatClient({ user }: { user: User }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+  const { error, hideError, handleApiError } = useErrorToast();
+
   // Close sidebar on window resize and check screen size
   useEffect(() => {
     const handleResize = () => {
       // Always close sidebar on resize
       setIsSidebarOpen(false);
-      
+
       // Force close on smaller screens (below lg breakpoint - 1024px)
       if (window.innerWidth < 1024) {
         setIsSidebarOpen(false);
@@ -31,13 +34,13 @@ export default function ChatClient({ user }: { user: User }) {
     // Check initial screen size
     handleResize();
 
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener("resize", handleResize);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
-  
+
   const {
     chatSidePanelRef,
     messages,
@@ -60,7 +63,7 @@ export default function ChatClient({ user }: { user: User }) {
     handleSend,
     handleAnswerSubmit,
     handleModelSelect,
-  } = useChat({ user });
+  } = useChat({ user, onError: handleApiError });
 
   return (
     <div className="flex h-screen bg-black overflow-hidden">
@@ -68,21 +71,23 @@ export default function ChatClient({ user }: { user: User }) {
       <Background />
 
       {/* Mobile Sidebar Overlay */}
-      <div 
+      <div
         className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden ${
-          isSidebarOpen 
-            ? 'opacity-100 visible' 
-            : 'opacity-0 invisible'
+          isSidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
       {/* Sidebar - Desktop always visible, Mobile overlay */}
-      <div className={`
+      <div
+        className={`
         fixed lg:relative inset-y-0 left-0 z-50 lg:z-10
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }
         lg:block
-      `}>
+      `}
+      >
         <ChatSidePanel
           ref={chatSidePanelRef}
           user={user}
@@ -106,21 +111,21 @@ export default function ChatClient({ user }: { user: User }) {
               className="lg:hidden p-2 text-white hover:bg-white/10 rounded-lg"
             >
               <div className="relative w-5 h-5">
-                <Menu className={`absolute inset-0 w-5 h-5 ${
-                  isSidebarOpen 
-                    ? 'opacity-0' 
-                    : 'opacity-100'
-                }`} />
-                <X className={`absolute inset-0 w-5 h-5 ${
-                  isSidebarOpen 
-                    ? 'opacity-100' 
-                    : 'opacity-0'
-                }`} />
+                <Menu
+                  className={`absolute inset-0 w-5 h-5 ${
+                    isSidebarOpen ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+                <X
+                  className={`absolute inset-0 w-5 h-5 ${
+                    isSidebarOpen ? "opacity-100" : "opacity-0"
+                  }`}
+                />
               </div>
             </button>
 
             {/* Provider Selection - Responsive */}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
               <ProviderSelector
                 provider={provider}
                 setProvider={setProvider}
@@ -172,6 +177,14 @@ export default function ChatClient({ user }: { user: User }) {
           phase={phase}
         />
       </div>
+
+      {/* Error Toast */}
+      <ErrorToast
+        message={error.message}
+        details={error.details}
+        onClose={hideError}
+        isVisible={error.isVisible}
+      />
     </div>
   );
 }

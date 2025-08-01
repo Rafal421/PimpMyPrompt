@@ -51,14 +51,9 @@ export function useQuestionGenerator({
 
   const generateClarifyingQuestions = useCallback(
     async (question: string): Promise<QuestionData[]> => {
-      try {
-        // callProvider zwraca teraz bezpośrednio QuestionData[] dla akcji 'clarify'
-        const questions = await callProvider("clarify", { question });
-        return questions || [];
-      } catch (error) {
-        console.error("Error generating clarifying questions:", error);
-        return [];
-      }
+      // callProvider zwraca teraz bezpośrednio QuestionData[] dla akcji 'clarify'
+      const questions = await callProvider("clarify", { question });
+      return questions || [];
     },
     [callProvider]
   );

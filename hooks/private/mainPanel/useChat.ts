@@ -12,7 +12,13 @@ import { createModelSelection } from "./useModelSelection";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
-export const useChat = ({ user }: { user: User }) => {
+export const useChat = ({
+  user,
+  onError,
+}: {
+  user: User;
+  onError?: (error: any, context?: string) => void;
+}) => {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
 
   // Core state
@@ -44,6 +50,7 @@ export const useChat = ({ user }: { user: User }) => {
     setMessages,
     setPhase,
     setImprovedPrompt,
+    onError,
   });
 
   const { startQuestionFlow, handleAnswerSubmit } = createQuestionFlow({
@@ -62,6 +69,7 @@ export const useChat = ({ user }: { user: User }) => {
     clarifyingAnswers,
     questionsData,
     currentQuestionIndex,
+    onError,
   });
 
   const { handleModelSelect } = createModelSelection({
@@ -70,6 +78,7 @@ export const useChat = ({ user }: { user: User }) => {
     chatSidePanelRef,
     setMessages,
     setPhase,
+    onError,
   });
 
   // Reset session
@@ -113,10 +122,15 @@ export const useChat = ({ user }: { user: User }) => {
         await startQuestionFlow(input, currentChatId);
       }
     } catch (error) {
-      console.error("Error handling message:", error);
+      onError?.(error, "sending message");
+
+      // Add error message to chat so user knows what happened
       setMessages((prev) => [
         ...prev,
-        { from: "bot", text: "An error occurred. Please try again." },
+        {
+          from: "bot",
+          text: "I encountered a problem processing your message. Please try again or rephrase your question.",
+        },
       ]);
     }
     setIsBotResponding(false);
@@ -125,7 +139,20 @@ export const useChat = ({ user }: { user: User }) => {
   const wrappedHandleAnswerSubmit = async (answer: string) => {
     if (isBotResponding) return;
     setIsBotResponding(true);
-    await handleAnswerSubmit(answer);
+    try {
+      await handleAnswerSubmit(answer);
+    } catch (error) {
+      onError?.(error, "submitting answer");
+
+      // Add error message to chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "I encountered a problem processing your answer. Please try again or select a different option.",
+        },
+      ]);
+    }
     setIsBotResponding(false);
   };
 
@@ -135,7 +162,20 @@ export const useChat = ({ user }: { user: User }) => {
   ) => {
     if (isBotResponding) return;
     setIsBotResponding(true);
-    await handleModelSelect(selectedProvider, selectedModel);
+    try {
+      await handleModelSelect(selectedProvider, selectedModel);
+    } catch (error) {
+      onError?.(error, "selecting model");
+
+      // Add error message to chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "I encountered a problem generating the response with the selected model. Please try a different model or try again.",
+        },
+      ]);
+    }
     setIsBotResponding(false);
   };
 

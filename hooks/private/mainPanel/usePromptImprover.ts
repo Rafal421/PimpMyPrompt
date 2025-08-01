@@ -16,6 +16,7 @@ interface PromptImproverLogicProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   setImprovedPrompt: React.Dispatch<React.SetStateAction<string>>;
+  onError?: (error: any, context?: string) => void;
 }
 
 export const createPromptImprover = ({
@@ -27,6 +28,7 @@ export const createPromptImprover = ({
   setMessages,
   setPhase,
   setImprovedPrompt,
+  onError,
 }: PromptImproverLogicProps) => {
   const generateImprovedPrompt = async () => {
     if (!chatId) return;
@@ -56,15 +58,17 @@ export const createPromptImprover = ({
 
       setPhase("model-selection");
     } catch (error) {
-      console.error("Error generating improved prompt:", error);
+      onError?.(error, "generating improved prompt");
+
+      // Add error message to chat instead of going back to clarifying phase
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "An error occurred while generating the improved prompt. Please try again.",
+          text: "I encountered a problem while generating the improved prompt. Please try again or modify your answers.",
         },
       ]);
-      setPhase("clarifying");
+      // Stay in current phase, don't go back to clarifying
     }
   };
 

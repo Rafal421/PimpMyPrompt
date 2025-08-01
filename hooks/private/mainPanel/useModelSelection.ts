@@ -9,6 +9,7 @@ interface ModelSelectionLogicProps {
   chatSidePanelRef: React.RefObject<ChatSidePanelHandle | null>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
+  onError?: (error: any, context?: string) => void;
 }
 
 export const createModelSelection = ({
@@ -17,6 +18,7 @@ export const createModelSelection = ({
   chatSidePanelRef,
   setMessages,
   setPhase,
+  onError,
 }: ModelSelectionLogicProps) => {
   const handleModelSelect = async (
     selectedProvider: Provider,
@@ -49,15 +51,14 @@ export const createModelSelection = ({
 
       setPhase("done");
     } catch (error) {
-      console.error("Error generating final response:", error);
+      onError?.(error, "generating final response");
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "An error occurred while generating the final response. Please try again.",
+          text: "I encountered a problem while generating the final response. Please try selecting a different model or try again.",
         },
       ]);
-      setPhase("model-selection");
     }
   };
 
