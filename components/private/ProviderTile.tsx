@@ -34,7 +34,7 @@ export default function ProviderTile({
 
   return (
     <div
-      className={`group relative bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-6 hover:bg-black/60 hover:border-gray-700/50 transition-all duration-300 ${
+      className={`group relative bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-black/60 hover:border-gray-700/50 transition-all duration-300 ${
         isExpanded ? "z-[1000]" : "z-10"
       }`}
     >
@@ -45,25 +45,25 @@ export default function ProviderTile({
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300" />
 
       <div className="relative z-10">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
             {providerConfig.icon}
           </div>
           <div>
-            <h5 className="font-bold text-white text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
+            <h5 className="font-bold text-white text-base sm:text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
               {providerConfig.name}
             </h5>
-            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+            <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
               AI Provider
             </p>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="relative">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-sm font-medium text-gray-200 hover:bg-gray-800/50 hover:border-gray-600/50 transition-all duration-200"
+              className="w-full flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-200 hover:bg-gray-800/50 hover:border-gray-600/50 transition-all duration-200"
               disabled={disabled}
             >
               <span className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function ProviderTile({
             onClick={() =>
               onSelect(providerConfig.id as Provider, selectedModel)
             }
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn shadow-lg hover:shadow-xl"
+            className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg sm:rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group/btn shadow-lg hover:shadow-xl text-sm sm:text-base"
             disabled={disabled}
           >
             <Sparkles className="w-4 h-4" />

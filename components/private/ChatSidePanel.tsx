@@ -1,13 +1,8 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-  useCallback,
-} from "react";
+import React, { forwardRef, useImperativeHandle } from "react";
 import { logout } from "@/app/login/actions";
-import type { User, Chat, Message, Phase } from "@/lib/types";
+import { useChatSidePanel } from "@/hooks/private/sidePanel/useChatSidePanel";
+import type { User, Message, Phase } from "@/lib/types";
 import {
   Plus,
   MessageSquare,
@@ -35,180 +30,32 @@ interface ChatSidePanelProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   onResetSession: () => void;
+  isBotResponding: boolean;
   onChatCreated?: (chatId: string) => void;
-  onCreateChat?: (title: string, usedModel: string) => Promise<string | null>;
-  onSendMessage?: (
-    chat_id: string,
-    from: string,
-    content: string
-  ) => Promise<void>;
 }
 
 const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
-  (
-    {
-      user,
-      chatId,
-      setChatId,
-      setMessages,
-      setPhase,
-      onResetSession,
-      onChatCreated,
-      onCreateChat,
-      onSendMessage,
-    },
-    ref
-  ) => {
-    const [chats, setChats] = useState<Chat[]>([]);
-
-    const fetchChats = useCallback(async () => {
-      try {
-        const res = await fetch(`/api/chat?user_id=${user.id}`);
-        const data = await res.json();
-        setChats(data.chats || []);
-      } catch (error) {
-        console.error("Error fetching chats:", error);
-      }
-    }, [user.id]);
-
-    // Fetch chats on component mount
-    useEffect(() => {
-      fetchChats();
-    }, [fetchChats]);
-
-    // API helper functions - przeniesione z ChatClient
-    const createChat = async (
-      user_id: string,
-      title: string,
-      usedModel: string
-    ) => {
-      try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id, title: `${title} (${usedModel})` }),
-        });
-        const data = await res.json();
-        return data.chat.id;
-      } catch (error) {
-        console.error("Error creating chat:", error);
-        return null;
-      }
-    };
-
-    const sendMessageToServer = async (
-      chat_id: string,
-      user_id: string,
-      from: string,
-      content: string
-    ) => {
-      try {
-        await fetch("/api/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id, user_id, from, content }),
-        });
-      } catch (error) {
-        console.error("Error sending message to server:", error);
-      }
-    };
-
-    const fetchChatHistory = async (chatId: string) => {
-      const res = await fetch(`/api/messages?chat_id=${chatId}`);
-      const data = await res.json();
-      setMessages(
-        data.messages.map((msg: { from: string; content: string }) => ({
-          from: msg.from === "user" ? "user" : "bot",
-          text: msg.content,
-        }))
-      );
-    };
-
-    const handleChatSelectForViewing = (chat: Chat) => {
-      if (chat.id) {
-        fetchChatHistory(chat.id);
-        setChatId(chat.id);
-        setPhase("done");
-      }
-    };
-
-    const handleDeleteChat = async (
-      chatIdToDelete: string,
-      e: React.MouseEvent
-    ) => {
-      e.stopPropagation(); // Prevent triggering chat selection
-
-      try {
-        const res = await fetch("/api/chat", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatIdToDelete, user_id: user.id }),
-        });
-
-        if (res.ok) {
-          // Remove chat from local state
-          setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
-
-          // If the deleted chat was currently selected, reset session
-          if (chatIdToDelete === chatId) {
-            onResetSession();
-          }
-
-          // Refresh chats list
-          fetchChats();
-        } else {
-          console.error("Failed to delete chat");
-        }
-      } catch (error) {
-        console.error("Error deleting chat:", error);
-      }
-    };
-
-    // Expose functions for parent component
-    const handleCreateChat = useCallback(async (title: string, usedModel: string) => {
-      // Use passed function or internal one
-      const newChatId = onCreateChat
-        ? await onCreateChat(title, usedModel)
-        : await createChat(user.id, title, usedModel);
-
-      if (newChatId) {
-        setChatId(newChatId);
-        fetchChats(); // Refresh chat list
-        if (onChatCreated) {
-          onChatCreated(newChatId);
-        }
-      }
-      return newChatId;
-    }, [onCreateChat, onChatCreated, user.id, fetchChats, setChatId]);
-
-    const handleSendMessage = useCallback(async (
-      chat_id: string,
-      from: string,
-      content: string
-    ) => {
-      // Use passed function or internal one
-      return onSendMessage
-        ? onSendMessage(chat_id, from, content)
-        : sendMessageToServer(chat_id, user.id, from, content);
-    }, [onSendMessage, user.id]);
+  (props, ref) => {
+    const { chats, selectChat, deleteChat, chatSidePanelActions } =
+      useChatSidePanel(props);
 
     // Expose functions to parent component
-    useImperativeHandle(
-      ref,
-      () => ({
-        createChat: handleCreateChat,
-        sendMessage: handleSendMessage,
-        refreshChats: fetchChats,
-      }),
-      [handleCreateChat, handleSendMessage, fetchChats]
-    );
+    useImperativeHandle(ref, () => chatSidePanelActions, [
+      chatSidePanelActions,
+    ]);
+
+    const handleDeleteChat = (chatIdToDelete: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (props.isBotResponding) return;
+      deleteChat(chatIdToDelete);
+    };
 
     return (
-      <div className="relative z-10 w-72 bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
+      <div className="relative z-10 w-72 h-full bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-800/50">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -218,12 +65,13 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
           </div>
 
           <button
-            onClick={onResetSession}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 group shadow-lg hover:shadow-xl"
+            onClick={props.onResetSession}
+            disabled={props.isBotResponding}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
           >
             <Plus className="w-5 h-5" />
             New Chat
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRight className="w-4 h-4 ml-auto" />
           </button>
         </div>
 
@@ -236,27 +84,25 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             {chats.map((chat) => (
               <div
                 key={chat.id}
-                className={`relative group w-full rounded-xl transition-all duration-200 border ${
-                  chatId === chat.id
-                    ? "bg-gray-800/50 border-gray-700/50"
-                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50"
+                className={`relative group w-full rounded-xl border ${
+                  props.chatId === chat.id
+                    ? "bg-gray-800/50 border-gray-700/50 shadow-lg"
+                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50 hover:shadow-md"
                 }`}
               >
                 <div
                   className="w-full text-left p-4 rounded-xl cursor-pointer"
-                  onClick={() => handleChatSelectForViewing(chat)}
+                  onClick={() => !props.isBotResponding && selectChat(chat)}
                 >
                   <div className="flex items-center gap-3">
                     <button
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 transition-all duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteChat(chat.id, e);
-                      }}
+                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
+                      onClick={(e) => handleDeleteChat(chat.id, e)}
                       title="Delete chat"
+                      disabled={props.isBotResponding}
                     >
-                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden transition-all duration-200" />
-                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block transition-all duration-200" />
+                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden" />
+                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block" />
                     </button>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
@@ -277,12 +123,12 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
         <div className="p-4 border-t border-gray-800/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                 <UserIcon className="w-4 h-4 text-white" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">
-                  {user.email || "User"}
+                  {props.user.email || "User"}
                 </p>
                 <p className="text-xs text-gray-400">Online</p>
               </div>
@@ -290,7 +136,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             <form action={logout}>
               <button
                 type="submit"
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
@@ -304,5 +150,4 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
 );
 
 ChatSidePanel.displayName = "ChatSidePanel";
-
 export default ChatSidePanel;

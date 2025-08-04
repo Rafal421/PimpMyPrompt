@@ -6,6 +6,7 @@ import {
   createImprovePrompt,
   TOKEN_LIMITS,
 } from "@/lib/ai-helpers";
+import { handleError, ValidationError } from "@/lib/error-handler";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -38,10 +39,7 @@ export async function POST(req: NextRequest) {
 
     // Handle legacy action format
     if (!action || !question) {
-      return NextResponse.json(
-        { error: "Action and question are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Action and question are required");
     }
 
     if (action === "clarify") {
@@ -55,10 +53,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "improve") {
       if (!answers?.length) {
-        return NextResponse.json(
-          { error: "Answers are required for improve action" },
-          { status: 400 }
-        );
+        throw new ValidationError("Answers are required for improve action");
       }
       const content = await callOpenAI(
         createImprovePrompt(question, answers),
@@ -67,12 +62,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ prompt: content.trim() });
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    throw new ValidationError("Invalid action");
   } catch (error) {
-    console.error("Error calling OpenAI:", error);
-    return NextResponse.json(
-      { error: "Failed to get response from OpenAI" },
-      { status: 500 }
-    );
+    return handleError(error, "OpenAI");
   }
 }
