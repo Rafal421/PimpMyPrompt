@@ -1,6 +1,7 @@
 import { questionService } from "./questionService";
 import { chatService } from "./chatService";
 import { messageService } from "./messageService";
+import type { Provider } from "@/lib/types";
 
 // Centralne error handling
 class ApiError extends Error {
@@ -32,7 +33,7 @@ async function withErrorHandling<T>(
 // Eksportuj wszystkie serwisy z error handling
 export const apiServices = {
   questions: {
-    generateClarifying: (question: string, provider: any) =>
+    generateClarifying: (question: string, provider: Provider) =>
       withErrorHandling(
         () => questionService.generateClarifyingQuestions(question, provider),
         "generateClarifyingQuestions"

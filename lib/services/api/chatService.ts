@@ -1,5 +1,5 @@
 // lib/services/api/chatService.ts
-import type { User, Chat, Message, Provider } from "@/lib/types";
+import type { Chat, Message, Provider } from "@/lib/types";
 
 export class ChatService {
   async fetchChats(userId: string): Promise<Chat[]> {

@@ -81,7 +81,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             Recent Chats
           </h3>
           <div className="space-y-3">
-            {chats.map((chat, index) => (
+            {chats.map((chat) => (
               <div
                 key={chat.id}
                 className={`relative group w-full rounded-xl border ${
@@ -92,9 +92,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
               >
                 <div
                   className="w-full text-left p-4 rounded-xl cursor-pointer"
-                  onClick={() =>
-                    !props.isBotResponding && selectChat(chat)
-                  }
+                  onClick={() => !props.isBotResponding && selectChat(chat)}
                 >
                   <div className="flex items-center gap-3">
                     <button
