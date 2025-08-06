@@ -5,37 +5,58 @@ export const QUESTION_PROVIDERS = [
   {
     id: "anthropic",
     name: "Claude",
-    modleName: "Opus 4",
-    model: "claude-opus-4-20250514",
+    modelName: "3.5 Sonnet",
+    model: "claude-3-5-sonnet-20241022",
     endpoint: "/api/chat/anthropic",
-  },
-  {
-    id: "openai",
-    name: "OpenAI",
-    modleName: "4o",
-    model: "gpt-4o",
-    endpoint: "/api/chat/openai",
   },
   {
     id: "gemini",
     name: "Gemini",
-    modleName: "2.5 flash lite",
+    modelName: "2.5 flash lite",
     model: "gemini-2.5-flash-lite-preview-06-17",
     endpoint: "/api/chat/gemini",
+  },
+  {
+    id: "openai",
+    name: "OpenAI",
+    modelName: "4o mini",
+    model: "gpt-4o-mini",
+    endpoint: "/api/chat/openai",
+  },
+  {
+    id: "deepseek",
+    name: "DeepSeek",
+    modelName: "Chat",
+    model: "deepseek-chat",
+    endpoint: "/api/chat/deepseek",
+  },
+  {
+    id: "grok",
+    name: "Grok",
+    modelName: "Grok 3 Mini",
+    model: "grok-3-mini",
+    endpoint: "/api/chat/grok",
+  },
+  {
+    id: "perplexity",
+    name: "Perplexity",
+    modelName: "Sonar",
+    model: "sonar",
+    endpoint: "/api/chat/perplexity",
   },
 ];
 
 // Default provider for asking questions (best overall)
-export const DEFAULT_QUESTION_PROVIDER = "anthropic";
+export const DEFAULT_QUESTION_PROVIDER = "openai";
 
 // Available providers for final responses (shown as tiles after questions)
 export const RESPONSE_PROVIDERS = [
   {
     id: "anthropic",
-    name: "Anthropic Claude",
+    name: "Anthropic",
     icon: "🧠",
     endpoint: "/api/chat/anthropic",
-    recommendedModel: "claude-opus-4-20250514",
+    recommendedModel: "claude-3-5-sonnet-20241022",
     models: [
       {
         id: "claude-opus-4-20250514",
@@ -79,7 +100,7 @@ export const RESPONSE_PROVIDERS = [
     name: "OpenAI",
     icon: "🤖",
     endpoint: "/api/chat/openai",
-    recommendedModel: "gpt-4o",
+    recommendedModel: "gpt-4o-mini",
     models: [
       {
         id: "gpt-4o",
@@ -92,19 +113,14 @@ export const RESPONSE_PROVIDERS = [
         description: "Thinks longer - ideal for complex problems",
       },
       {
-        id: "o4-mini",
-        name: "o4 Mini",
+        id: "gpt-4o-mini",
+        name: "GPT-4o Mini",
         description: "Fast for math and science",
       },
       {
         id: "gpt-4.1",
         name: "GPT-4.1",
         description: "Best for programming and code",
-      },
-      {
-        id: "gpt-4o-mini",
-        name: "GPT-4o Mini",
-        description: "Fast and cheap - for simple tasks",
       },
       {
         id: "o3-mini",
@@ -128,7 +144,7 @@ export const RESPONSE_PROVIDERS = [
     name: "Google Gemini",
     icon: "🌟",
     endpoint: "/api/chat/gemini",
-    recommendedModel: "gemini-2.5-pro",
+    recommendedModel: "gemini-2.5-flash",
     models: [
       {
         id: "gemini-2.5-pro",
@@ -157,7 +173,7 @@ export const RESPONSE_PROVIDERS = [
     name: "Grok (X.AI)",
     icon: "⚡",
     endpoint: "/api/chat/grok",
-    recommendedModel: "grok-4-0709",
+    recommendedModel: "grok-3-mini",
     models: [
       {
         id: "grok-4-0709",
@@ -201,7 +217,7 @@ export const RESPONSE_PROVIDERS = [
     name: "Perplexity",
     icon: "🔍",
     endpoint: "/api/chat/perplexity",
-    recommendedModel: "sonar-pro",
+    recommendedModel: "sonar",
     models: [
       {
         id: "sonar-pro",

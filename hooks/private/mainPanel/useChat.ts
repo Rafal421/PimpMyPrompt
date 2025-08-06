@@ -2,10 +2,14 @@
 "use client";
 import { useState, useRef } from "react";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
-import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { useAutoScroll } from "@/hooks/private/mainPanel/useAutoScroll";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
-import { getQuestionProviderById } from "@/lib/ai-config";
+import {
+  DEFAULT_QUESTION_PROVIDER,
+  getQuestionProviderById,
+} from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
+import { useUsageLimit } from "@/hooks/private/mainPanel/useUsageLimit";
 
 import { createQuestionFlow } from "./useQuestionFlow";
 import { createPromptImprover } from "./usePromptImprover";
@@ -33,7 +37,7 @@ export const useChat = ({
   const [input, setInput] = useState("");
   const [isBotResponding, setIsBotResponding] = useState(false);
   const [chatId, setChatId] = useState<string | null>(null);
-  const [provider, setProvider] = useState<Provider>("anthropic");
+  const [provider, setProvider] = useState<Provider>(DEFAULT_QUESTION_PROVIDER);
   const [phase, setPhase] = useState<Phase>("init");
 
   // Question flow state
@@ -44,6 +48,15 @@ export const useChat = ({
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
   const messagesEndRef = useAutoScroll(messages, 500);
+
+  // Usage limit management
+  const {
+    incrementUsage,
+    canMakeRequest,
+    requestsRemaining,
+    getTimeUntilReset,
+    checkUsage,
+  } = useUsageLimit();
 
   // Create logic handlers by passing state and setters
   const { generateImprovedPrompt } = createPromptImprover({
@@ -85,6 +98,7 @@ export const useChat = ({
     setMessages,
     setPhase,
     onError,
+    onUsageIncrement: incrementUsage, // Pass the increment function
   });
 
   // Reset session
@@ -106,6 +120,22 @@ export const useChat = ({
   // Main message handling
   const handleSend = async () => {
     if (!input.trim() || isBotResponding) return;
+
+    // Refresh usage status before checking
+    await checkUsage();
+
+    // Check usage limit before proceeding with any message
+    if (!canMakeRequest) {
+      // Add error message about limit
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "You've reached your daily limit. Please wait for the reset or upgrade your plan.",
+        },
+      ]);
+      return;
+    }
 
     let currentChatId = chatId;
     if (!currentChatId) {
@@ -207,5 +237,10 @@ export const useChat = ({
     handleSend,
     handleAnswerSubmit: wrappedHandleAnswerSubmit,
     handleModelSelect: wrappedHandleModelSelect,
+    // Usage limit info
+    canMakeRequest,
+    requestsRemaining,
+    getTimeUntilReset,
+    checkUsage,
   };
 };

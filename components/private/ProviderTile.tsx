@@ -71,11 +71,6 @@ export default function ProviderTile({
                   providerConfig.models.find((m) => m.id === selectedModel)
                     ?.name
                 }
-                {selectedModel === providerConfig.recommendedModel && (
-                  <span className="text-xs bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-0.5 rounded-full font-medium">
-                    Recommended
-                  </span>
-                )}
               </span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 ${

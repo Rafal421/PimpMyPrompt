@@ -180,7 +180,7 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
 
     return {
       success: true,
-      message: "Sprawdź swoją skrzynkę email aby potwierdzić konto",
+      message: "Check your email inbox to confirm your account",
     };
   } catch (error) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {

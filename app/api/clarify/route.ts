@@ -12,6 +12,21 @@ const getAIClient = (provider: string) => {
       return new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
     case "openai":
       return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    case "perplexity":
+      return new OpenAI({
+        apiKey: process.env.PERPLEXITY_API_KEY,
+        baseURL: "https://api.perplexity.ai",
+      });
+    case "deepseek":
+      return new OpenAI({
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        baseURL: "https://api.deepseek.com/v1",
+      });
+    case "grok":
+      return new OpenAI({
+        apiKey: process.env.GROK_API_KEY,
+        baseURL: "https://api.x.ai/v1",
+      });
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
@@ -47,7 +62,13 @@ export async function POST(req: Request) {
       const result = await generativeModel.generateContent(message);
       const response = await result.response;
       responseContent = response.text();
-    } else if (provider === "openai" && ai instanceof OpenAI) {
+    } else if (
+      (provider === "openai" ||
+        provider === "perplexity" ||
+        provider === "deepseek" ||
+        provider === "grok") &&
+      ai instanceof OpenAI
+    ) {
       const response = await ai.chat.completions.create({
         model,
         messages: [{ role: "user", content: message }],

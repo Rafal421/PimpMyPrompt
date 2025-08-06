@@ -11,7 +11,7 @@ import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
 import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
-import { useErrorToast } from "@/hooks/useErrorToast";
+import { useErrorToast } from "@/hooks/private/mainPanel/useErrorToast";
 import { Menu, X } from "lucide-react";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
@@ -63,6 +63,10 @@ export default function ChatClient({ user }: { user: User }) {
     handleSend,
     handleAnswerSubmit,
     handleModelSelect,
+    canMakeRequest,
+    requestsRemaining,
+    getTimeUntilReset,
+    checkUsage,
   } = useChat({ user, onError: handleApiError });
 
   return (
@@ -160,7 +164,6 @@ export default function ChatClient({ user }: { user: User }) {
               messages={messages}
               isBotResponding={isBotResponding}
             />
-
             {/* Answer Options */}
             <AnimatePresence mode="wait">
               {phase === "clarifying" &&
@@ -191,7 +194,6 @@ export default function ChatClient({ user }: { user: User }) {
                   </motion.div>
                 )}
             </AnimatePresence>
-
             {/* Model Selection */}
             <AnimatePresence mode="wait">
               {phase === "model-selection" && (
@@ -231,6 +233,10 @@ export default function ChatClient({ user }: { user: User }) {
             onResetSession={resetSession}
             isBotResponding={isBotResponding}
             phase={phase}
+            canMakeRequest={canMakeRequest}
+            requestsRemaining={requestsRemaining}
+            getTimeUntilReset={getTimeUntilReset}
+            checkUsage={checkUsage}
           />
         </div>
       </div>

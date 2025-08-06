@@ -11,6 +11,7 @@ interface ModelSelectionLogicProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   onError?: (error: any, context?: string) => void;
+  onUsageIncrement?: () => Promise<boolean>; // Add this prop
 }
 
 export const createModelSelection = ({
@@ -20,12 +21,29 @@ export const createModelSelection = ({
   setMessages,
   setPhase,
   onError,
+  onUsageIncrement,
 }: ModelSelectionLogicProps) => {
   const handleModelSelect = async (
     selectedProvider: Provider,
     selectedModel: string
   ) => {
     if (!chatId || !improvedPrompt) return;
+
+    // Check usage limit before proceeding
+    if (onUsageIncrement) {
+      const canProceed = await onUsageIncrement();
+      if (!canProceed) {
+        // Error message for usage limit exceeded
+        setMessages((prev) => [
+          ...prev,
+          {
+            from: "bot",
+            text: "You've reached your hourly limit of 20 requests. Please wait for the next hour or upgrade your plan.",
+          },
+        ]);
+        return;
+      }
+    }
 
     // User selects model and provider
     const choiceText = `I choose: ${selectedProvider.toUpperCase()} (${selectedModel})`;
