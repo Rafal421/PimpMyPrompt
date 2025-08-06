@@ -5,6 +5,7 @@ import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
 import { getQuestionProviderById } from "@/lib/ai-config";
+import { addRegularMessage } from "@/lib/messageHelpers";
 
 import { createQuestionFlow } from "./useQuestionFlow";
 import { createPromptImprover } from "./usePromptImprover";
@@ -23,7 +24,11 @@ export const useChat = ({
 
   // Core state
   const [messages, setMessages] = useState<Message[]>([
-    { from: "bot", text: "Ask a question and I'll help you refine it!" },
+    {
+      from: "bot",
+      text: "Ask a question and I'll help you refine it!",
+      isTyping: false,
+    },
   ]);
   const [input, setInput] = useState("");
   const [isBotResponding, setIsBotResponding] = useState(false);
@@ -50,6 +55,7 @@ export const useChat = ({
     setMessages,
     setPhase,
     setImprovedPrompt,
+    setIsBotResponding,
     onError,
   });
 
@@ -112,7 +118,7 @@ export const useChat = ({
     }
 
     setIsBotResponding(true);
-    setMessages((prev) => [...prev, { from: "user", text: input }]);
+    addRegularMessage(setMessages, input, "user");
     if (currentChatId) {
       await chatSidePanelRef.current?.sendMessage(currentChatId, "user", input);
     }
@@ -138,13 +144,13 @@ export const useChat = ({
 
   const wrappedHandleAnswerSubmit = async (answer: string) => {
     if (isBotResponding) return;
-    setIsBotResponding(true);
+    // Handle answer submission
     try {
       await handleAnswerSubmit(answer);
     } catch (error) {
       onError?.(error, "submitting answer");
 
-      // Add error message to chat
+      // Error message for answer submission
       setMessages((prev) => [
         ...prev,
         {
@@ -152,8 +158,8 @@ export const useChat = ({
           text: "I encountered a problem processing your answer. Please try again or select a different option.",
         },
       ]);
+      setIsBotResponding(false);
     }
-    setIsBotResponding(false);
   };
 
   const wrappedHandleModelSelect = async (

@@ -2,6 +2,7 @@
 import type { Message, Phase, QuestionData, Provider } from "@/lib/types";
 import { useQuestionGenerator } from "@/hooks/private/sidePanel/useQuestionGenerator";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { addTypingMessage } from "@/lib/messageHelpers";
 
 interface QuestionFlowLogicProps {
   provider: Provider;
@@ -57,12 +58,20 @@ export const createQuestionFlow = ({
 
       if (questionsWithOptions.length > 0) {
         setQuestionsData(questionsWithOptions);
-        setPhase("clarifying");
         setCurrentQuestionIndex(0);
         setClarifyingAnswers([]);
 
         const firstQuestion = questionsWithOptions[0].question;
-        setMessages((prev) => [...prev, { from: "bot", text: firstQuestion }]);
+
+        // Add typing animation for first question with delay to show it after user message
+        setTimeout(() => {
+          addTypingMessage(setMessages, firstQuestion, () => {
+            setTimeout(() => {
+              setPhase("clarifying");
+            }, 300);
+          });
+        }, 500);
+
         if (currentChatId) {
           await chatSidePanelRef.current?.sendMessage(
             currentChatId,
@@ -93,7 +102,14 @@ export const createQuestionFlow = ({
       setCurrentQuestionIndex(nextIndex);
       const nextQuestion = questionsData[nextIndex].question;
 
-      setMessages((prev) => [...prev, { from: "bot", text: nextQuestion }]);
+      // Add typing animation for next question
+      addTypingMessage(setMessages, nextQuestion, () => {
+        setTimeout(() => {
+          setPhase("clarifying");
+        }, 300);
+      });
+
+      // Send next question to chat
       if (chatId) {
         await chatSidePanelRef.current?.sendMessage(
           chatId,
@@ -109,13 +125,20 @@ export const createQuestionFlow = ({
   const handleAnswerSubmit = async (answer: string) => {
     if (!chatId || !answer.trim()) return;
 
+    // Add user answer to chat
     setMessages((prev) => [...prev, { from: "user", text: answer }]);
     await chatSidePanelRef.current?.sendMessage(chatId, "user", answer);
 
     const newAnswers = [...clarifyingAnswers, answer];
     setClarifyingAnswers(newAnswers);
     setCustomAnswer("");
-    await proceedToNextQuestion();
+
+    setPhase("improving"); // Temporary phase to hide QuestionBlock
+
+    setTimeout(() => {
+      // Proceed to next question after animation
+      proceedToNextQuestion();
+    }, 600); // Adjust timing to match animation duration
   };
 
   return { startQuestionFlow, handleAnswerSubmit };

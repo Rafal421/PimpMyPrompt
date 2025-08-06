@@ -19,6 +19,7 @@ export type Phase =
 export interface Message {
   from: "user" | "bot";
   text: string;
+  isTyping?: boolean;
 }
 
 export interface QuestionData {

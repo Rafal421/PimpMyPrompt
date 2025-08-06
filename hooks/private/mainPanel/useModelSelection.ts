@@ -2,6 +2,7 @@
 import type { Provider, Message, Phase } from "@/lib/types";
 import { chatService } from "@/lib/services/api/chatService";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { addTypingMessage } from "@/lib/messageHelpers";
 
 interface ModelSelectionLogicProps {
   improvedPrompt: string;
@@ -26,10 +27,15 @@ export const createModelSelection = ({
   ) => {
     if (!chatId || !improvedPrompt) return;
 
+    // User selects model and provider
     const choiceText = `I choose: ${selectedProvider.toUpperCase()} (${selectedModel})`;
-    setMessages((prev) => [...prev, { from: "user", text: choiceText }]);
+    setMessages((prev) => [
+      ...prev,
+      { from: "user", text: choiceText, isTyping: false },
+    ]);
     await chatSidePanelRef.current?.sendMessage(chatId, "user", choiceText);
 
+    // Transition to final response phase
     setPhase("final-response");
 
     try {
@@ -39,7 +45,12 @@ export const createModelSelection = ({
         selectedModel
       );
 
-      setMessages((prev) => [...prev, { from: "bot", text: finalResponse }]);
+      // Typing animation for bot's final response
+      addTypingMessage(setMessages, finalResponse, () => {
+        setTimeout(() => {
+          setPhase("done");
+        }, 500);
+      });
 
       if (chatId) {
         await chatSidePanelRef.current?.sendMessage(
@@ -48,10 +59,10 @@ export const createModelSelection = ({
           finalResponse
         );
       }
-
-      setPhase("done");
     } catch (error) {
       onError?.(error, "generating final response");
+
+      // Error message for final response generation
       setMessages((prev) => [
         ...prev,
         {

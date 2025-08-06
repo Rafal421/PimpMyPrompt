@@ -29,10 +29,12 @@ export default function QuestionBlock({
   };
 
   return (
-    <div className="bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl">
+    <div className="w-full w-full bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl">
       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
-        <h4 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Choose an answer</h4>
+        <h4 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+          Choose an answer
+        </h4>
       </div>
 
       <div className="space-y-3 sm:space-y-4">
@@ -75,13 +77,13 @@ export default function QuestionBlock({
               placeholder="Your answer..."
               disabled={isBotResponding}
               style={{
-                height: 'auto',
-                minHeight: '48px'
+                height: "auto",
+                minHeight: "48px",
               }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
+                target.style.height = "auto";
+                target.style.height = target.scrollHeight + "px";
               }}
             />
             <button
