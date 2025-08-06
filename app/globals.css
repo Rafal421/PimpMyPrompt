@@ -116,8 +116,23 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background: #000000 !important;
+    color-scheme: dark;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground min-h-screen;
+    background: #000000 !important;
+  }
+
+  /* Fix for Dynamic Island */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
   }
 }
 
