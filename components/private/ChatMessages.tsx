@@ -1,9 +1,13 @@
 "use client";
-import { Bot, UserIcon } from "lucide-react";
+
+import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 
 interface Message {
   from: "user" | "bot";
   text: string;
+  isTyping?: boolean;
 }
 
 interface ChatMessagesProps {
@@ -16,51 +20,101 @@ export default function ChatMessages({
   isBotResponding,
 }: ChatMessagesProps) {
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div className="w-full px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
       {messages.map((msg, idx) => (
         <div
           key={idx}
-          className={`flex gap-4 ${
+          className={`flex gap-2 sm:gap-4 ${
             msg.from === "user" ? "justify-end" : "justify-start"
           }`}
         >
-          {msg.from === "bot" && (
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
-          )}
-
           <div
-            className={`max-w-2xl ${msg.from === "user" ? "order-first" : ""}`}
+            className={`max-w-[85%] sm:max-w-2xl ${
+              msg.from === "user" ? "order-first" : ""
+            }`}
           >
             <div
-              className={`px-6 py-4 rounded-2xl shadow-lg ${
+              className={`px-3 py-3 sm:px-6 sm:py-4 rounded-2xl shadow-lg ${
                 msg.from === "user"
                   ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white ml-auto"
                   : "bg-black/40 backdrop-blur-sm border border-gray-800/50 text-gray-100"
               }`}
             >
-              <p className="leading-relaxed whitespace-pre-wrap font-medium !m-0 !mt-0 !mb-0 !ml-0 !mr-0">
-                {msg.text}
-              </p>
+              <div className="leading-relaxed font-medium text-sm sm:text-base prose prose-invert max-w-none">
+                {msg.from === "bot" && msg.isTyping ? (
+                  <MarkdownTypewriter
+                    text={msg.text}
+                    speed={20}
+                    className="leading-relaxed whitespace-pre-wrap font-medium text-sm sm:text-base"
+                  />
+                ) : msg.from === "bot" ? (
+                  <ReactMarkdown
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      h1: ({ ...props }) => (
+                        <h1
+                          className="text-xl font-bold mt-4 mb-2"
+                          {...props}
+                        />
+                      ),
+                      h2: ({ ...props }) => (
+                        <h2
+                          className="text-lg font-bold mt-3 mb-2"
+                          {...props}
+                        />
+                      ),
+                      h3: ({ ...props }) => (
+                        <h3
+                          className="text-md font-bold mt-3 mb-1"
+                          {...props}
+                        />
+                      ),
+                      h4: ({ ...props }) => (
+                        <h4
+                          className="text-base font-bold mt-2 mb-1"
+                          {...props}
+                        />
+                      ),
+                      p: ({ ...props }) => <p className="mb-2" {...props} />,
+                      ul: ({ ...props }) => (
+                        <ul className="list-disc pl-6 mb-2" {...props} />
+                      ),
+                      ol: ({ ...props }) => (
+                        <ol className="list-decimal pl-6 mb-2" {...props} />
+                      ),
+                      li: ({ ...props }) => <li className="mb-1" {...props} />,
+                      strong: ({ ...props }) => (
+                        <strong className="font-bold" {...props} />
+                      ),
+                      em: ({ ...props }) => (
+                        <em className="italic" {...props} />
+                      ),
+                      code: ({ ...props }) => (
+                        <code className="bg-gray-800 px-1 rounded" {...props} />
+                      ),
+                      pre: ({ ...props }) => (
+                        <pre
+                          className="bg-gray-800 p-2 rounded mb-3 overflow-x-auto"
+                          {...props}
+                        />
+                      ),
+                    }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                ) : (
+                  msg.text
+                )}
+              </div>
             </div>
           </div>
-
-          {msg.from === "user" && (
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <UserIcon className="w-5 h-5 text-white" />
-            </div>
-          )}
         </div>
       ))}
 
       {/* Loading indicator */}
       {isBotResponding && (
-        <div className="flex gap-4 justify-start">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl px-6 py-4 shadow-lg">
+        <div className="flex gap-2 sm:gap-4 justify-start">
+          <div className="bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl px-3 py-3 sm:px-6 sm:py-4 shadow-lg">
             <div className="flex gap-1">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
               <div

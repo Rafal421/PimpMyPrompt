@@ -36,7 +36,7 @@ export default function ProviderSelector({
         </select>
       </div>
       <div className="text-xs text-gray-400 bg-gray-900/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-700/50 font-mono">
-        {getQuestionProviderById(provider)?.modleName || defaultModel}
+        {getQuestionProviderById(provider)?.modelName || defaultModel}
       </div>
     </div>
   );

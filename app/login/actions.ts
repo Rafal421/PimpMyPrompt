@@ -180,6 +180,7 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
 
     return {
       success: true,
+
       message: "Check your email to confirm your account",
     };
   } catch (error) {

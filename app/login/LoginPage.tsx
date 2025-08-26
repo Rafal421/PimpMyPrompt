@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { login, signup } from "./actions";
 import {
   Card,
@@ -11,14 +13,30 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Check, Bot, CheckCircle } from "lucide-react";
+import { AlertCircle, Check, Bot, CheckCircle, Loader2 } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
-import { Background } from "@/components/ui/background";
+import { Background } from "@/components/ui/background"; // Assuming this exists and provides the animated background
 import { AuthInput } from "@/components/auth/AuthInput";
+import { createClient } from "@/utils/supabase/client";
 
 // Main authentication component with login/signup forms
 export default function OptimizedAuthPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        router.replace("/private");
+      }
+    };
+    checkUser();
+  }, [router, supabase.auth]);
 
   const {
     mode,
@@ -45,6 +63,8 @@ export default function OptimizedAuthPage() {
     async (formData: FormData) => {
       setIsLoading(true);
       try {
+        // Add a longer delay to ensure loading state is visible
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await login(formData);
         handleServerResponse(result);
       } catch (error) {
@@ -65,8 +85,9 @@ export default function OptimizedAuthPage() {
     async (formData: FormData) => {
       setIsLoading(true);
       try {
+        // Add a longer delay to ensure loading state is visible
+        await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await signup(formData);
-
         // If registration is successful
         if (result?.success) {
           // Reset form
@@ -74,13 +95,11 @@ export default function OptimizedAuthPage() {
           setConfirmPassword("");
           setEmail("");
           setSuccessMessage(result.message || "Account created successfully!");
-
           // Switch to login after 2 seconds
           setTimeout(() => {
             switchMode("login");
             setSuccessMessage(null);
           }, 4000);
-
           setIsLoading(false);
         } else {
           // Handle errors
@@ -109,204 +128,293 @@ export default function OptimizedAuthPage() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Animated gradient background with floating blobs */}
       <Background />
-
-      <Card className="relative z-10 w-full max-w-md bg-black/40 backdrop-blur-md border border-gray-800/50 shadow-2xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Bot className="h-8 w-8 text-white" />
+      <motion.div
+        initial={{ y: 20, scale: 0.98 }}
+        animate={{ y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-md"
+      >
+        <Card className="bg-black/40 backdrop-blur-md border border-gray-800/50 shadow-2xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Bot className="h-8 w-8 text-white" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-3xl font-bold text-white mb-2">
-            {mode === "login" ? (
-              <>
-                Sign in to{" "}
-                <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                  AI Assistant
-                </span>
-              </>
-            ) : (
-              <>
-                Join{" "}
-                <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
-                  AI Assistant
-                </span>
-              </>
-            )}
-          </CardTitle>
-          <CardDescription className="text-gray-400 text-lg">
-            {mode === "login"
-              ? "Sign in to your account"
-              : "Create an account and start using AI"}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Success message display */}
-          {successMessage && (
-            <Alert className="bg-green-900/20 backdrop-blur-sm border border-green-800/50 text-green-400">
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>{successMessage}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Error message display */}
-          {error && (
-            <Alert className="bg-red-900/20 backdrop-blur-sm border border-red-800/50 text-red-400">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Login form */}
-          {mode === "login" ? (
-            <form action={handleLogin} className="space-y-6">
-              <AuthInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email Address"
-                placeholder="Enter your email"
-                value={email}
-                error={validationErrors.email}
-                required
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  validateField("email", e.target.value);
-                }}
-              />
-
-              <AuthInput
-                id="password"
-                name="password"
-                type="password"
-                label="Password"
-                placeholder="Enter your password"
-                value={password}
-                error={validationErrors.password}
-                required
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  validateField("password", e.target.value);
-                }}
-              />
-
-              <Button
-                type="submit"
-                disabled={isLoading || !isFormValid}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-          ) : (
-            // Signup form with password validation
-            <form action={handleSignup} className="space-y-6">
-              <AuthInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email Address"
-                placeholder="Enter your email"
-                value={email}
-                error={validationErrors.email}
-                required
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  validateField("email", e.target.value);
-                }}
-              />
-
-              <div className="space-y-2">
-                <AuthInput
-                  id="password"
-                  name="password"
-                  label="Password"
-                  placeholder="Create password"
-                  value={password}
-                  error={validationErrors.password}
-                  required
-                  showPasswordToggle
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    validateField("password", e.target.value);
-                    // Check password match again when main password changes
-                    if (confirmPassword) {
-                      validateField("confirmPassword", confirmPassword);
-                    }
-                  }}
-                />
-
-                {/* Always show requirements for signup */}
-                {mode === "signup" && (
-                  <PasswordStrengthIndicator strength={passwordStrength} />
+            <motion.div
+              initial={{ y: 15 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              <CardTitle className="text-3xl font-bold text-white mb-2">
+                {mode === "login" ? (
+                  <>
+                    Sign in to{" "}
+                    <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
+                      AI Assistant
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Join{" "}
+                    <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent">
+                      AI Assistant
+                    </span>
+                  </>
                 )}
-              </div>
-
-              <div className="space-y-2">
-                <AuthInput
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  label="Confirm Password"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  error={validationErrors.confirmPassword}
-                  required
-                  showPasswordToggle
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    validateField("confirmPassword", e.target.value);
-                  }}
-                />
-
-                {confirmPassword.length > 0 &&
-                  !validationErrors.confirmPassword && (
-                    <PasswordMatchIndicator isMatch={passwordMatch} />
-                  )}
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isLoading || !isFormValid}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
-          )}
-
-          <div className="text-center pt-4 border-t border-gray-800/50">
-            {/* Mode switching buttons */}
-            <p className="text-gray-400 text-sm">
-              {mode === "login" ? (
-                <>
-                  Don&apos;t have an account?{" "}
-                  <button
-                    type="button"
-                    className="text-white hover:text-blue-400 font-medium transition-colors duration-200 hover:underline"
-                    onClick={() => switchMode("signup")}
-                  >
-                    Create Account
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    className="text-white hover:text-blue-400 font-medium transition-colors duration-200 hover:underline"
-                    onClick={() => switchMode("login")}
-                  >
-                    Sign in here
-                  </button>
-                </>
+              </CardTitle>
+              <CardDescription className="text-gray-400 text-lg">
+                {mode === "login"
+                  ? "Sign in to your account"
+                  : "Create an account and start using AI"}
+              </CardDescription>
+            </motion.div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <AnimatePresence mode="wait">
+              {/* Success message display */}
+              {successMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Alert className="bg-green-900/20 backdrop-blur-sm border border-green-800/50 text-green-400">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>{successMessage}</AlertDescription>
+                  </Alert>
+                </motion.div>
               )}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Error message display */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Alert className="bg-red-900/20 backdrop-blur-sm border border-red-800/50 text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {mode === "login" ? (
+                <motion.form
+                  key="login"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    await handleLogin(formData);
+                  }}
+                  className="space-y-6"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AuthInput
+                    id="email"
+                    name="email"
+                    type="email"
+                    label="Email Address"
+                    placeholder="Enter your email"
+                    value={email}
+                    error={validationErrors.email}
+                    required
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      validateField("email", e.target.value);
+                    }}
+                  />
+                  <AuthInput
+                    id="password"
+                    name="password"
+                    type="password"
+                    label="Password"
+                    placeholder="Enter your password"
+                    value={password}
+                    error={validationErrors.password}
+                    required
+                    showPasswordToggle
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      validateField("password", e.target.value);
+                    }}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !isFormValid}
+                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Signing in...
+                        </div>
+                      ) : (
+                        "Sign In"
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.form>
+              ) : (
+                // Signup form with password validation
+                <motion.form
+                  key="signup"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    await handleSignup(formData);
+                  }}
+                  className="space-y-6"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AuthInput
+                    id="email"
+                    name="email"
+                    type="email"
+                    label="Email Address"
+                    placeholder="Enter your email"
+                    value={email}
+                    error={validationErrors.email}
+                    required
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      validateField("email", e.target.value);
+                    }}
+                  />
+                  <div className="space-y-2">
+                    <AuthInput
+                      id="password"
+                      name="password"
+                      label="Password"
+                      placeholder="Create password"
+                      value={password}
+                      error={validationErrors.password}
+                      required
+                      showPasswordToggle
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        validateField("password", e.target.value);
+                        // Check password match again when main password changes
+                        if (confirmPassword) {
+                          validateField("confirmPassword", confirmPassword);
+                        }
+                      }}
+                    />
+                    {/* Always show requirements for signup */}
+                    {mode === "signup" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <PasswordStrengthIndicator
+                          strength={passwordStrength}
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <AuthInput
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      label="Confirm Password"
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      error={validationErrors.confirmPassword}
+                      required
+                      showPasswordToggle
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        validateField("confirmPassword", e.target.value);
+                      }}
+                    />
+                    {confirmPassword.length > 0 &&
+                      !validationErrors.confirmPassword && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <PasswordMatchIndicator isMatch={passwordMatch} />
+                        </motion.div>
+                      )}
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !isFormValid}
+                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Creating Account...
+                        </div>
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+            {!isLoading && (
+              <motion.div
+                className="text-center pt-4 border-t border-gray-800/50"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                {/* Mode switching buttons */}
+                <p className="text-gray-400 text-sm">
+                  {mode === "login" ? (
+                    <>
+                      Don&apos;t have an account?{" "}
+                      <button
+                        type="button"
+                        className="text-white hover:text-blue-400 font-medium transition-colors duration-200 hover:underline"
+                        onClick={() => switchMode("signup")}
+                      >
+                        Create Account
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        className="text-white hover:text-blue-400 font-medium transition-colors duration-200 hover:underline"
+                        onClick={() => switchMode("login")}
+                      >
+                        Sign in here
+                      </button>
+                    </>
+                  )}
+                </p>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
@@ -343,7 +451,6 @@ function PasswordStrengthIndicator({
           {strength.strength === 3 && "Strong"}
         </span>
       </div>
-
       {/* Always show requirements in signup mode */}
       <div className="space-y-1">
         {Object.entries(strength.checks).map(([key, passed]) => (
