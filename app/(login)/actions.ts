@@ -195,9 +195,3 @@ export async function signup(formData: FormData): Promise<ActionResult | void> {
     };
   }
 }
-
-export async function logout() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/");
-}
