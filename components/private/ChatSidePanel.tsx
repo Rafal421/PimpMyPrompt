@@ -38,7 +38,6 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
   (props, ref) => {
     const { chats, selectChat, deleteChat, chatSidePanelActions } =
       useChatSidePanel(props);
-
     // Expose functions to parent component
     useImperativeHandle(ref, () => chatSidePanelActions, [
       chatSidePanelActions,
