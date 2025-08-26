@@ -172,7 +172,7 @@ export default function HomePage() {
           </span>
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Link href="/login">
+          <Link href="/sign-in">
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2">
               Get Started
             </Button>
@@ -229,7 +229,7 @@ export default function HomePage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
             >
-              <Link href="/login" className="w-full sm:w-auto">
+              <Link href="/sign-in" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-base sm:text-lg">
                   Get Started Free
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />

@@ -19,8 +19,14 @@ import { Background } from "@/components/ui/background"; // Assuming this exists
 import { AuthInput } from "@/components/auth/AuthInput";
 import { createClient } from "@/utils/supabase/client";
 
+interface OptimizedAuthPageProps {
+  initialMode?: "login" | "signup";
+}
+
 // Main authentication component with login/signup forms
-export default function OptimizedAuthPage() {
+export default function OptimizedAuthPage({
+  initialMode = "login",
+}: OptimizedAuthPageProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -53,10 +59,27 @@ export default function OptimizedAuthPage() {
     setConfirmPassword,
     setEmail,
     validateField,
-    switchMode,
+    switchMode: originalSwitchMode,
     handleServerResponse,
     setIsLoading,
+    setMode,
   } = useAuthForm();
+
+  // Initialize mode from prop
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode, setMode]);
+
+  // Custom switchMode that also updates URL
+  const switchMode = useCallback(
+    (newMode: "login" | "signup") => {
+      originalSwitchMode(newMode);
+      // Update URL when mode changes
+      const newPath = newMode === "login" ? "/sign-in" : "/sign-up";
+      router.push(newPath);
+    },
+    [originalSwitchMode, router]
+  );
 
   // Handle login form submission
   const handleLogin = useCallback(
