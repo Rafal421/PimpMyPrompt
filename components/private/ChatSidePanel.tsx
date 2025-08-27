@@ -1,8 +1,8 @@
 "use client";
 import React, { forwardRef, useImperativeHandle } from "react";
-import { logout } from "@/app/login/actions";
 import { useChatSidePanel } from "@/hooks/private/sidePanel/useChatSidePanel";
 import type { User, Message, Phase } from "@/lib/types";
+import { logout } from "@/app/auth/logout/actions";
 import {
   Plus,
   MessageSquare,

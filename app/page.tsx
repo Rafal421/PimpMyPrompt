@@ -4,143 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Sparkles,
-  ArrowRight,
-  Wand2,
-  Bot,
-  MessageSquare,
-  Lightbulb,
-  Cpu,
-  Award,
-  Brain,
-  Zap,
-  Search,
-  Code,
-} from "lucide-react";
+import { Sparkles, ArrowRight, Wand2, Bot } from "lucide-react";
+import { steps } from "@/lib/simpleData/steps";
+import { aiProviders } from "@/lib/simpleData/aiProviders";
 import { Background } from "@/components/ui/background";
-
-// Data for steps
-const steps = [
-  {
-    id: 1,
-    title: "Ask Your Question",
-    description:
-      "Start by typing your initial question or prompt. Don't worry about making it perfect - we'll help refine it.",
-    icon: MessageSquare,
-    color: "blue",
-    bgColor: "from-blue-500/20 to-purple-600/20",
-    borderColor: "border-blue-500/20",
-    textColor: "text-blue-400",
-    hoverColor: "hover:border-blue-500/30",
-  },
-  {
-    id: 2,
-    title: "Smart Clarification",
-    description:
-      "Our AI asks targeted follow-up questions to understand your context, goals, and preferences better.",
-    icon: Lightbulb,
-    color: "purple",
-    bgColor: "from-purple-500/20 to-pink-600/20",
-    borderColor: "border-purple-500/20",
-    textColor: "text-purple-400",
-    hoverColor: "hover:border-purple-500/30",
-  },
-  {
-    id: 3,
-    title: "Choose AI Provider",
-    description:
-      "Select the best AI provider for your specific task - each excels in different areas like coding, writing, or analysis.",
-    icon: Cpu,
-    color: "green",
-    bgColor: "from-green-500/20 to-teal-600/20",
-    borderColor: "border-green-500/20",
-    textColor: "text-green-400",
-    hoverColor: "hover:border-green-500/30",
-  },
-  {
-    id: 4,
-    title: "Get Enhanced Results",
-    description:
-      "Receive a detailed, accurate response based on your refined prompt, with the option to improve it further.",
-    icon: Award,
-    color: "orange",
-    bgColor: "from-orange-500/20 to-red-600/20",
-    borderColor: "border-orange-500/20",
-    textColor: "text-orange-400",
-    hoverColor: "hover:border-orange-500/30",
-  },
-];
-
-// Data for AI providers
-const aiProviders = [
-  {
-    name: "OpenAI",
-    description:
-      "Perfect for creative writing, storytelling, and natural conversations. Excels at generating engaging content and brainstorming ideas.",
-    icon: Brain,
-    color: "green",
-    bgColor: "bg-green-500/20",
-    textColor: "text-green-400",
-    borderColor: "border-green-500/30",
-    hoverColor: "hover:border-green-500/50",
-  },
-  {
-    name: "Anthropic",
-    description:
-      "Specializes in deep analysis, complex reasoning, and thoughtful responses. Best choice for research and detailed explanations.",
-    icon: Brain,
-    color: "orange",
-    bgColor: "bg-orange-500/20",
-    textColor: "text-orange-400",
-    borderColor: "border-orange-500/30",
-    hoverColor: "hover:border-orange-500/50",
-  },
-  {
-    name: "Google Gemini",
-    description:
-      "Advanced multimodal AI that processes text, images, and data seamlessly. Ideal for complex analysis and structured information tasks.",
-    icon: Sparkles,
-    color: "blue",
-    bgColor: "bg-blue-500/20",
-    textColor: "text-blue-400",
-    borderColor: "border-blue-500/30",
-    hoverColor: "hover:border-blue-500/50",
-  },
-  {
-    name: "Grok",
-    description:
-      "Provides real-time information with a witty, conversational style. Great for current events and engaging discussions.",
-    icon: Zap,
-    color: "purple",
-    bgColor: "bg-purple-500/20",
-    textColor: "text-purple-400",
-    borderColor: "border-purple-500/30",
-    hoverColor: "hover:border-purple-500/50",
-  },
-  {
-    name: "DeepSeek",
-    description:
-      "Engineering-focused AI that excels in coding, debugging, and technical problem-solving. Your go-to for development challenges.",
-    icon: Code,
-    color: "cyan",
-    bgColor: "bg-cyan-500/20",
-    textColor: "text-cyan-400",
-    borderColor: "border-cyan-500/30",
-    hoverColor: "hover:border-cyan-500/50",
-  },
-  {
-    name: "Perplexity",
-    description:
-      "Research-powered AI that provides accurate, fact-checked information. Perfect for academic work and factual inquiries.",
-    icon: Search,
-    color: "rose",
-    bgColor: "bg-rose-500/20",
-    textColor: "text-rose-400",
-    borderColor: "border-rose-500/30",
-    hoverColor: "hover:border-rose-500/50",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -172,7 +39,7 @@ export default function HomePage() {
           </span>
         </motion.div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Link href="/login">
+          <Link href="/sign-in">
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2">
               Get Started
             </Button>
@@ -229,7 +96,7 @@ export default function HomePage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
             >
-              <Link href="/login" className="w-full sm:w-auto">
+              <Link href="/sign-in" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-base sm:text-lg">
                   Get Started Free
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
