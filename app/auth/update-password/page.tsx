@@ -110,7 +110,7 @@ export default function UpdatePasswordPage() {
           window.location.href = "/sign-in";
         }, 2000);
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "An unexpected error occurred. Please try again." });
     } finally {
       setIsLoading(false);
@@ -152,7 +152,7 @@ export default function UpdatePasswordPage() {
             <Alert className="bg-yellow-900/20 border-yellow-800/50 text-yellow-400">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                If you leave this page, your reset link will expire and you'll need to request a new one.
+                If you leave this page, your reset link will expire and you&apos;ll need to request a new one.
               </AlertDescription>
             </Alert>
 

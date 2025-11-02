@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
 import { AuthInput } from "./AuthInput";
 import { validatePassword } from "@/lib/validation";
 
@@ -23,8 +23,6 @@ export function PasswordValidation({
   showValidation = true,
   showConfirmPassword = true,
 }: PasswordValidationProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPasswordField, setShowConfirmPasswordField] = useState(false);
   const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const [hasStartedTypingConfirm, setHasStartedTypingConfirm] = useState(false);
 
@@ -34,11 +32,6 @@ export function PasswordValidation({
   );
 
   const passwordStrength = useMemo(() => validatePassword(password), [password]);
-
-  const isValid = useMemo(() => {
-    if (!showConfirmPassword) return passwordStrength.isValid;
-    return passwordStrength.isValid && passwordMatch;
-  }, [passwordStrength.isValid, passwordMatch, showConfirmPassword]);
 
   const handlePasswordChange = (newPassword: string) => {
     if (newPassword.length > 0 && !hasStartedTyping) setHasStartedTyping(true);

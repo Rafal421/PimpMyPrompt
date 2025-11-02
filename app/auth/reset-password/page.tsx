@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
           window.location.href = "/sign-in";
         }, 2000);
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: "error",
         text: "An unexpected error occurred. Please try again.",

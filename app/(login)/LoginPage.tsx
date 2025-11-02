@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2, Bot, Check } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Bot } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
 import { Background } from "@/components/ui/background"; // Assuming this exists and provides the animated background
 import { AuthInput } from "@/components/auth/AuthInput";
@@ -53,8 +53,6 @@ export default function OptimizedAuthPage({
     password,
     confirmPassword,
     email,
-    passwordMatch,
-    passwordStrength,
     isFormValid,
     setPassword,
     setConfirmPassword,
