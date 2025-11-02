@@ -1,6 +1,5 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest } from "next/server";
-
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -12,31 +11,19 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/";
 
   const supabase = await createClient();
-  if (token_hash && type) {
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash,
-    });
 
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      if (type === "recovery") {
-        redirect("/auth/update-password");
-      }
-      redirect(next);
+      redirect(type === "recovery" ? "/auth/update-password" : next);
     }
   }
 
-  // Handle code verification (older format or PKCE flow)
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
     if (!error) {
-      // If this is a password reset flow, redirect to update password
-      if (next.includes("update-password")) {
-        redirect("/auth/update-password");
-      }
-      // Otherwise redirect to the specified next URL or default to private page
-      redirect(next === "/" ? "/private" : next);
+      const isPasswordReset = next.includes("update-password") || next === "/";
+      redirect(isPasswordReset ? "/auth/update-password" : next);
     }
   }
 

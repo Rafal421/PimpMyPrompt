@@ -44,31 +44,22 @@ export default function UpdatePasswordPage() {
     setIsLoading(true);
     setMessage(null);
 
-    // Validate passwords match using the validation logic
     if (!passwordMatch) {
       setMessage({ type: "error", text: "Passwords do not match." });
       setIsLoading(false);
       return;
     }
 
-    // Validate password strength
     if (!passwordStrength.isValid) {
-      setMessage({
-        type: "error",
-        text: "Password must meet all requirements.",
-      });
+      setMessage({ type: "error", text: "Password must meet all requirements." });
       setIsLoading(false);
       return;
     }
 
     try {
-      // Update the password (user should already be authenticated via confirm route)
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      });
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        console.error("Update password error:", error);
         setMessage({ type: "error", text: error.message });
       } else {
         setMessage({
@@ -76,21 +67,13 @@ export default function UpdatePasswordPage() {
           text: "Password updated successfully! Please sign in with your new password.",
         });
 
-        // After successful password update, sign out the user and redirect to login
         setTimeout(async () => {
-          // Sign out the user to ensure they need to log in with new password
           await supabase.auth.signOut();
-
-          // Redirect to sign-in page
           window.location.href = "/sign-in";
         }, 2000);
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
-      setMessage({
-        type: "error",
-        text: "An unexpected error occurred. Please try again.",
-      });
+      setMessage({ type: "error", text: "An unexpected error occurred. Please try again." });
     } finally {
       setIsLoading(false);
     }

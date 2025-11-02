@@ -38,9 +38,7 @@ export default function ResetPasswordPage() {
     setMessage(null);
 
     try {
-      // Get the current origin (works for both localhost and production)
       const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(
           "/auth/update-password"
@@ -48,23 +46,24 @@ export default function ResetPasswordPage() {
       });
 
       if (error) {
-        console.error("Reset password error:", error);
         setMessage({ type: "error", text: error.message });
+        setIsLoading(false);
       } else {
-        console.log("Password reset email sent to:", email);
         setMessage({
           type: "success",
           text: "Password reset link has been sent.",
         });
         setEmail("");
+
+        setTimeout(() => {
+          window.location.href = "/sign-in";
+        }, 2000);
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
       setMessage({
         type: "error",
         text: "An unexpected error occurred. Please try again.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
