@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,45 @@ export default function UpdatePasswordPage() {
     text: string;
   } | null>(null);
 
+  const isPasswordUpdated = useRef(false);
   const supabase = createClient();
   const router = useRouter();
+
+  useEffect(() => {
+    const signOutAndRedirect = async () => {
+      if (!isPasswordUpdated.current) {
+        await supabase.auth.signOut();
+        router.replace("/sign-in");
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      if (!isPasswordUpdated.current) {
+        supabase.auth.signOut();
+      }
+    };
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden && !isPasswordUpdated.current) {
+        await signOutAndRedirect();
+      }
+    };
+
+    const handlePopState = async () => {
+      await signOutAndRedirect();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('popstate', handlePopState);
+    window.history.pushState(null, '', window.location.href);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [supabase.auth, router]);
 
   // Password validation using the shared validation logic
   const passwordStrength = validatePassword(password);
@@ -62,6 +99,7 @@ export default function UpdatePasswordPage() {
       if (error) {
         setMessage({ type: "error", text: error.message });
       } else {
+        isPasswordUpdated.current = true;
         setMessage({
           type: "success",
           text: "Password updated successfully! Please sign in with your new password.",
@@ -111,6 +149,13 @@ export default function UpdatePasswordPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            <Alert className="bg-yellow-900/20 border-yellow-800/50 text-yellow-400">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                If you leave this page, your reset link will expire and you'll need to request a new one.
+              </AlertDescription>
+            </Alert>
+
             <AnimatePresence mode="wait">
               {message && (
                 <motion.div
