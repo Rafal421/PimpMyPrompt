@@ -13,30 +13,25 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Check, Bot, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Bot } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
-import { Background } from "@/components/ui/background"; // Assuming this exists and provides the animated background
+import { Background } from "@/components/ui/background";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { PasswordValidation } from "@/components/auth/PasswordValidation";
 import { createClient } from "@/utils/supabase/client";
 
 interface OptimizedAuthPageProps {
   initialMode?: "login" | "signup";
 }
 
-// Main authentication component with login/signup forms
-export default function OptimizedAuthPage({
-  initialMode = "login",
-}: OptimizedAuthPageProps) {
+export default function OptimizedAuthPage({ initialMode = "login" }: OptimizedAuthPageProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         router.replace("/private");
       }
@@ -52,8 +47,6 @@ export default function OptimizedAuthPage({
     password,
     confirmPassword,
     email,
-    passwordMatch,
-    passwordStrength,
     isFormValid,
     setPassword,
     setConfirmPassword,
@@ -65,97 +58,79 @@ export default function OptimizedAuthPage({
     setMode,
   } = useAuthForm();
 
-  // Initialize mode from prop
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode, setMode]);
 
-  // Custom switchMode that also updates URL
   const switchMode = useCallback(
     (newMode: "login" | "signup") => {
       originalSwitchMode(newMode);
-      // Update URL when mode changes
       const newPath = newMode === "login" ? "/sign-in" : "/sign-up";
       router.push(newPath);
     },
     [originalSwitchMode, router]
   );
 
-  // Handle login form submission
   const handleLogin = useCallback(
     async (formData: FormData) => {
       setIsLoading(true);
       try {
-        // Add a longer delay to ensure loading state is visible
         await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await login(formData);
         handleServerResponse(result);
       } catch (error) {
-        // Check if error is a Next.js redirect (successful login)
         if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-          // Don't handle redirect as error - it means successful login
           return;
         }
-        console.error("Login error:", error);
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
     [setIsLoading, handleServerResponse]
   );
 
-  // Handle signup form submission with success flow
   const handleSignup = useCallback(
     async (formData: FormData) => {
       setIsLoading(true);
       try {
-        // Add a longer delay to ensure loading state is visible
         await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await signup(formData);
-        // If registration is successful
         if (result?.success) {
-          // Reset form
           setPassword("");
           setConfirmPassword("");
           setEmail("");
           setSuccessMessage(result.message || "Account created successfully!");
-          // Switch to login after 2 seconds
           setTimeout(() => {
             switchMode("login");
             setSuccessMessage(null);
           }, 4000);
           setIsLoading(false);
         } else {
-          // Handle errors
           handleServerResponse(result);
         }
       } catch (error) {
-        // Check if error is a Next.js redirect
         if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-          // Don't handle redirect as error
           return;
         }
-        console.error("Signup error:", error);
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
-    [
-      setIsLoading,
-      handleServerResponse,
-      setPassword,
-      setConfirmPassword,
-      setEmail,
-      setSuccessMessage,
-      switchMode,
-    ]
+    [setIsLoading, handleServerResponse, setPassword, setConfirmPassword, setEmail, setSuccessMessage, switchMode]
   );
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 overflow-hidden relative">
       <Background />
       <motion.div
-        initial={{ y: 20, scale: 0.98 }}
-        animate={{ y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        initial={{ y: 40, scale: 0.95, opacity: 0 }}
+        animate={{
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          transition: {
+            duration: 1.8,
+            ease: [0.23, 1, 0.32, 1],
+          },
+        }}
         className="relative z-10 w-full max-w-md"
       >
         <Card className="bg-black/40 backdrop-blur-md border border-gray-800/50 shadow-2xl">
@@ -235,10 +210,26 @@ export default function OptimizedAuthPage({
                     await handleLogin(formData);
                   }}
                   className="space-y-6"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: {
+                      duration: 1.8,
+                      ease: [0.23, 1, 0.32, 1],
+                      staggerChildren: 0.15,
+                    },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -40,
+                    scale: 0.95,
+                    transition: {
+                      duration: 1.2,
+                      ease: [0.23, 1, 0.32, 1],
+                    },
+                  }}
                 >
                   <AuthInput
                     id="email"
@@ -269,6 +260,15 @@ export default function OptimizedAuthPage({
                       validateField("password", e.target.value);
                     }}
                   />
+
+                  <div className="text-right">
+                    <a
+                      href="/auth/reset-password"
+                      className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -291,7 +291,6 @@ export default function OptimizedAuthPage({
                   </motion.div>
                 </motion.form>
               ) : (
-                // Signup form with password validation
                 <motion.form
                   key="signup"
                   onSubmit={async (e) => {
@@ -300,10 +299,26 @@ export default function OptimizedAuthPage({
                     await handleSignup(formData);
                   }}
                   className="space-y-6"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: {
+                      duration: 1.8,
+                      ease: [0.23, 1, 0.32, 1],
+                      staggerChildren: 0.15,
+                    },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -40,
+                    scale: 0.95,
+                    transition: {
+                      duration: 1.2,
+                      ease: [0.23, 1, 0.32, 1],
+                    },
+                  }}
                 >
                   <AuthInput
                     id="email"
@@ -319,64 +334,24 @@ export default function OptimizedAuthPage({
                       validateField("email", e.target.value);
                     }}
                   />
-                  <div className="space-y-2">
-                    <AuthInput
-                      id="password"
-                      name="password"
-                      label="Password"
-                      placeholder="Create password"
-                      value={password}
-                      error={validationErrors.password}
-                      required
-                      showPasswordToggle
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        validateField("password", e.target.value);
-                        // Check password match again when main password changes
-                        if (confirmPassword) {
-                          validateField("confirmPassword", confirmPassword);
-                        }
-                      }}
-                    />
-                    {/* Always show requirements for signup */}
-                    {mode === "signup" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <PasswordStrengthIndicator
-                          strength={passwordStrength}
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <AuthInput
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      label="Confirm Password"
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      error={validationErrors.confirmPassword}
-                      required
-                      showPasswordToggle
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        validateField("confirmPassword", e.target.value);
-                      }}
-                    />
-                    {confirmPassword.length > 0 &&
-                      !validationErrors.confirmPassword && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <PasswordMatchIndicator isMatch={passwordMatch} />
-                        </motion.div>
-                      )}
-                  </div>
+
+                  <PasswordValidation
+                    password={password}
+                    confirmPassword={confirmPassword}
+                    onPasswordChange={(newPassword) => {
+                      setPassword(newPassword);
+                      validateField("password", newPassword);
+                      if (confirmPassword) {
+                        validateField("confirmPassword", confirmPassword);
+                      }
+                    }}
+                    onConfirmPasswordChange={(newConfirmPassword) => {
+                      setConfirmPassword(newConfirmPassword);
+                      validateField("confirmPassword", newConfirmPassword);
+                    }}
+                    showValidation={true}
+                    showConfirmPassword={true}
+                  />
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -407,7 +382,6 @@ export default function OptimizedAuthPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
               >
-                {/* Mode switching buttons */}
                 <p className="text-gray-400 text-sm">
                   {mode === "login" ? (
                     <>
@@ -440,102 +414,4 @@ export default function OptimizedAuthPage({
       </motion.div>
     </div>
   );
-}
-
-// Password strength indicator component
-function PasswordStrengthIndicator({
-  strength,
-}: {
-  strength: { strength: number; checks: Record<string, boolean> };
-}) {
-  return (
-    <div className="mt-2 space-y-2">
-      <div className="flex items-center gap-2 text-xs">
-        <div className="flex gap-1">
-          {[1, 2, 3].map((level) => (
-            <div
-              key={level}
-              className={`h-2 w-8 rounded-full transition-colors duration-200 ${
-                strength.strength >= level
-                  ? strength.strength === 1
-                    ? "bg-red-400"
-                    : strength.strength === 2
-                    ? "bg-yellow-400"
-                    : "bg-green-400"
-                  : "bg-gray-600"
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-gray-400">
-          {strength.strength === 0 && "Enter password"}
-          {strength.strength === 1 && "Weak"}
-          {strength.strength === 2 && "Medium"}
-          {strength.strength === 3 && "Strong"}
-        </span>
-      </div>
-      {/* Always show requirements in signup mode */}
-      <div className="space-y-1">
-        {Object.entries(strength.checks).map(([key, passed]) => (
-          <PasswordRequirement
-            key={key}
-            passed={passed as boolean}
-            text={getRequirementText(key)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PasswordRequirement({
-  passed,
-  text,
-}: {
-  passed: boolean;
-  text: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      {passed ? (
-        <Check className="h-3 w-3 text-green-400" />
-      ) : (
-        <AlertCircle className="h-3 w-3 text-gray-500" />
-      )}
-      <span className={passed ? "text-green-400" : "text-gray-500"}>
-        {text}
-      </span>
-    </div>
-  );
-}
-
-function PasswordMatchIndicator({ isMatch }: { isMatch: boolean }) {
-  return (
-    <div className="flex items-center gap-2 text-xs mt-2">
-      {isMatch ? (
-        <>
-          <Check className="h-3 w-3 text-green-400" />
-          <span className="text-green-400">Passwords match</span>
-        </>
-      ) : (
-        <>
-          <AlertCircle className="h-3 w-3 text-red-400" />
-          <span className="text-red-400">Passwords don&apos;t match</span>
-        </>
-      )}
-    </div>
-  );
-}
-
-function getRequirementText(key: string): string {
-  switch (key) {
-    case "length":
-      return "At least 6 characters";
-    case "uppercase":
-      return "At least 1 uppercase letter";
-    case "special":
-      return "At least 1 special character";
-    default:
-      return "";
-  }
 }
