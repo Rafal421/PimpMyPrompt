@@ -93,28 +93,20 @@ export default function UpdatePasswordPage() {
       return;
     }
 
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
+    const { updatePassword } = await import("@/lib/services/auth/authService");
+    const result = await updatePassword(password);
 
-      if (error) {
-        setMessage({ type: "error", text: error.message });
-      } else {
-        isPasswordUpdated.current = true;
-        setMessage({
-          type: "success",
-          text: "Password updated successfully! Please sign in with your new password.",
-        });
-
-        setTimeout(async () => {
-          await supabase.auth.signOut();
-          window.location.href = "/sign-in";
-        }, 2000);
-      }
-    } catch {
-      setMessage({ type: "error", text: "An unexpected error occurred. Please try again." });
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      isPasswordUpdated.current = true;
+      setMessage({ type: "success", text: result.message || "Password updated successfully!" });
+      setTimeout(() => {
+        window.location.href = "/sign-in";
+      }, 2000);
+    } else {
+      setMessage({ type: "error", text: result.error || "An error occurred." });
     }
+
+    setIsLoading(false);
   };
 
   return (

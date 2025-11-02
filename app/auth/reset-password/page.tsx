@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClient } from "@/utils/supabase/client";
+import { resetPassword } from "@/lib/services/auth/authService";
 import { Button } from "@/components/ui/button";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { Background } from "@/components/ui/background";
@@ -30,42 +30,28 @@ export default function ResetPasswordPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const supabase = createClient();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage(null);
 
-    try {
-      const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(
-          "/auth/update-password"
-        )}`,
-      });
+    const result = await resetPassword(email);
 
-      if (error) {
-        setMessage({ type: "error", text: error.message });
-        setIsLoading(false);
-      } else {
-        setMessage({
-          type: "success",
-          text: "Password reset link has been sent.",
-        });
-        setEmail("");
-
-        setTimeout(() => {
-          window.location.href = "/sign-in";
-        }, 2000);
-      }
-    } catch {
+    if (result.success) {
       setMessage({
-        type: "error",
-        text: "An unexpected error occurred. Please try again.",
+        type: "success",
+        text: result.message || "Password reset link has been sent.",
       });
-      setIsLoading(false);
+      setEmail("");
+      setTimeout(() => {
+        window.location.href = "/sign-in";
+      }, 2000);
+    } else {
+      setMessage({ type: "error", text: result.error || "An error occurred." });
     }
+
+    setIsLoading(false);
   };
 
   return (

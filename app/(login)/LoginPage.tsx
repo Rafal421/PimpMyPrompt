@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2, Bot } from "lucide-react";
 import { useAuthForm } from "@/hooks/auth/useAuthForm";
-import { Background } from "@/components/ui/background"; // Assuming this exists and provides the animated background
+import { Background } from "@/components/ui/background";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { PasswordValidation } from "@/components/auth/PasswordValidation";
 import { createClient } from "@/utils/supabase/client";
@@ -24,20 +24,14 @@ interface OptimizedAuthPageProps {
   initialMode?: "login" | "signup";
 }
 
-// Main authentication component with login/signup forms
-export default function OptimizedAuthPage({
-  initialMode = "login",
-}: OptimizedAuthPageProps) {
+export default function OptimizedAuthPage({ initialMode = "login" }: OptimizedAuthPageProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         router.replace("/private");
       }
@@ -64,88 +58,63 @@ export default function OptimizedAuthPage({
     setMode,
   } = useAuthForm();
 
-  // Initialize mode from prop
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode, setMode]);
 
-  // Custom switchMode that also updates URL
   const switchMode = useCallback(
     (newMode: "login" | "signup") => {
       originalSwitchMode(newMode);
-      // Update URL when mode changes
       const newPath = newMode === "login" ? "/sign-in" : "/sign-up";
       router.push(newPath);
     },
     [originalSwitchMode, router]
   );
 
-  // Handle login form submission
   const handleLogin = useCallback(
     async (formData: FormData) => {
       setIsLoading(true);
       try {
-        // Add a longer delay to ensure loading state is visible
         await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await login(formData);
         handleServerResponse(result);
       } catch (error) {
-        // Check if error is a Next.js redirect (successful login)
         if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-          // Don't handle redirect as error - it means successful login
           return;
         }
-        console.error("Login error:", error);
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
     [setIsLoading, handleServerResponse]
   );
 
-  // Handle signup form submission with success flow
   const handleSignup = useCallback(
     async (formData: FormData) => {
       setIsLoading(true);
       try {
-        // Add a longer delay to ensure loading state is visible
         await new Promise((resolve) => setTimeout(resolve, 2500));
         const result = await signup(formData);
-        // If registration is successful
         if (result?.success) {
-          // Reset form
           setPassword("");
           setConfirmPassword("");
           setEmail("");
           setSuccessMessage(result.message || "Account created successfully!");
-          // Switch to login after 2 seconds
           setTimeout(() => {
             switchMode("login");
             setSuccessMessage(null);
           }, 4000);
           setIsLoading(false);
         } else {
-          // Handle errors
           handleServerResponse(result);
         }
       } catch (error) {
-        // Check if error is a Next.js redirect
         if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-          // Don't handle redirect as error
           return;
         }
-        console.error("Signup error:", error);
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
-    [
-      setIsLoading,
-      handleServerResponse,
-      setPassword,
-      setConfirmPassword,
-      setEmail,
-      setSuccessMessage,
-      switchMode,
-    ]
+    [setIsLoading, handleServerResponse, setPassword, setConfirmPassword, setEmail, setSuccessMessage, switchMode]
   );
 
   return (
@@ -292,7 +261,6 @@ export default function OptimizedAuthPage({
                     }}
                   />
 
-                  {/* Forgot Password Link */}
                   <div className="text-right">
                     <a
                       href="/auth/reset-password"
@@ -323,7 +291,6 @@ export default function OptimizedAuthPage({
                   </motion.div>
                 </motion.form>
               ) : (
-                // Signup form with password validation
                 <motion.form
                   key="signup"
                   onSubmit={async (e) => {
@@ -374,7 +341,6 @@ export default function OptimizedAuthPage({
                     onPasswordChange={(newPassword) => {
                       setPassword(newPassword);
                       validateField("password", newPassword);
-                      // Check password match again when main password changes
                       if (confirmPassword) {
                         validateField("confirmPassword", confirmPassword);
                       }
@@ -416,7 +382,6 @@ export default function OptimizedAuthPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
               >
-                {/* Mode switching buttons */}
                 <p className="text-gray-400 text-sm">
                   {mode === "login" ? (
                     <>
