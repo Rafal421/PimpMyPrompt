@@ -1,53 +1,15 @@
 // Configuration for AI models and providers
 
-// Best models for asking clarifying questions (fixed selection)
-export const QUESTION_PROVIDERS = [
-  {
-    id: "anthropic",
-    name: "Claude",
-    modelName: "3.5 Sonnet",
-    model: "claude-3-5-sonnet-20241022",
-    endpoint: "/api/chat/anthropic",
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    modelName: "2.5 flash lite",
-    model: "gemini-2.5-flash-lite-preview-06-17",
-    endpoint: "/api/chat/gemini",
-  },
-  {
-    id: "openai",
-    name: "OpenAI",
-    modelName: "4o mini",
-    model: "gpt-4o-mini",
-    endpoint: "/api/chat/openai",
-  },
-  {
-    id: "deepseek",
-    name: "DeepSeek",
-    modelName: "Chat",
-    model: "deepseek-chat",
-    endpoint: "/api/chat/deepseek",
-  },
-  {
-    id: "grok",
-    name: "Grok",
-    modelName: "Grok 3 Mini",
-    model: "grok-3-mini",
-    endpoint: "/api/chat/grok",
-  },
-  {
-    id: "perplexity",
-    name: "Perplexity",
-    modelName: "Sonar",
-    model: "sonar",
-    endpoint: "/api/chat/perplexity",
-  },
-];
+export const QUESTION_PROVIDER = {
+  id: "openai",
+  name: "OpenAI",
+  modelName: "4o mini",
+  model: "gpt-4o-mini",
+  endpoint: "/api/chat/openai",
+} as const;
 
 // Default provider for asking questions (best overall)
-export const DEFAULT_QUESTION_PROVIDER = "openai";
+export const DEFAULT_QUESTION_PROVIDER = "openai" as const;
 
 // Available providers for final responses (shown as tiles after questions)
 export const RESPONSE_PROVIDERS = [
@@ -56,8 +18,23 @@ export const RESPONSE_PROVIDERS = [
     name: "Anthropic",
     icon: "🧠",
     endpoint: "/api/chat/anthropic",
-    recommendedModel: "claude-3-5-sonnet-20241022",
+    recommendedModel: "claude-sonnet-4-5-20250929",
     models: [
+      {
+        id: "claude-sonnet-4-5-20250929",
+        name: "Claude Sonnet 4.5",
+        description: "Our smartest model for complex agents and coding",
+      },
+      {
+        id: "claude-haiku-4-5-20251001",
+        name: "Claude Haiku 4.5",
+        description: "Our fastest model with near-frontier intelligence",
+      },
+      {
+        id: "claude-opus-4-1-20250805",
+        name: "Claude Opus 4.1",
+        description: "Exceptional model for specialized reasoning tasks",
+      },
       {
         id: "claude-opus-4-20250514",
         name: "Opus 4",
@@ -72,26 +49,6 @@ export const RESPONSE_PROVIDERS = [
         id: "claude-3-7-sonnet-20250219",
         name: " Sonnet 3.7",
         description: "Improved version - more precise",
-      },
-      {
-        id: "claude-3-5-sonnet-20241022",
-        name: "Sonnet 3.5 v2",
-        description: "Proven model for daily work",
-      },
-      {
-        id: "claude-3-5-sonnet-20240620",
-        name: "Claude Sonnet 3.5",
-        description: "Older 3.5 version - still good",
-      },
-      {
-        id: "claude-3-5-haiku-20241022",
-        name: "Haiku 3.5",
-        description: "Very fast - for simple tasks",
-      },
-      {
-        id: "claude-3-haiku-20240307",
-        name: "Haiku 3",
-        description: "Basic model - cheap and fast",
       },
     ],
   },
@@ -264,5 +221,5 @@ export function getAllProviderIds() {
 
 // Get question provider config by ID
 export function getQuestionProviderById(providerId: string) {
-  return QUESTION_PROVIDERS.find((provider) => provider.id === providerId);
+  return QUESTION_PROVIDER.id === providerId ? QUESTION_PROVIDER : undefined;
 }

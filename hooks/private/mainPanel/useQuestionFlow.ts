@@ -9,6 +9,7 @@ interface QuestionFlowLogicProps {
   chatId: string | null;
   chatSidePanelRef: React.RefObject<ChatSidePanelHandle | null>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  phase: Phase;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   generateImprovedPrompt: () => Promise<void>;
   setOriginalQuestion: React.Dispatch<React.SetStateAction<string>>;
@@ -28,6 +29,7 @@ export const createQuestionFlow = ({
   chatId,
   chatSidePanelRef,
   setMessages,
+  phase,
   setPhase,
   generateImprovedPrompt,
   setOriginalQuestion,
@@ -125,6 +127,10 @@ export const createQuestionFlow = ({
   const handleAnswerSubmit = async (answer: string) => {
     if (!chatId || !answer.trim()) return;
 
+    if (phase === "improving") return;
+
+    setPhase("improving");
+
     // Add user answer to chat
     setMessages((prev) => [...prev, { from: "user", text: answer }]);
     await chatSidePanelRef.current?.sendMessage(chatId, "user", answer);
@@ -132,8 +138,6 @@ export const createQuestionFlow = ({
     const newAnswers = [...clarifyingAnswers, answer];
     setClarifyingAnswers(newAnswers);
     setCustomAnswer("");
-
-    setPhase("improving"); // Temporary phase to hide QuestionBlock
 
     setTimeout(() => {
       // Proceed to next question after animation
