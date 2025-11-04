@@ -77,6 +77,7 @@ export const useChat = ({
     chatId,
     chatSidePanelRef,
     setMessages,
+    phase,
     setPhase,
     generateImprovedPrompt,
     setOriginalQuestion,

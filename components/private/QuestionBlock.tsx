@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 
 interface QuestionBlockProps {
@@ -16,9 +17,19 @@ export default function QuestionBlock({
   onAnswerSubmit,
   isBotResponding,
 }: QuestionBlockProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCustomAnswerSubmit = () => {
-    if (customAnswer.trim()) {
+    if (customAnswer.trim() && !isSubmitting) {
+      setIsSubmitting(true);
       onAnswerSubmit(customAnswer);
+    }
+  };
+
+  const handleOptionClick = (option: string) => {
+    if (!isSubmitting) {
+      setIsSubmitting(true);
+      onAnswerSubmit(option);
     }
   };
 
@@ -42,9 +53,9 @@ export default function QuestionBlock({
         {currentQuestionOptions.map((option, idx) => (
           <button
             key={idx}
-            onClick={() => onAnswerSubmit(option)}
+            onClick={() => handleOptionClick(option)}
             className="w-full text-left p-3 sm:p-4 bg-gray-900/50 backdrop-blur-sm hover:bg-gray-800/50 border border-gray-800/50 hover:border-gray-700/50 rounded-lg sm:rounded-xl transition-all duration-300 disabled:opacity-50 group touch-target"
-            disabled={isBotResponding}
+            disabled={isBotResponding || isSubmitting}
           >
             <div className="flex items-start gap-3 sm:gap-4">
               <span className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -75,7 +86,7 @@ export default function QuestionBlock({
               rows={1}
               className="flex-1 px-3 py-3 sm:px-4 bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 hover:border-gray-700/50 transition-all duration-200 text-base resize-none overflow-hidden min-h-[48px]"
               placeholder="Your answer..."
-              disabled={isBotResponding}
+              disabled={isBotResponding || isSubmitting}
               style={{
                 height: "auto",
                 minHeight: "48px",
@@ -89,7 +100,7 @@ export default function QuestionBlock({
             <button
               onClick={handleCustomAnswerSubmit}
               className="px-4 py-3 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg sm:rounded-xl transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold shadow-lg hover:shadow-xl touch-target text-sm sm:text-base"
-              disabled={isBotResponding || !customAnswer.trim()}
+              disabled={isBotResponding || isSubmitting || !customAnswer.trim()}
             >
               <Send className="w-3 h-3 sm:w-4 sm:h-4" />
               Send

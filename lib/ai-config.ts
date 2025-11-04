@@ -18,7 +18,7 @@ export const RESPONSE_PROVIDERS = [
     name: "Anthropic",
     icon: "🧠",
     endpoint: "/api/chat/anthropic",
-    recommendedModel: "claude-3-5-sonnet-20241022",
+    recommendedModel: "claude-sonnet-4-5-20250929",
     models: [
       {
         id: "claude-sonnet-4-5-20250929",
