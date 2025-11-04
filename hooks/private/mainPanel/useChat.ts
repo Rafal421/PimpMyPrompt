@@ -6,7 +6,7 @@ import { useAutoScroll } from "@/hooks/private/mainPanel/useAutoScroll";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
 import {
   DEFAULT_QUESTION_PROVIDER,
-  getQuestionProviderById,
+  QUESTION_PROVIDER,
 } from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
 import { useUsageLimit } from "@/hooks/private/mainPanel/useUsageLimit";
@@ -139,8 +139,7 @@ export const useChat = ({
 
     let currentChatId = chatId;
     if (!currentChatId) {
-      const questionProvider = getQuestionProviderById(provider);
-      const currentModel = questionProvider?.model || DEFAULT_MODEL;
+      const currentModel = QUESTION_PROVIDER.model || DEFAULT_MODEL;
       currentChatId =
         (await chatSidePanelRef.current?.createChat(input, currentModel)) ||
         null;
@@ -224,8 +223,6 @@ export const useChat = ({
     isBotResponding,
     chatId,
     setChatId,
-    provider,
-    setProvider,
     phase,
     setPhase,
     questionsData,
@@ -237,7 +234,6 @@ export const useChat = ({
     handleSend,
     handleAnswerSubmit: wrappedHandleAnswerSubmit,
     handleModelSelect: wrappedHandleModelSelect,
-    // Usage limit info
     canMakeRequest,
     requestsRemaining,
     getTimeUntilReset,

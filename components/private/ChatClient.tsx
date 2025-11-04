@@ -5,7 +5,6 @@ import type { User } from "@/lib/types";
 import ChatSidePanel from "@/components/private/ChatSidePanel";
 import QuestionBlock from "@/components/private/QuestionBlock";
 import ChatMessages from "@/components/private/ChatMessages";
-import ProviderSelector from "@/components/private/ProviderSelector";
 import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
@@ -50,8 +49,6 @@ export default function ChatClient({ user }: { user: User }) {
     isBotResponding,
     chatId,
     setChatId,
-    provider,
-    setProvider,
     phase,
     setPhase,
     questionsData,
@@ -145,14 +142,11 @@ export default function ChatClient({ user }: { user: User }) {
               </div>
             </button>
 
-            {/* Provider Selection - Responsive */}
+            {/* Provider Selection - Using OpenAI only */}
             <div className="ml-auto flex items-center gap-2">
-              <ProviderSelector
-                provider={provider}
-                setProvider={setProvider}
-                phase={phase}
-                defaultModel={DEFAULT_MODEL}
-              />
+              <div className="text-xs text-gray-400 bg-gray-900/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-700/50 font-mono">
+                OpenAI GPT-4o Mini
+              </div>
             </div>
           </div>
         </div>
