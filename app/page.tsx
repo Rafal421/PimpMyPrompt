@@ -4,10 +4,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ArrowRight, Wand2, Bot } from "lucide-react";
+import { Wand2, Bot } from "lucide-react";
 import { steps } from "@/lib/simpleData/steps";
 import { aiProviders } from "@/lib/simpleData/aiProviders";
 import { Background } from "@/components/ui/background";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 export default function HomePage() {
   return (
@@ -59,9 +60,7 @@ export default function HomePage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-2xl">
-                <Wand2 className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-              </div>
+              <DotLottieReact src="/MainAnimation.json" loop autoplay />
             </motion.div>
 
             {/* Main heading */}
@@ -88,28 +87,6 @@ export default function HomePage() {
                 Get better results, faster responses, and more creative outputs.
               </span>
             </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
-            >
-              <Link href="/sign-in" className="w-full sm:w-auto">
-                <Button className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-base sm:text-lg">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </Link>
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 border-2 border-gray-600 text-white hover:bg-white/10 rounded-xl font-semibold transition-all duration-300 text-base sm:text-lg backdrop-blur-sm bg-transparent"
-              >
-                Watch Demo
-                <Sparkles className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </motion.div>
           </div>
         </div>
 
