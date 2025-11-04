@@ -13,8 +13,6 @@ import { useChat } from "@/hooks/private/mainPanel/useChat";
 import { useErrorToast } from "@/hooks/private/mainPanel/useErrorToast";
 import { Menu, X } from "lucide-react";
 
-const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
-
 export default function ChatClient({ user }: { user: User }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);

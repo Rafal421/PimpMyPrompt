@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Wand2, Bot } from "lucide-react";
+import { Bot } from "lucide-react";
 import { steps } from "@/lib/simpleData/steps";
 import { aiProviders } from "@/lib/simpleData/aiProviders";
 import { Background } from "@/components/ui/background";
