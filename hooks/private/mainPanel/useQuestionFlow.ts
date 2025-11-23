@@ -69,14 +69,19 @@ export const createQuestionFlow = ({
 
         // Add typing animation for first question with delay to show it after user message
         setTimeout(() => {
-          addTypingMessage(setMessages, firstQuestion, () => {
-            setTimeout(() => {
-              setPhase("clarifying");
-            }, 300);
-          }, () => {
-            // Turn off loading when typing animation starts
-            setIsBotResponding(false);
-          });
+          addTypingMessage(
+            setMessages,
+            firstQuestion,
+            () => {
+              setTimeout(() => {
+                setPhase("clarifying");
+              }, 300);
+            },
+            () => {
+              // Turn off loading when typing animation starts
+              setIsBotResponding(false);
+            }
+          );
         }, 500);
 
         if (currentChatId) {
@@ -110,14 +115,19 @@ export const createQuestionFlow = ({
       const nextQuestion = questionsData[nextIndex].question;
 
       // Add typing animation for next question
-      addTypingMessage(setMessages, nextQuestion, () => {
-        setTimeout(() => {
-          setPhase("clarifying");
-        }, 300);
-      }, () => {
-        // Turn off loading when typing animation starts
-        setIsBotResponding(false);
-      });
+      addTypingMessage(
+        setMessages,
+        nextQuestion,
+        () => {
+          setTimeout(() => {
+            setPhase("clarifying");
+          }, 300);
+        },
+        () => {
+          // Turn off loading when typing animation starts
+          setIsBotResponding(false);
+        }
+      );
 
       // Send next question to chat
       if (chatId) {
@@ -148,9 +158,8 @@ export const createQuestionFlow = ({
     setCustomAnswer("");
 
     setTimeout(() => {
-      // Proceed to next question after animation + additional 1s delay
       proceedToNextQuestion();
-    }, 1600); // Extended timing: 600ms base + 1000ms additional delay
+    }, 1600);
   };
 
   return { startQuestionFlow, handleAnswerSubmit };
