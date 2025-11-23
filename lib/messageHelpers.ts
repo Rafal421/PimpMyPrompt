@@ -5,11 +5,15 @@ import type { Message } from "@/lib/types";
 export const addTypingMessage = (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   text: string,
-  onComplete?: () => void
+  onComplete?: () => void,
+  onStartTyping?: () => void
 ): void => {
   setMessages((prev) => [...prev, { from: "bot", text, isTyping: true }]);
 
-  // After typing animation completes, mark as not typing
+  if (onStartTyping) {
+    onStartTyping();
+  }
+
   if (onComplete) {
     setTimeout(() => {
       setMessages((prev) =>
@@ -20,7 +24,7 @@ export const addTypingMessage = (
         )
       );
       onComplete();
-    }, text.length * 20 + 500); // Estimate typing time plus buffer
+    }, text.length * 20 + 500);
   }
 };
 

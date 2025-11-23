@@ -3,9 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@/lib/types";
 import ChatSidePanel from "@/components/private/ChatSidePanel";
-import QuestionBlock from "@/components/private/QuestionBlock";
 import ChatMessages from "@/components/private/ChatMessages";
-import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
 import { ErrorToast } from "@/components/ui/error-toast";
@@ -63,6 +61,20 @@ export default function ChatClient({ user }: { user: User }) {
     getTimeUntilReset,
     checkUsage,
   } = useChat({ user, onError: handleApiError });
+
+  // Auto scroll on phase changes (when QuestionBlock appears/disappears)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }
+    }, 500); // Small delay to let animation start
+
+    return () => clearTimeout(timer);
+  }, [phase, questionsData]);
 
   return (
     <div className="flex h-[100svh] bg-black overflow-hidden">
@@ -150,70 +162,23 @@ export default function ChatClient({ user }: { user: User }) {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-visible">
+        <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
           <div className="w-full max-w-4xl mx-auto px-2 sm:px-1 py-2 sm:py-2">
             <ChatMessages
               messages={messages}
               isBotResponding={isBotResponding}
+              phase={phase}
+              questionsData={questionsData}
+              currentQuestionIndex={currentQuestionIndex}
+              customAnswer={customAnswer}
+              setCustomAnswer={setCustomAnswer}
+              onAnswerSubmit={handleAnswerSubmit}
+              onModelSelect={handleModelSelect}
             />
-            {/* Answer Options */}
-            <AnimatePresence mode="wait">
-              {phase === "clarifying" &&
-                questionsData[currentQuestionIndex] && (
-                  <motion.div
-                    key="question-block"
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.4, 0.0, 0.2, 1],
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 15,
-                    }}
-                    className="w-full px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6"
-                  >
-                    <QuestionBlock
-                      currentQuestionOptions={
-                        questionsData[currentQuestionIndex].options
-                      }
-                      customAnswer={customAnswer}
-                      setCustomAnswer={setCustomAnswer}
-                      onAnswerSubmit={handleAnswerSubmit}
-                      isBotResponding={isBotResponding}
-                    />
-                  </motion.div>
-                )}
-            </AnimatePresence>
-            {/* Model Selection */}
-            <AnimatePresence mode="wait">
-              {phase === "model-selection" && (
-                <motion.div
-                  key="model-selection"
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{
-                    duration: 0.6,
-                    ease: [0.4, 0.0, 0.2, 1],
-                    type: "spring",
-                    stiffness: 100,
-                    damping: 15,
-                  }}
-                  className="flex justify-center px-3 sm:px-6 mt-4"
-                >
-                  <ModelSelection
-                    onModelSelect={handleModelSelect}
-                    isBotResponding={isBotResponding}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
-          {/* Invisible div for auto-scroll - this is the target */}
-          <div ref={messagesEndRef} />
+            {/* Scroll target - at the very end */}
+            <div ref={messagesEndRef} className="h-4" />
+          </div>
         </div>
 
         {/* Input Area */}

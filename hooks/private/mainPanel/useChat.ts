@@ -4,10 +4,7 @@ import { useState, useRef } from "react";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
 import { useAutoScroll } from "@/hooks/private/mainPanel/useAutoScroll";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
-import {
-  DEFAULT_QUESTION_PROVIDER,
-  QUESTION_PROVIDER,
-} from "@/lib/ai-config";
+import { DEFAULT_QUESTION_PROVIDER, QUESTION_PROVIDER } from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
 import { useUsageLimit } from "@/hooks/private/mainPanel/useUsageLimit";
 
@@ -47,7 +44,9 @@ export const useChat = ({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
-  const messagesEndRef = useAutoScroll(messages, 500);
+
+  // Auto scroll hook that tracks messages and phase changes
+  const messagesEndRef = useAutoScroll(messages, 200);
 
   // Usage limit management
   const {
@@ -89,6 +88,7 @@ export const useChat = ({
     clarifyingAnswers,
     questionsData,
     currentQuestionIndex,
+    setIsBotResponding,
     onError,
   });
 
@@ -174,6 +174,10 @@ export const useChat = ({
 
   const wrappedHandleAnswerSubmit = async (answer: string) => {
     if (isBotResponding) return;
+    
+    // Set loading when user submits answer
+    setIsBotResponding(true);
+    
     // Handle answer submission
     try {
       await handleAnswerSubmit(answer);
