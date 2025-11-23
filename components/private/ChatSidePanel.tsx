@@ -200,7 +200,6 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
                 <form action={logout} className="w-full">
                   <button
                     type="submit"
-                    onClick={() => setUserMenuOpen(false)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
                   >
                     <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors" />

@@ -47,7 +47,7 @@ export default function SettingsPage() {
   };
 
   const error = profileHook.error || passwordHook.error;
-  const success = profileHook.success || passwordHook.success;
+  const success = !error ? (profileHook.success || passwordHook.success) : "";
 
   const clearAllMessages = () => {
     profileHook.setError("");
@@ -89,16 +89,21 @@ export default function SettingsPage() {
         </div>
 
         {/* Messages */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
-            {success}
-          </div>
-        )}
+        <div className="mb-6 min-h-[60px]">
+          {error ? (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+              {error}
+            </div>
+          ) : success ? (
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
+              {success}
+            </div>
+          ) : (
+            <div className="invisible p-4 bg-transparent border border-transparent rounded-xl text-transparent text-sm">
+              Placeholder message for height
+            </div>
+          )}
+        </div>
 
         {/* Sections */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
