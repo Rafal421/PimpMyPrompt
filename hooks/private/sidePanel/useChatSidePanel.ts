@@ -33,7 +33,7 @@ export function useChatSidePanel({
     async (title: string, usedModel: string) => {
       const chatId = await apiServices.chats.create(
         user.id,
-        `${title} (${usedModel})`
+        title
       );
       setChatId(chatId);
       await fetchChats();
@@ -83,20 +83,44 @@ export function useChatSidePanel({
     [user.id, chatId, onResetSession, fetchChats]
   );
 
+  const updateChatTitle = useCallback(
+    async (chatId: string, newTitle: string) => {
+      try {
+        await apiServices.chats.updateTitle(chatId, user.id, newTitle);
+
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === chatId ? { ...chat, title: newTitle } : chat
+          )
+        );
+
+        await fetchChats();
+      } catch (error) {
+        console.error("Failed to update chat title:", error);
+        throw error;
+      }
+    },
+    [user.id, fetchChats]
+  );
+
   // Fetch chats on component mount
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
 
+  const currentChat = chats.find((chat) => chat.id === chatId);
+
   return {
     // State
     chats,
+    currentChat,
 
     // Actions
     createChat,
     sendMessage,
     selectChat,
     deleteChat,
+    updateChatTitle,
     fetchChats,
 
     // Exposed for useImperativeHandle
@@ -104,6 +128,7 @@ export function useChatSidePanel({
       createChat,
       sendMessage,
       refreshChats: fetchChats,
+      updateChatTitle,
     },
   };
 }

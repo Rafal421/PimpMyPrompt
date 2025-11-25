@@ -35,6 +35,7 @@ export interface User {
 export interface Chat {
   id: string;
   title: string;
+  created_at?: string;
 }
 
 export interface ProviderConfig {

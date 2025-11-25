@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { user_id, title } = await req.json();
 
-    // Validate inputs
     const validationError = validateRequired({ user_id, title });
     if (validationError) return errorResponse(validationError, 400);
 
@@ -81,7 +80,6 @@ export async function DELETE(req: NextRequest) {
     const validationError = validateRequired({ chat_id, user_id });
     if (validationError) return errorResponse(validationError, 400);
 
-    // Verify ownership and delete in one transaction
     const { error } = await supabase.rpc("delete_user_chat", {
       p_chat_id: chat_id,
       p_user_id: user_id,
@@ -100,6 +98,42 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/chat error:", error);
+    return errorResponse("Invalid request", 400);
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { chat_id, user_id, title } = await req.json();
+
+    const validationError = validateRequired({ chat_id, user_id, title });
+    if (validationError) return errorResponse(validationError, 400);
+
+    if (title.trim().length > 255) {
+      return errorResponse("Title too long (max 255 characters)", 400);
+    }
+
+    const { data, error } = await supabase
+      .from("chats")
+      .update({ title: title.trim() })
+      .eq("id", chat_id)
+      .eq("user_id", user_id)
+      .select("id, title")
+      .single();
+
+    if (error) {
+      console.error("Database error:", error);
+      return errorResponse("Failed to update chat title", 500);
+    }
+
+    if (!data) {
+      return errorResponse("Chat not found", 404);
+    }
+
+    return NextResponse.json({ chat: data });
+  } catch (error) {
+    console.error("PUT /api/chat error:", error);
     return errorResponse("Invalid request", 400);
   }
 }

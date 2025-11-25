@@ -29,6 +29,15 @@ export class ChatService {
     if (!res.ok) throw new Error("Failed to delete chat");
   }
 
+  async updateChatTitle(chatId: string, userId: string, newTitle: string): Promise<void> {
+    const res = await fetch("/api/chat", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, user_id: userId, title: newTitle }),
+    });
+    if (!res.ok) throw new Error("Failed to update chat title");
+  }
+
   async fetchChatHistory(chatId: string): Promise<Message[]> {
     const res = await fetch(`/api/messages?chat_id=${chatId}`);
     if (!res.ok) throw new Error("Failed to fetch chat history");

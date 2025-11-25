@@ -9,20 +9,24 @@ import { Background } from "@/components/ui/background";
 import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
 import { useErrorToast } from "@/hooks/private/mainPanel/useErrorToast";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Edit3 } from "lucide-react";
 
 export default function ChatClient({ user }: { user: User }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [currentChat, setCurrentChat] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   const { error, hideError, handleApiError } = useErrorToast();
 
-  // Close sidebar on window resize and check screen size
   useEffect(() => {
     const handleResize = () => {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
 
-      // Always close sidebar on resize for mobile
       if (!desktop) {
         setIsSidebarOpen(false);
       }
@@ -76,6 +80,55 @@ export default function ChatClient({ user }: { user: User }) {
     return () => clearTimeout(timer);
   }, [phase, questionsData]);
 
+  // Functions for editing chat title
+  const handleTitleClick = () => {
+    if (currentChat && !isBotResponding) {
+      setIsEditingTitle(true);
+      setEditTitle(currentChat.title);
+    }
+  };
+
+  const handleTitleSave = async () => {
+    if (!currentChat || !editTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    if (editTitle.trim() === currentChat.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      // Update title via chat side panel
+      await chatSidePanelRef.current?.updateChatTitle(
+        currentChat.id,
+        editTitle.trim()
+      );
+      setCurrentChat({ ...currentChat, title: editTitle.trim() });
+      setIsEditingTitle(false);
+    } catch (error) {
+      console.error("Failed to update chat title:", error);
+      handleApiError?.(error, "updating chat title");
+      // Revert to original title on error
+      setEditTitle(currentChat.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditTitle("");
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      handleTitleCancel();
+    }
+  };
+
   return (
     <div className="flex h-[100svh] bg-black overflow-hidden">
       {/* Animated background */}
@@ -125,6 +178,7 @@ export default function ChatClient({ user }: { user: User }) {
           setPhase={setPhase}
           onResetSession={resetSession}
           isBotResponding={isBotResponding}
+          onCurrentChatChange={setCurrentChat}
         />
       </motion.div>
 
@@ -152,10 +206,51 @@ export default function ChatClient({ user }: { user: User }) {
               </div>
             </button>
 
-            {/* Provider Selection - Using OpenAI only */}
-            <div className="ml-auto flex items-center gap-2">
+            {/* Chat Title - Centered */}
+            <div className="flex-1 flex items-center justify-center">
+              {currentChat ? (
+                <div className="flex items-center gap-2">
+                  {isEditingTitle ? (
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={handleTitleKeyDown}
+                      onBlur={handleTitleSave}
+                      className="bg-gray-800/50 text-white text-base font-semibold px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none max-w-48"
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleTitleClick}
+                        disabled={isBotResponding}
+                        className="text-base font-semibold text-white hover:text-blue-300 transition-colors truncate max-w-48 text-center disabled:cursor-not-allowed disabled:hover:text-white"
+                        title="Click to edit chat name"
+                      >
+                        {currentChat.title}
+                      </button>
+                      <div 
+                        className="cursor-pointer" 
+                        onClick={handleTitleClick}
+                        title="Edit chat name"
+                      >
+                        <Edit3 className="w-4 h-4 text-gray-400 hover:text-blue-300 transition-colors opacity-60" />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-base font-semibold text-gray-400">
+                  New Chat
+                </div>
+              )}
+            </div>
+
+            {/* Provider Selection - Right side */}
+            <div className="flex items-center gap-2">
               <div className="text-xs text-gray-400 bg-gray-900/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-700/50 font-mono">
-                OpenAI GPT-4o Mini
+                GPT-4o Mini
               </div>
             </div>
           </div>

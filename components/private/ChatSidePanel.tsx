@@ -31,6 +31,7 @@ export interface ChatSidePanelHandle {
     content: string
   ) => Promise<void>;
   refreshChats: () => Promise<void>;
+  updateChatTitle: (chatId: string, newTitle: string) => Promise<void>;
 }
 
 interface ChatSidePanelProps {
@@ -42,6 +43,7 @@ interface ChatSidePanelProps {
   onResetSession: () => void;
   isBotResponding: boolean;
   onChatCreated?: (chatId: string) => void;
+  onCurrentChatChange?: (chat: { id: string; title: string } | null) => void;
 }
 
 const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
@@ -49,15 +51,17 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
     const router = useRouter();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
-    const { chats, selectChat, deleteChat, chatSidePanelActions } =
+    const { chats, currentChat, selectChat, deleteChat, chatSidePanelActions } =
       useChatSidePanel(props);
 
-    // Expose functions to parent component
+    useEffect(() => {
+      props.onCurrentChatChange?.(currentChat || null);
+    }, [currentChat, props]);
+
     useImperativeHandle(ref, () => chatSidePanelActions, [
       chatSidePanelActions,
     ]);
 
-    // Handle clicking outside to close menu
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (
@@ -83,6 +87,32 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
       deleteChat(chatIdToDelete);
     };
 
+    const formatChatDate = (dateString?: string) => {
+      if (!dateString) return "Unknown date";
+
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return date.toLocaleTimeString("pl-PL", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } else if (diffDays === 1) {
+        return "Wczoraj";
+      } else if (diffDays < 7) {
+        return `${diffDays} dni temu`;
+      } else {
+        return date.toLocaleDateString("pl-PL", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        });
+      }
+    };
+
     return (
       <div className="relative z-10 w-72 h-full bg-black/40 backdrop-blur-md border-r border-gray-800/50 flex flex-col">
         {/* Sidebar Header */}
@@ -100,7 +130,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
           <button
             onClick={props.onResetSession}
             disabled={props.isBotResponding}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
+            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-base font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -142,7 +172,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
                         {chat.title || "Untitled"}
                       </p>
                       <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
-                        Last conversation
+                        {formatChatDate(chat.created_at)}
                       </p>
                     </div>
                   </div>

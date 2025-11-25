@@ -59,10 +59,6 @@ export function validateChatInput(input: string, phase: Phase): boolean {
   return true;
 }
 
-export function formatChatTitle(title: string, model: string): string {
-  return `${title} (${model})`;
-}
-
 export function truncateText(text: string, maxLength: number = 50): string {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + "...";
