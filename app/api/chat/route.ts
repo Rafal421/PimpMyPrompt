@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { AuditLogger } from "@/lib/audit-logger";
 
 // Helper function for consistent error responses
 const errorResponse = (message: string, status: number) =>
@@ -34,13 +35,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Database error:", error);
       return errorResponse("Failed to create chat", 500);
     }
 
+    await AuditLogger.log("CHAT_CREATED", user_id, { chat_id: data.id });
     return NextResponse.json({ chat: data });
-  } catch (error) {
-    console.error("POST /api/chat error:", error);
+  } catch {
     return errorResponse("Invalid request", 400);
   }
 }
@@ -61,13 +61,11 @@ export async function GET(req: NextRequest) {
       .limit(50);
 
     if (error) {
-      console.error("Database error:", error);
       return errorResponse("Failed to fetch chats", 500);
     }
 
     return NextResponse.json({ chats: data || [] });
-  } catch (error) {
-    console.error("GET /api/chat error:", error);
+  } catch {
     return errorResponse("Internal server error", 500);
   }
 }
@@ -86,7 +84,6 @@ export async function DELETE(req: NextRequest) {
     });
 
     if (error) {
-      console.error("Database error:", error);
       return errorResponse(
         error.message.includes("not found")
           ? "Chat not found"
@@ -95,9 +92,9 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    await AuditLogger.log("CHAT_DELETED", user_id, { chat_id });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("DELETE /api/chat error:", error);
+  } catch {
     return errorResponse("Invalid request", 400);
   }
 }
@@ -123,7 +120,6 @@ export async function PUT(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Database error:", error);
       return errorResponse("Failed to update chat title", 500);
     }
 
@@ -131,9 +127,9 @@ export async function PUT(req: NextRequest) {
       return errorResponse("Chat not found", 404);
     }
 
+    await AuditLogger.log("CHAT_TITLE_UPDATED", user_id, { chat_id, title: "[REDACTED]" });
     return NextResponse.json({ chat: data });
-  } catch (error) {
-    console.error("PUT /api/chat error:", error);
+  } catch {
     return errorResponse("Invalid request", 400);
   }
 }

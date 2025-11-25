@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { AuditLogger } from "@/lib/audit-logger";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await AuditLogger.log("MESSAGE_STORED", user_id, { chat_id, from, content_length: content?.length || 0 });
   return NextResponse.json({ success: true, message: { chat_id, user_id, from, content } });
 }
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { validateProfile } from "@/lib/validation";
+import { AuditLogger } from "@/lib/audit-logger";
 import type { User as UserType } from "@/lib/types";
 
 interface UserProfile {
@@ -38,13 +39,13 @@ export function useProfile(user: UserType | null) {
 
       if (profileError) {
         if (profileError.code === "PGRST116") {
-          console.log("Profile not found, will be created when user saves data");
           setFirstName("");
           setLastName("");
           setDateOfBirth("");
+          setProfile(null);
         } else {
-          console.error("Error fetching profile:", profileError);
-          setError("Failed to load profile data. This might be normal for new accounts.");
+          setError("Failed to load profile data. Please try again.");
+          return;
         }
       } else if (profileData) {
         setProfile(profileData);
@@ -52,9 +53,8 @@ export function useProfile(user: UserType | null) {
         setLastName(profileData.last_name || "");
         setDateOfBirth(profileData.date_of_birth || "");
       }
-    } catch (error) {
-      console.error("Error checking user:", error);
-      setError("Failed to load user data");
+    } catch (error: any) {
+      setError("An unexpected error occurred. Please refresh and try again.");
     }
   };
 
@@ -91,7 +91,6 @@ export function useProfile(user: UserType | null) {
         .single();
 
       if (upsertError) {
-        console.error("Profile upsert error:", upsertError);
         throw upsertError;
       }
 
@@ -99,18 +98,21 @@ export function useProfile(user: UserType | null) {
         setProfile(data);
       }
 
+      await AuditLogger.log("PROFILE_UPDATED", user.id);
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
-      console.error("Error saving profile:", error);
-
+      let errorMessage = "Failed to save profile. Please try again.";
+      
       if (error.code === "42P01") {
-        setError("Database table not found. Please contact support.");
+        errorMessage = "Service temporarily unavailable. Please contact support.";
       } else if (error.code === "23505") {
-        setError("Profile already exists. Please refresh the page and try again.");
-      } else {
-        setError(error.message || "Failed to save profile. Please try again.");
+        errorMessage = "Profile conflict detected. Please refresh and try again.";
+      } else if (error.code === "PGRST301") {
+        errorMessage = "Permission denied. Please re-authenticate.";
       }
+      
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

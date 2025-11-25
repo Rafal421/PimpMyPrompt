@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { AuditLogger } from "@/lib/audit-logger";
 
 export function usePasswordChange() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -34,20 +35,37 @@ export function usePasswordChange() {
     setSuccess("");
 
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user?.email) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, { reason: "Invalid current password" });
+        throw new Error("Current password is incorrect");
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (error) {
+        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, { reason: error.message });
         throw error;
       }
 
+      await AuditLogger.log("PASSWORD_CHANGED", user.user.id);
       setSuccess("Password updated successfully!");
       clearFields();
       setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
-      console.error("Error changing password:", error);
-      setError(error.message || "Failed to change password");
+      const sanitizedError = error.message?.includes("email") ? "Authentication failed" : error.message;
+      setError(sanitizedError || "Failed to change password");
     } finally {
       setIsSaving(false);
     }
