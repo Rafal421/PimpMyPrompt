@@ -78,7 +78,7 @@ export default function ChatClient({ user }: { user: User }) {
     }, 500); // Small delay to let animation start
 
     return () => clearTimeout(timer);
-  }, [phase, questionsData]);
+  }, [phase, questionsData, messagesEndRef]);
 
   // Functions for editing chat title
   const handleTitleClick = () => {

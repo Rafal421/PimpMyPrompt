@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User, ArrowLeft } from "lucide-react";
@@ -20,11 +20,7 @@ export default function SettingsPage() {
   const profileHook = useProfile(user);
   const passwordHook = usePasswordChange();
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     try {
       const {
         data: { user },
@@ -44,7 +40,11 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, profileHook]);
+
+  useEffect(() => {
+    checkUser();
+  }, [checkUser]);
 
   const error = profileHook.error || passwordHook.error;
   const success = !error ? (profileHook.success || passwordHook.success) : "";

@@ -1,7 +1,6 @@
 "use client";
 
 import { User, Save } from "lucide-react";
-import { motion } from "framer-motion";
 import type { User as UserType } from "@/lib/types";
 
 interface ProfileSectionProps {

@@ -4,7 +4,7 @@ import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Phase, QuestionData } from "@/lib/types";
+import type { Phase, QuestionData, Provider } from "@/lib/types";
 import QuestionBlock from "@/components/private/QuestionBlock";
 import ModelSelection from "@/components/private/ModelSelection";
 
@@ -23,7 +23,7 @@ interface ChatMessagesProps {
   customAnswer?: string;
   setCustomAnswer?: (value: string) => void;
   onAnswerSubmit?: (answer: string) => void;
-  onModelSelect?: (provider: any, model: string) => void;
+  onModelSelect?: (provider: Provider, model: string) => void;
 }
 
 export default function ChatMessages({
