@@ -55,22 +55,16 @@ export const createPromptImprover = ({
 
       setImprovedPrompt(prompt);
 
-      addTypingMessage(
-        setMessages,
-        prompt,
-        () => {
-          setTimeout(() => {
-            setPhase("model-selection");
-          }, 500);
-        },
-        () => {
-          setIsBotResponding(false);
-        }
-      );
+      addTypingMessage(setMessages, prompt, () => {
+        setTimeout(() => {
+          setPhase("model-selection");
+        }, 500);
+      });
 
       if (chatId) {
         await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
       }
+      setIsBotResponding(false);
     } catch (error) {
       setIsBotResponding(false);
       onError?.(error, "generating improved prompt");

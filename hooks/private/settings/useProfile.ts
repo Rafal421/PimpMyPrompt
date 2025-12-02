@@ -37,21 +37,21 @@ export function useProfile(user: UserType | null) {
         .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        if (profileError.code === "PGRST116") {
-          setFirstName("");
-          setLastName("");
-          setDateOfBirth("");
-          setProfile(null);
-        } else {
-          setError("Failed to load profile data. Please try again.");
-          return;
-        }
-      } else if (profileData) {
+      if (profileError && profileError.code !== "PGRST116") {
+        setError("Failed to load profile data.");
+        return;
+      }
+
+      if (profileData) {
         setProfile(profileData);
         setFirstName(profileData.first_name || "");
         setLastName(profileData.last_name || "");
         setDateOfBirth(profileData.date_of_birth || "");
+      } else {
+        setFirstName("");
+        setLastName("");
+        setDateOfBirth("");
+        setProfile(null);
       }
     } catch (error: any) {
       setError("An unexpected error occurred. Please refresh and try again.");
