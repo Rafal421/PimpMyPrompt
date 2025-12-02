@@ -103,15 +103,17 @@ export function useProfile(user: UserType | null) {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
       let errorMessage = "Failed to save profile. Please try again.";
-      
+
       if (error.code === "42P01") {
-        errorMessage = "Service temporarily unavailable. Please contact support.";
+        errorMessage =
+          "Service temporarily unavailable. Please contact support.";
       } else if (error.code === "23505") {
-        errorMessage = "Profile conflict detected. Please refresh and try again.";
+        errorMessage =
+          "Profile conflict detected. Please refresh and try again.";
       } else if (error.code === "PGRST301") {
         errorMessage = "Permission denied. Please re-authenticate.";
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsSaving(false);

@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
 
     // Handle message format (from ChatClient)
     if (message) {
-      await auditAIRequest("openai", selectedModel, "message", "user", { message_length: message?.length });
+      await auditAIRequest("openai", selectedModel, "message", "user", {
+        message_length: message?.length,
+      });
       const content = await callOpenAI(message, TOKEN_LIMITS.GENERAL);
       const questions = parseQuestionsWithOptions(content);
       return NextResponse.json(
@@ -44,7 +46,9 @@ export async function POST(req: NextRequest) {
       throw new ValidationError("Action and question are required");
     }
 
-    await auditAIRequest("openai", selectedModel, action, "user", { question_length: question?.length });
+    await auditAIRequest("openai", selectedModel, action, "user", {
+      question_length: question?.length,
+    });
 
     if (action === "clarify") {
       const content = await callOpenAI(

@@ -12,8 +12,8 @@ export async function auditAIRequest(
     provider,
     model,
     action,
-    ...details
+    ...details,
   };
-  
+
   await AuditLogger.log(auditAction, userId || "anonymous", auditDetails);
 }

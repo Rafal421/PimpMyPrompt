@@ -64,7 +64,9 @@ export async function POST() {
       );
     }
 
-    await AuditLogger.log("USAGE_INCREMENTED", user.id, { requests_used: data?.requests_used });
+    await AuditLogger.log("USAGE_INCREMENTED", user.id, {
+      requests_used: data?.requests_used,
+    });
     return NextResponse.json(data);
   } catch (error) {
     console.error("Usage increment error:", error);

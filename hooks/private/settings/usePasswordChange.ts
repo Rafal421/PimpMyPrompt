@@ -46,7 +46,9 @@ export function usePasswordChange() {
       });
 
       if (signInError) {
-        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, { reason: "Invalid current password" });
+        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, {
+          reason: "Invalid current password",
+        });
         throw new Error("Current password is incorrect");
       }
 
@@ -55,7 +57,9 @@ export function usePasswordChange() {
       });
 
       if (error) {
-        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, { reason: error.message });
+        await AuditLogger.log("PASSWORD_CHANGE_FAILED", user.user.id, {
+          reason: error.message,
+        });
         throw error;
       }
 
@@ -64,7 +68,9 @@ export function usePasswordChange() {
       clearFields();
       setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
-      const sanitizedError = error.message?.includes("email") ? "Authentication failed" : error.message;
+      const sanitizedError = error.message?.includes("email")
+        ? "Authentication failed"
+        : error.message;
       setError(sanitizedError || "Failed to change password");
     } finally {
       setIsSaving(false);

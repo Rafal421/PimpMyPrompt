@@ -127,7 +127,10 @@ export async function PUT(req: NextRequest) {
       return errorResponse("Chat not found", 404);
     }
 
-    await AuditLogger.log("CHAT_TITLE_UPDATED", user_id, { chat_id, title: "[REDACTED]" });
+    await AuditLogger.log("CHAT_TITLE_UPDATED", user_id, {
+      chat_id,
+      title: "[REDACTED]",
+    });
     return NextResponse.json({ chat: data });
   } catch {
     return errorResponse("Invalid request", 400);

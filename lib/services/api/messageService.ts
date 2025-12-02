@@ -13,8 +13,12 @@ export class MessageService {
       body: JSON.stringify({ chat_id: chatId, user_id: userId, from, content }),
     });
     if (!res.ok) throw new Error("Failed to send message");
-    
-    await AuditLogger.log("MESSAGE_SENT", userId, { chat_id: chatId, from, content_length: content.length });
+
+    await AuditLogger.log("MESSAGE_SENT", userId, {
+      chat_id: chatId,
+      from,
+      content_length: content.length,
+    });
   }
 }
 

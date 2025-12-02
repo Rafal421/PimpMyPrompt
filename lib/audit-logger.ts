@@ -17,7 +17,9 @@ export class AuditLogger {
     }
   }
 
-  private static sanitize(data: Record<string, unknown>): Record<string, unknown> {
+  private static sanitize(
+    data: Record<string, unknown>
+  ): Record<string, unknown> {
     const sanitized = { ...data };
     const sensitiveFields = [
       "password",
