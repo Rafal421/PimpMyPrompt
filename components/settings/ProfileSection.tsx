@@ -44,9 +44,7 @@ export function ProfileSection({
             disabled
             className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-gray-400 cursor-not-allowed"
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Email cannot be changed
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
         </div>
 
         <div>
@@ -57,7 +55,7 @@ export function ProfileSection({
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Enter your first name"
+            placeholder="Enter your first name (letters only)"
             className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-700/50 transition-all duration-200"
           />
         </div>
@@ -77,8 +75,7 @@ export function ProfileSection({
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Date of Birth{" "}
-            <span className="text-gray-500">(optional)</span>
+            Date of Birth <span className="text-gray-500">(optional)</span>
           </label>
           <input
             type="date"

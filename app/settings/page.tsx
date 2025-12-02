@@ -32,22 +32,26 @@ export default function SettingsPage() {
       }
 
       setUser({ id: user.id, email: user.email });
-
-      setTimeout(() => profileHook.loadProfile(), 0);
     } catch (error) {
       console.error("Error checking user:", error);
       profileHook.setError("Failed to load user data");
     } finally {
       setIsLoading(false);
     }
-  }, [router, profileHook]);
+  }, [router, supabase.auth]);
 
   useEffect(() => {
     checkUser();
   }, [checkUser]);
 
+  useEffect(() => {
+    if (user) {
+      profileHook.loadProfile();
+    }
+  }, [user, profileHook.loadProfile]);
+
   const error = profileHook.error || passwordHook.error;
-  const success = !error ? (profileHook.success || passwordHook.success) : "";
+  const success = !error ? profileHook.success || passwordHook.success : "";
 
   const clearAllMessages = () => {
     profileHook.setError("");

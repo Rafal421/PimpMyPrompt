@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { validateProfile } from "@/lib/validation";
 import { AuditLogger } from "@/lib/audit-logger";
@@ -27,7 +27,7 @@ export function useProfile(user: UserType | null) {
 
   const supabase = createClient();
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -56,9 +56,9 @@ export function useProfile(user: UserType | null) {
     } catch (error: any) {
       setError("An unexpected error occurred. Please refresh and try again.");
     }
-  };
+  }, [user]);
 
-  const saveProfile = async () => {
+  const saveProfile = useCallback(async () => {
     if (!user) return;
 
     const validationError = validateProfile(firstName, lastName, dateOfBirth);
@@ -118,7 +118,7 @@ export function useProfile(user: UserType | null) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [user, firstName, lastName, dateOfBirth]);
 
   return {
     profile,

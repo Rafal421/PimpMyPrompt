@@ -14,29 +14,27 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   if (token_hash && type) {
-    const { error, data } = await supabase.auth.verifyOtp({ type, token_hash });
+    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      if (data.user) {
-        await AuditLogger.log("EMAIL_CONFIRMED", data.user.id, { type });
+      if (type === "recovery") {
+        redirect("/auth/update-password");
+      } else {
+        await supabase.auth.signOut();
+        redirect("/sign-in?confirmed=true");
       }
-      redirect(
-        type === "recovery"
-          ? "/auth/update-password"
-          : "/sign-in?confirmed=true"
-      );
     }
   }
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Nie logujemy użytkownika automatycznie - tylko potwierdzamy email
-      // i przekierowujemy na stronę logowania
       const isPasswordReset = next.includes("update-password");
 
       if (isPasswordReset) {
         redirect("/auth/update-password");
       } else {
+        // Po potwierdzeniu signup wyloguj użytkownika i przekieruj na sign-up
+        await supabase.auth.signOut();
         redirect("/sign-in?confirmed=true");
       }
     }
