@@ -19,18 +19,26 @@ export async function GET(request: NextRequest) {
       if (data.user) {
         await AuditLogger.log("EMAIL_CONFIRMED", data.user.id, { type });
       }
-      redirect(type === "recovery" ? "/auth/update-password" : next);
+      redirect(
+        type === "recovery"
+          ? "/auth/update-password"
+          : "/sign-in?confirmed=true"
+      );
     }
   }
 
   if (code) {
-    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      if (data.user) {
-        await AuditLogger.log("SESSION_EXCHANGED", data.user.id);
+      // Nie logujemy użytkownika automatycznie - tylko potwierdzamy email
+      // i przekierowujemy na stronę logowania
+      const isPasswordReset = next.includes("update-password");
+
+      if (isPasswordReset) {
+        redirect("/auth/update-password");
+      } else {
+        redirect("/sign-in?confirmed=true");
       }
-      const isPasswordReset = next.includes("update-password") || next === "/";
-      redirect(isPasswordReset ? "/auth/update-password" : next);
     }
   }
 
