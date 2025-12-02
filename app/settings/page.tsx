@@ -38,7 +38,7 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, supabase.auth, profileHook]);
+  }, [router, supabase.auth, profileHook.setError]);
 
   useEffect(() => {
     checkUser();
@@ -48,7 +48,7 @@ export default function SettingsPage() {
     if (user) {
       profileHook.loadProfile();
     }
-  }, [user, profileHook]);
+  }, [user, profileHook.loadProfile]);
 
   const error = profileHook.error || passwordHook.error;
   const success = !error ? profileHook.success || passwordHook.success : "";
