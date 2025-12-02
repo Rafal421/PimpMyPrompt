@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { AuditLogger } from "@/lib/audit-logger";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -16,28 +17,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, message: { chat_id, user_id, from, content } });
+  await AuditLogger.log("MESSAGE_STORED", user_id, {
+    chat_id,
+    from,
+    content_length: content?.length || 0,
+  });
+  return NextResponse.json({
+    success: true,
+    message: { chat_id, user_id, from, content },
+  });
 }
 
-
 export async function GET(req: NextRequest) {
-    const supabase = await createClient();
-    const { searchParams } = new URL(req.url);
-    const chat_id = searchParams.get("chat_id");
-  
-    if (!chat_id) {
-      return NextResponse.json({ error: "Missing chat_id" }, { status: 400 });
-    }
-  
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("chat_id", chat_id)
-      .order("created_at", { ascending: true });
-  
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-  
-    return NextResponse.json({ messages: data });
+  const supabase = await createClient();
+  const { searchParams } = new URL(req.url);
+  const chat_id = searchParams.get("chat_id");
+
+  if (!chat_id) {
+    return NextResponse.json({ error: "Missing chat_id" }, { status: 400 });
   }
+
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("chat_id", chat_id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ messages: data });
+}

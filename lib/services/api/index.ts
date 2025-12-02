@@ -53,6 +53,11 @@ export const apiServices = {
         () => chatService.deleteChat(chatId, userId),
         "deleteChat"
       ),
+    updateTitle: (chatId: string, userId: string, newTitle: string) =>
+      withErrorHandling(
+        () => chatService.updateChatTitle(chatId, userId, newTitle),
+        "updateChatTitle"
+      ),
     fetchHistory: (chatId: string) =>
       withErrorHandling(
         () => chatService.fetchChatHistory(chatId),

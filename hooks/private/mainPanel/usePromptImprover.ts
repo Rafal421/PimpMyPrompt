@@ -55,24 +55,20 @@ export const createPromptImprover = ({
 
       setImprovedPrompt(prompt);
 
-      // Typing animation for improved prompt
       addTypingMessage(setMessages, prompt, () => {
-        // Turn off loading after typing animation completes
-        setIsBotResponding(false);
         setTimeout(() => {
           setPhase("model-selection");
         }, 500);
       });
 
       if (chatId) {
-        // Send improved prompt to chat
         await chatSidePanelRef.current?.sendMessage(chatId, "bot", prompt);
       }
+      setIsBotResponding(false);
     } catch (error) {
-      setIsBotResponding(false); // Turn off loading on error
+      setIsBotResponding(false);
       onError?.(error, "generating improved prompt");
 
-      // Error message for improved prompt generation
       setMessages((prev) => [
         ...prev,
         {
@@ -80,7 +76,6 @@ export const createPromptImprover = ({
           text: "I encountered a problem while generating the improved prompt. Please try again or modify your answers.",
         },
       ]);
-      // Stay in current phase, don't go back to clarifying
     }
   };
 

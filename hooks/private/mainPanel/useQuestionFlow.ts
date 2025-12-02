@@ -21,6 +21,7 @@ interface QuestionFlowLogicProps {
   clarifyingAnswers: string[];
   questionsData: QuestionData[];
   currentQuestionIndex: number;
+  setIsBotResponding: React.Dispatch<React.SetStateAction<boolean>>;
   onError?: (error: any, context?: string) => void;
 }
 
@@ -41,6 +42,7 @@ export const createQuestionFlow = ({
   clarifyingAnswers,
   questionsData,
   currentQuestionIndex,
+  setIsBotResponding,
   onError,
 }: QuestionFlowLogicProps) => {
   const { generateClarifyingQuestions } = useQuestionGenerator({
@@ -67,11 +69,19 @@ export const createQuestionFlow = ({
 
         // Add typing animation for first question with delay to show it after user message
         setTimeout(() => {
-          addTypingMessage(setMessages, firstQuestion, () => {
-            setTimeout(() => {
-              setPhase("clarifying");
-            }, 300);
-          });
+          addTypingMessage(
+            setMessages,
+            firstQuestion,
+            () => {
+              setTimeout(() => {
+                setPhase("clarifying");
+              }, 300);
+            },
+            () => {
+              // Turn off loading when typing animation starts
+              setIsBotResponding(false);
+            }
+          );
         }, 500);
 
         if (currentChatId) {
@@ -105,11 +115,19 @@ export const createQuestionFlow = ({
       const nextQuestion = questionsData[nextIndex].question;
 
       // Add typing animation for next question
-      addTypingMessage(setMessages, nextQuestion, () => {
-        setTimeout(() => {
-          setPhase("clarifying");
-        }, 300);
-      });
+      addTypingMessage(
+        setMessages,
+        nextQuestion,
+        () => {
+          setTimeout(() => {
+            setPhase("clarifying");
+          }, 300);
+        },
+        () => {
+          // Turn off loading when typing animation starts
+          setIsBotResponding(false);
+        }
+      );
 
       // Send next question to chat
       if (chatId) {
@@ -140,9 +158,8 @@ export const createQuestionFlow = ({
     setCustomAnswer("");
 
     setTimeout(() => {
-      // Proceed to next question after animation
       proceedToNextQuestion();
-    }, 600); // Adjust timing to match animation duration
+    }, 1600);
   };
 
   return { startQuestionFlow, handleAnswerSubmit };

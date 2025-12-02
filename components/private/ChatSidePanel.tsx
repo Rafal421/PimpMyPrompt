@@ -1,5 +1,12 @@
 "use client";
-import React, { forwardRef, useImperativeHandle } from "react";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { useRouter } from "next/navigation";
 import { useChatSidePanel } from "@/hooks/private/sidePanel/useChatSidePanel";
 import type { User, Message, Phase } from "@/lib/types";
 import { logout } from "@/app/auth/logout/actions";
@@ -11,6 +18,9 @@ import {
   Bot,
   ArrowRight,
   Trash2,
+  Settings,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export interface ChatSidePanelHandle {
@@ -21,6 +31,7 @@ export interface ChatSidePanelHandle {
     content: string
   ) => Promise<void>;
   refreshChats: () => Promise<void>;
+  updateChatTitle: (chatId: string, newTitle: string) => Promise<void>;
 }
 
 interface ChatSidePanelProps {
@@ -32,21 +43,74 @@ interface ChatSidePanelProps {
   onResetSession: () => void;
   isBotResponding: boolean;
   onChatCreated?: (chatId: string) => void;
+  onCurrentChatChange?: (chat: { id: string; title: string } | null) => void;
 }
 
 const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
   (props, ref) => {
-    const { chats, selectChat, deleteChat, chatSidePanelActions } =
+    const router = useRouter();
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    const { chats, currentChat, selectChat, deleteChat, chatSidePanelActions } =
       useChatSidePanel(props);
-    // Expose functions to parent component
+
+    useEffect(() => {
+      props.onCurrentChatChange?.(currentChat || null);
+    }, [currentChat, props]);
+
     useImperativeHandle(ref, () => chatSidePanelActions, [
       chatSidePanelActions,
     ]);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          userMenuRef.current &&
+          !userMenuRef.current.contains(event.target as Node)
+        ) {
+          setUserMenuOpen(false);
+        }
+      };
+
+      if (userMenuOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+      }
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [userMenuOpen]);
 
     const handleDeleteChat = (chatIdToDelete: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if (props.isBotResponding) return;
       deleteChat(chatIdToDelete);
+    };
+
+    const formatChatDate = (dateString?: string) => {
+      if (!dateString) return "Unknown date";
+
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return date.toLocaleTimeString("pl-PL", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } else if (diffDays === 1) {
+        return "Wczoraj";
+      } else if (diffDays < 7) {
+        return `${diffDays} dni temu`;
+      } else {
+        return date.toLocaleDateString("pl-PL", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        });
+      }
     };
 
     return (
@@ -66,7 +130,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
           <button
             onClick={props.onResetSession}
             disabled={props.isBotResponding}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
+            className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-base font-semibold group shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:bg-gray-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed disabled:shadow-none"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -108,7 +172,7 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
                         {chat.title || "Untitled"}
                       </p>
                       <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
-                        Last conversation
+                        {formatChatDate(chat.created_at)}
                       </p>
                     </div>
                   </div>
@@ -119,29 +183,62 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
         </div>
 
         {/* User Section */}
-        <div className="p-4 border-t border-gray-800/50">
-          <div className="flex items-center justify-between">
+        <div
+          className="p-4 border-t border-gray-800/50 relative"
+          ref={userMenuRef}
+        >
+          {/* User Menu Button */}
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-800/50 transition-all duration-200 group"
+          >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                 <UserIcon className="w-4 h-4 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-white">
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors">
                   {props.user.email || "User"}
                 </p>
                 <p className="text-xs text-gray-400">Online</p>
               </div>
             </div>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
+            {userMenuOpen ? (
+              <ChevronUp className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+            )}
+          </button>
+
+          {/* Dropdown Menu */}
+          {userMenuOpen && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 bg-black/90 backdrop-blur-md border border-gray-700/50 rounded-xl shadow-2xl overflow-hidden">
+              <div className="py-2">
+                {/* Settings Option */}
+                <button
+                  onClick={() => {
+                    router.push("/settings");
+                    setUserMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all duration-200 group"
+                >
+                  <Settings className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                  <span className="text-sm font-medium">Settings</span>
+                </button>
+
+                {/* Logout Option */}
+                <form action={logout} className="w-full">
+                  <button
+                    type="submit"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+                  >
+                    <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

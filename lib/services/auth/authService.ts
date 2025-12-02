@@ -3,7 +3,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { loginSchema, signupSchema, type ValidationError, type ActionResult } from "@/lib/validation";
+import {
+  loginSchema,
+  signupSchema,
+  type ValidationError,
+  type ActionResult,
+} from "@/lib/validation";
+import { AuditLogger } from "@/lib/audit-logger";
 
 const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -18,13 +24,19 @@ const ERROR_MESSAGES = {
 const mapSupabaseError = (error: unknown): string => {
   const message = (error as { message?: string })?.message?.toLowerCase() || "";
 
-  if (message.includes("invalid login credentials") || message.includes("invalid email or password")) {
+  if (
+    message.includes("invalid login credentials") ||
+    message.includes("invalid email or password")
+  ) {
     return ERROR_MESSAGES.INVALID_CREDENTIALS;
   }
   if (message.includes("email not confirmed")) {
     return ERROR_MESSAGES.EMAIL_NOT_CONFIRMED;
   }
-  if (message.includes("user already registered") || message.includes("already exists")) {
+  if (
+    message.includes("user already registered") ||
+    message.includes("already exists")
+  ) {
     return ERROR_MESSAGES.USER_EXISTS;
   }
   if (message.includes("password should be")) {
@@ -40,15 +52,20 @@ const mapSupabaseError = (error: unknown): string => {
   return ERROR_MESSAGES.SERVER_ERROR;
 };
 
-export async function loginUser(email: string, password: string): Promise<ActionResult | void> {
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<ActionResult | void> {
   const supabase = await createClient();
 
   const validation = loginSchema.safeParse({ email, password });
   if (!validation.success) {
-    const fieldErrors: ValidationError[] = validation.error.errors.map((err) => ({
-      field: err.path[0] as string,
-      message: err.message,
-    }));
+    const fieldErrors: ValidationError[] = validation.error.errors.map(
+      (err) => ({
+        field: err.path[0] as string,
+        message: err.message,
+      })
+    );
 
     return {
       success: false,
@@ -61,14 +78,28 @@ export async function loginUser(email: string, password: string): Promise<Action
     const { error } = await supabase.auth.signInWithPassword(validation.data);
 
     if (error) {
-      if (error.status === 400 || error.message.includes("Invalid login credentials") || 
-          error.message.includes("Email not confirmed") || error.message.includes("Invalid email or password")) {
+      await AuditLogger.log("LOGIN_FAILED", validation.data.email, {
+        error_type: error.message,
+      });
+      if (
+        error.status === 400 ||
+        error.message.includes("Invalid login credentials") ||
+        error.message.includes("Email not confirmed") ||
+        error.message.includes("Invalid email or password")
+      ) {
         return {
           success: false,
           error: mapSupabaseError(error),
         };
       }
       redirect(`/error?message=${encodeURIComponent("Server error occurred")}`);
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await AuditLogger.log("LOGIN_SUCCESS", user.id);
     }
 
     revalidatePath("/private", "layout");
@@ -84,15 +115,24 @@ export async function loginUser(email: string, password: string): Promise<Action
   }
 }
 
-export async function signupUser(email: string, password: string): Promise<ActionResult | void> {
+export async function signupUser(
+  email: string,
+  password: string
+): Promise<ActionResult | void> {
   const supabase = await createClient();
 
-  const validation = signupSchema.safeParse({ email, password, confirmPassword: password });
+  const validation = signupSchema.safeParse({
+    email,
+    password,
+    confirmPassword: password,
+  });
   if (!validation.success) {
-    const fieldErrors: ValidationError[] = validation.error.errors.map((err) => ({
-      field: err.path[0] as string,
-      message: err.message,
-    }));
+    const fieldErrors: ValidationError[] = validation.error.errors.map(
+      (err) => ({
+        field: err.path[0] as string,
+        message: err.message,
+      })
+    );
 
     return {
       success: false,
@@ -111,17 +151,30 @@ export async function signupUser(email: string, password: string): Promise<Actio
     });
 
     if (error) {
-      if (error.status === 400 || error.status === 422 || error.message.includes("User already registered") ||
-          error.message.includes("Password should be") || error.message.includes("Invalid email") ||
-          error.message.includes("already exists")) {
+      await AuditLogger.log("SIGNUP_FAILED", validation.data.email, {
+        error_type: error.message,
+      });
+      if (
+        error.status === 400 ||
+        error.status === 422 ||
+        error.message.includes("User already registered") ||
+        error.message.includes("Password should be") ||
+        error.message.includes("Invalid email") ||
+        error.message.includes("already exists")
+      ) {
         return {
           success: false,
           error: mapSupabaseError(error),
         };
       }
-      redirect(`/error?message=${encodeURIComponent("Error occurred during registration")}`);
+      redirect(
+        `/error?message=${encodeURIComponent(
+          "Error occurred during registration"
+        )}`
+      );
     }
 
+    await AuditLogger.log("SIGNUP_SUCCESS", validation.data.email);
     return {
       success: true,
       message: "Check your email to confirm your account",
@@ -143,16 +196,22 @@ export async function resetPassword(email: string): Promise<ActionResult> {
   try {
     const origin = process.env.NEXT_PUBLIC_SITE_URL;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/auth/update-password")}`,
+      redirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(
+        "/auth/update-password"
+      )}`,
     });
 
     if (error) {
+      await AuditLogger.log("PASSWORD_RESET_FAILED", email, {
+        error_type: error.message,
+      });
       return {
         success: false,
         error: mapSupabaseError(error),
       };
     }
 
+    await AuditLogger.log("PASSWORD_RESET_REQUESTED", email);
     return {
       success: true,
       message: "Password reset link has been sent.",
@@ -169,20 +228,32 @@ export async function updatePassword(password: string): Promise<ActionResult> {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
+      if (user) {
+        await AuditLogger.log("PASSWORD_UPDATE_FAILED", user.id, {
+          error_type: error.message,
+        });
+      }
       return {
         success: false,
         error: error.message,
       };
     }
 
+    if (user) {
+      await AuditLogger.log("PASSWORD_UPDATED", user.id);
+    }
     await supabase.auth.signOut();
 
     return {
       success: true,
-      message: "Password updated successfully! Please sign in with your new password.",
+      message:
+        "Password updated successfully! Please sign in with your new password.",
     };
   } catch {
     return {
@@ -194,6 +265,14 @@ export async function updatePassword(password: string): Promise<ActionResult> {
 
 export async function logoutUser(): Promise<void> {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    await AuditLogger.log("LOGOUT", user.id);
+  }
+
   await supabase.auth.signOut();
   redirect("/sign-in");
 }

@@ -3,28 +3,30 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@/lib/types";
 import ChatSidePanel from "@/components/private/ChatSidePanel";
-import QuestionBlock from "@/components/private/QuestionBlock";
 import ChatMessages from "@/components/private/ChatMessages";
-import ModelSelection from "@/components/private/ModelSelection";
 import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
 import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
 import { useErrorToast } from "@/hooks/private/mainPanel/useErrorToast";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Edit3 } from "lucide-react";
 
 export default function ChatClient({ user }: { user: User }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [currentChat, setCurrentChat] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   const { error, hideError, handleApiError } = useErrorToast();
 
-  // Close sidebar on window resize and check screen size
   useEffect(() => {
     const handleResize = () => {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
 
-      // Always close sidebar on resize for mobile
       if (!desktop) {
         setIsSidebarOpen(false);
       }
@@ -63,6 +65,69 @@ export default function ChatClient({ user }: { user: User }) {
     getTimeUntilReset,
     checkUsage,
   } = useChat({ user, onError: handleApiError });
+
+  // Auto scroll on phase changes (when QuestionBlock appears/disappears)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }
+    }, 500); // Small delay to let animation start
+
+    return () => clearTimeout(timer);
+  }, [phase, questionsData, messagesEndRef]);
+
+  // Functions for editing chat title
+  const handleTitleClick = () => {
+    if (currentChat && !isBotResponding) {
+      setIsEditingTitle(true);
+      setEditTitle(currentChat.title);
+    }
+  };
+
+  const handleTitleSave = async () => {
+    if (!currentChat || !editTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    if (editTitle.trim() === currentChat.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      // Update title via chat side panel
+      await chatSidePanelRef.current?.updateChatTitle(
+        currentChat.id,
+        editTitle.trim()
+      );
+      setCurrentChat({ ...currentChat, title: editTitle.trim() });
+      setIsEditingTitle(false);
+    } catch (error) {
+      console.error("Failed to update chat title:", error);
+      handleApiError?.(error, "updating chat title");
+      // Revert to original title on error
+      setEditTitle(currentChat.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditTitle("");
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      handleTitleCancel();
+    }
+  };
 
   return (
     <div className="flex h-[100svh] bg-black overflow-hidden">
@@ -113,6 +178,7 @@ export default function ChatClient({ user }: { user: User }) {
           setPhase={setPhase}
           onResetSession={resetSession}
           isBotResponding={isBotResponding}
+          onCurrentChatChange={setCurrentChat}
         />
       </motion.div>
 
@@ -140,80 +206,74 @@ export default function ChatClient({ user }: { user: User }) {
               </div>
             </button>
 
-            {/* Provider Selection - Using OpenAI only */}
-            <div className="ml-auto flex items-center gap-2">
+            {/* Chat Title - Centered */}
+            <div className="flex-1 flex items-center justify-center">
+              {currentChat ? (
+                <div className="flex items-center gap-2">
+                  {isEditingTitle ? (
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={handleTitleKeyDown}
+                      onBlur={handleTitleSave}
+                      className="bg-gray-800/50 text-white text-base font-semibold px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none max-w-48"
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleTitleClick}
+                        disabled={isBotResponding}
+                        className="text-base font-semibold text-white hover:text-blue-300 transition-colors truncate max-w-48 text-center disabled:cursor-not-allowed disabled:hover:text-white"
+                        title="Click to edit chat name"
+                      >
+                        {currentChat.title}
+                      </button>
+                      <div 
+                        className="cursor-pointer" 
+                        onClick={handleTitleClick}
+                        title="Edit chat name"
+                      >
+                        <Edit3 className="w-4 h-4 text-gray-400 hover:text-blue-300 transition-colors opacity-60" />
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-base font-semibold text-gray-400">
+                  New Chat
+                </div>
+              )}
+            </div>
+
+            {/* Provider Selection - Right side */}
+            <div className="flex items-center gap-2">
               <div className="text-xs text-gray-400 bg-gray-900/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-700/50 font-mono">
-                OpenAI GPT-4o Mini
+                GPT-4o Mini
               </div>
             </div>
           </div>
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-visible">
+        <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
           <div className="w-full max-w-4xl mx-auto px-2 sm:px-1 py-2 sm:py-2">
             <ChatMessages
               messages={messages}
               isBotResponding={isBotResponding}
+              phase={phase}
+              questionsData={questionsData}
+              currentQuestionIndex={currentQuestionIndex}
+              customAnswer={customAnswer}
+              setCustomAnswer={setCustomAnswer}
+              onAnswerSubmit={handleAnswerSubmit}
+              onModelSelect={handleModelSelect}
             />
-            {/* Answer Options */}
-            <AnimatePresence mode="wait">
-              {phase === "clarifying" &&
-                questionsData[currentQuestionIndex] && (
-                  <motion.div
-                    key="question-block"
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.4, 0.0, 0.2, 1],
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 15,
-                    }}
-                    className="w-full px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6"
-                  >
-                    <QuestionBlock
-                      currentQuestionOptions={
-                        questionsData[currentQuestionIndex].options
-                      }
-                      customAnswer={customAnswer}
-                      setCustomAnswer={setCustomAnswer}
-                      onAnswerSubmit={handleAnswerSubmit}
-                      isBotResponding={isBotResponding}
-                    />
-                  </motion.div>
-                )}
-            </AnimatePresence>
-            {/* Model Selection */}
-            <AnimatePresence mode="wait">
-              {phase === "model-selection" && (
-                <motion.div
-                  key="model-selection"
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{
-                    duration: 0.6,
-                    ease: [0.4, 0.0, 0.2, 1],
-                    type: "spring",
-                    stiffness: 100,
-                    damping: 15,
-                  }}
-                  className="flex justify-center px-3 sm:px-6 mt-4"
-                >
-                  <ModelSelection
-                    onModelSelect={handleModelSelect}
-                    isBotResponding={isBotResponding}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
-          {/* Invisible div for auto-scroll - this is the target */}
-          <div ref={messagesEndRef} />
+            {/* Scroll target - at the very end */}
+            <div ref={messagesEndRef} className="h-4" />
+          </div>
         </div>
 
         {/* Input Area */}

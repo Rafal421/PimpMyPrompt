@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { AuditLogger } from "@/lib/audit-logger";
 
 export async function GET() {
   try {
@@ -63,6 +64,9 @@ export async function POST() {
       );
     }
 
+    await AuditLogger.log("USAGE_INCREMENTED", user.id, {
+      requests_used: data?.requests_used,
+    });
     return NextResponse.json(data);
   } catch (error) {
     console.error("Usage increment error:", error);
