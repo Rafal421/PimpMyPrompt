@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
       if (isPasswordReset) {
         redirect("/auth/update-password");
       } else {
-        // Po potwierdzeniu signup wyloguj użytkownika i przekieruj na sign-up
         await supabase.auth.signOut();
         redirect("/sign-in?confirmed=true");
       }

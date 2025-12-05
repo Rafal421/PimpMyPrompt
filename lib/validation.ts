@@ -69,9 +69,9 @@ export const validateProfileName = (name: string, fieldName: string) => {
     return `${fieldName} cannot be more than 50 characters long`;
   }
 
-  if (fieldName === "First name") {
+  if (fieldName === "First name" || fieldName === "Last name") {
     if (!/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/.test(trimmedName)) {
-      return `${fieldName} Can only contain letters`;
+      return `${fieldName} can only contain letters`;
     }
   }
 
