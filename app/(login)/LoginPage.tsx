@@ -24,14 +24,18 @@ interface OptimizedAuthPageProps {
   initialMode?: "login" | "signup";
 }
 
-export default function OptimizedAuthPage({ initialMode = "login" }: OptimizedAuthPageProps) {
+export default function OptimizedAuthPage({
+  initialMode = "login",
+}: OptimizedAuthPageProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         router.replace("/private");
       }
@@ -114,7 +118,15 @@ export default function OptimizedAuthPage({ initialMode = "login" }: OptimizedAu
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
-    [setIsLoading, handleServerResponse, setPassword, setConfirmPassword, setEmail, setSuccessMessage, switchMode]
+    [
+      setIsLoading,
+      handleServerResponse,
+      setPassword,
+      setConfirmPassword,
+      setEmail,
+      setSuccessMessage,
+      switchMode,
+    ]
   );
 
   return (
