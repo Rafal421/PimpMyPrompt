@@ -47,11 +47,25 @@ export const createPromptImprover = ({
     );
 
     try {
-      const prompt = await chatService.getLLMResponse(
-        improvePromptContent,
-        provider,
-        currentModel
-      );
+      // Call provider directly for improve action instead of using getLLMResponse
+      const response = await fetch(`/api/providers/${provider}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "improve",
+          question: originalQuestion,
+          answers: clarifyingAnswers,
+          model: currentModel,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate improved prompt");
+      }
+
+      const data = await response.json();
+      const prompt = data.response || data.content || data.prompt || "Failed to generate prompt";
 
       setImprovedPrompt(prompt);
 

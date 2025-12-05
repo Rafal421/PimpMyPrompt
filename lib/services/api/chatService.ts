@@ -29,11 +29,19 @@ export class ChatService {
     if (!res.ok) throw new Error("Failed to delete chat");
   }
 
-  async updateChatTitle(chatId: string, userId: string, newTitle: string): Promise<void> {
+  async updateChatTitle(
+    chatId: string,
+    userId: string,
+    newTitle: string
+  ): Promise<void> {
     const res = await fetch("/api/chat", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, user_id: userId, title: newTitle }),
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+        title: newTitle,
+      }),
     });
     if (!res.ok) throw new Error("Failed to update chat title");
   }
@@ -53,11 +61,14 @@ export class ChatService {
     targetProvider: Provider,
     model: string
   ): Promise<string> {
-    const endpoint = `/api/chat/${targetProvider}`;
+    const endpoint = `/api/providers/${targetProvider}`;
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, model }),
+      body: JSON.stringify({
+        message,
+        model,
+      }),
     });
 
     if (!response.ok) {

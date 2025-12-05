@@ -8,9 +8,9 @@ import { DEFAULT_QUESTION_PROVIDER, QUESTION_PROVIDER } from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
 import { useUsageLimit } from "@/hooks/private/mainPanel/useUsageLimit";
 
-import { createQuestionFlow } from "./useQuestionFlow";
-import { createPromptImprover } from "./usePromptImprover";
-import { createModelSelection } from "./useModelSelection";
+import { createQuestionFlow } from "./PMP/useQuestionFlow";
+import { createPromptImprover } from "./PMP/usePromptImprover";
+import { createModelSelection } from "./PMP/useModelSelection";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
@@ -174,10 +174,10 @@ export const useChat = ({
 
   const wrappedHandleAnswerSubmit = async (answer: string) => {
     if (isBotResponding) return;
-    
+
     // Set loading when user submits answer
     setIsBotResponding(true);
-    
+
     // Handle answer submission
     try {
       await handleAnswerSubmit(answer);

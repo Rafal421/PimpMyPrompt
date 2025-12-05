@@ -8,7 +8,6 @@ import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
 import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
-import { useErrorToast } from "@/hooks/private/mainPanel/useErrorToast";
 import { Menu, X, Edit3 } from "lucide-react";
 
 export default function ChatClient({ user }: { user: User }) {
@@ -20,7 +19,6 @@ export default function ChatClient({ user }: { user: User }) {
   } | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
-  const { error, hideError, handleApiError } = useErrorToast();
 
   useEffect(() => {
     const handleResize = () => {
@@ -64,7 +62,7 @@ export default function ChatClient({ user }: { user: User }) {
     requestsRemaining,
     getTimeUntilReset,
     checkUsage,
-  } = useChat({ user, onError: handleApiError });
+  } = useChat({ user });
 
   // Auto scroll on phase changes (when QuestionBlock appears/disappears)
   useEffect(() => {
@@ -109,7 +107,6 @@ export default function ChatClient({ user }: { user: User }) {
       setIsEditingTitle(false);
     } catch (error) {
       console.error("Failed to update chat title:", error);
-      handleApiError?.(error, "updating chat title");
       // Revert to original title on error
       setEditTitle(currentChat.title);
       setIsEditingTitle(false);
@@ -230,8 +227,8 @@ export default function ChatClient({ user }: { user: User }) {
                       >
                         {currentChat.title}
                       </button>
-                      <div 
-                        className="cursor-pointer" 
+                      <div
+                        className="cursor-pointer"
                         onClick={handleTitleClick}
                         title="Edit chat name"
                       >
@@ -292,14 +289,6 @@ export default function ChatClient({ user }: { user: User }) {
           />
         </div>
       </div>
-
-      {/* Error Toast */}
-      <ErrorToast
-        message={error.message}
-        details={error.details}
-        onClose={hideError}
-        isVisible={error.isVisible}
-      />
     </div>
   );
 }
