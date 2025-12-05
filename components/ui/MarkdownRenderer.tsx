@@ -35,28 +35,16 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           />
         ),
         p: ({ ...props }) => (
-          <p
-            className="mb-3 leading-relaxed text-gray-100"
-            {...props}
-          />
+          <p className="mb-3 leading-relaxed text-gray-100" {...props} />
         ),
         ul: ({ ...props }) => (
-          <ul
-            className="list-disc pl-6 mb-4 space-y-1"
-            {...props}
-          />
+          <ul className="list-disc pl-6 mb-4 space-y-1" {...props} />
         ),
         ol: ({ ...props }) => (
-          <ol
-            className="list-decimal pl-6 mb-4 space-y-1"
-            {...props}
-          />
+          <ol className="list-decimal pl-6 mb-4 space-y-1" {...props} />
         ),
         li: ({ ...props }) => (
-          <li
-            className="mb-1 text-gray-100 leading-relaxed"
-            {...props}
-          />
+          <li className="mb-1 text-gray-100 leading-relaxed" {...props} />
         ),
         strong: ({ ...props }) => (
           <strong className="font-bold text-white" {...props} />
