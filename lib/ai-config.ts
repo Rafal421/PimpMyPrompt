@@ -5,7 +5,6 @@ export const QUESTION_PROVIDER = {
   name: "OpenAI",
   modelName: "4o mini",
   model: "gpt-4o-mini",
-  endpoint: "/api/chat/openai",
 } as const;
 
 // Default provider for asking questions (best overall)
@@ -17,7 +16,6 @@ export const RESPONSE_PROVIDERS = [
     id: "anthropic",
     name: "Anthropic",
     icon: "🧠",
-    endpoint: "/api/chat/anthropic",
     recommendedModel: "claude-sonnet-4-5-20250929",
     models: [
       {
@@ -56,7 +54,6 @@ export const RESPONSE_PROVIDERS = [
     id: "openai",
     name: "OpenAI",
     icon: "🤖",
-    endpoint: "/api/chat/openai",
     recommendedModel: "gpt-4o-mini",
     models: [
       {
@@ -100,7 +97,6 @@ export const RESPONSE_PROVIDERS = [
     id: "gemini",
     name: "Google Gemini",
     icon: "🌟",
-    endpoint: "/api/chat/gemini",
     recommendedModel: "gemini-2.5-flash",
     models: [
       {
@@ -129,7 +125,6 @@ export const RESPONSE_PROVIDERS = [
     id: "grok",
     name: "Grok (X.AI)",
     icon: "⚡",
-    endpoint: "/api/chat/grok",
     recommendedModel: "grok-3-mini",
     models: [
       {
@@ -173,7 +168,6 @@ export const RESPONSE_PROVIDERS = [
     id: "perplexity",
     name: "Perplexity",
     icon: "🔍",
-    endpoint: "/api/chat/perplexity",
     recommendedModel: "sonar",
     models: [
       {
@@ -192,7 +186,6 @@ export const RESPONSE_PROVIDERS = [
     id: "deepseek",
     name: "DeepSeek",
     icon: "🚀",
-    endpoint: "/api/chat/deepseek",
     recommendedModel: "deepseek-chat",
     models: [
       {

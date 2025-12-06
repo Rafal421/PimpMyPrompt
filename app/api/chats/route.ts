@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { AuditLogger } from "@/lib/audit-logger";
 
-// GET /api/chat?user_id={userId} - Fetch all chats for a user
+// GET /api/chats?user_id={userId} - Fetch all chats for a user
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { searchParams } = new URL(req.url);
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ chats: chats || [] });
   } catch (error) {
-    console.error("Error in GET /api/chat:", error);
+    console.error("Error in GET /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/chat - Create a new chat
+// POST /api/chats - Create a new chat
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ chat });
   } catch (error) {
-    console.error("Error in POST /api/chat:", error);
+    console.error("Error in POST /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT /api/chat - Update chat title
+// PUT /api/chats - Update chat title
 export async function PUT(req: NextRequest) {
   const supabase = await createClient();
 
@@ -127,7 +127,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ chat });
   } catch (error) {
-    console.error("Error in PUT /api/chat:", error);
+    console.error("Error in PUT /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -135,7 +135,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// DELETE /api/chat - Delete a chat
+// DELETE /api/chats - Delete a chat
 export async function DELETE(req: NextRequest) {
   const supabase = await createClient();
 
@@ -167,7 +167,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error in DELETE /api/chat:", error);
+    console.error("Error in DELETE /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

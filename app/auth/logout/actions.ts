@@ -1,6 +1,6 @@
 "use server";
 
-import { logoutUser } from "@/lib/services/auth/authService";
+import { logoutUser } from "@/app/auth/actions";
 
 export async function logout() {
   return logoutUser();

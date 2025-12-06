@@ -6,7 +6,6 @@ import ChatSidePanel from "@/components/private/ChatSidePanel";
 import ChatMessages from "@/components/private/ChatMessages";
 import ChatInput from "@/components/private/ChatInput";
 import { Background } from "@/components/ui/background";
-import { ErrorToast } from "@/components/ui/error-toast";
 import { useChat } from "@/hooks/private/mainPanel/useChat";
 import { Menu, X, Edit3 } from "lucide-react";
 

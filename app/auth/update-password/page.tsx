@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { validatePassword } from "@/lib/validation";
+import { updatePassword } from "@/app/auth/actions";
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
@@ -55,15 +56,15 @@ export default function UpdatePasswordPage() {
       await signOutAndRedirect();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('popstate', handlePopState);
-    window.history.pushState(null, '', window.location.href);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("popstate", handlePopState);
+    window.history.pushState(null, "", window.location.href);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [supabase.auth, router]);
 
@@ -88,17 +89,22 @@ export default function UpdatePasswordPage() {
     }
 
     if (!passwordStrength.isValid) {
-      setMessage({ type: "error", text: "Password must meet all requirements." });
+      setMessage({
+        type: "error",
+        text: "Password must meet all requirements.",
+      });
       setIsLoading(false);
       return;
     }
 
-    const { updatePassword } = await import("@/lib/services/auth/authService");
     const result = await updatePassword(password);
 
     if (result.success) {
       isPasswordUpdated.current = true;
-      setMessage({ type: "success", text: result.message || "Password updated successfully!" });
+      setMessage({
+        type: "success",
+        text: result.message || "Password updated successfully!",
+      });
       setTimeout(() => {
         window.location.href = "/sign-in";
       }, 2000);
@@ -144,7 +150,8 @@ export default function UpdatePasswordPage() {
             <Alert className="bg-yellow-900/20 border-yellow-800/50 text-yellow-400">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                If you leave this page, your reset link will expire and you&apos;ll need to request a new one.
+                If you leave this page, your reset link will expire and
+                you&apos;ll need to request a new one.
               </AlertDescription>
             </Alert>
 
