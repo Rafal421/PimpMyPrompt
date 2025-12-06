@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { resetPassword } from "@/app/auth/actions";
+import { resetPassword } from "@/app/auth/reset-password/actions";
 import { Button } from "@/components/ui/button";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { Background } from "@/components/ui/background";

@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { validatePassword } from "@/lib/validation";
-import { updatePassword } from "@/app/auth/actions";
+import { updatePassword } from "@/app/auth/update-password/actions";
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
