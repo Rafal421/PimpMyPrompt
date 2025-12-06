@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { apiServices } from "@/lib/services/api";
 import type { User, Chat, Message, Phase } from "@/lib/types";
 
 interface UseChatSidePanelProps {
@@ -23,36 +22,80 @@ export function useChatSidePanel({
 }: UseChatSidePanelProps) {
   const [chats, setChats] = useState<Chat[]>([]);
 
-  // Wszystkie funkcje API używają teraz services
+  // Fetch all chats for user
   const fetchChats = useCallback(async () => {
-    const fetchedChats = await apiServices.chats.fetchAll(user.id);
-    setChats(fetchedChats);
+    try {
+      const res = await fetch(`/api/chats?user_id=${user.id}`);
+      if (!res.ok) throw new Error("Failed to fetch chats");
+      const data = await res.json();
+      setChats(data.chats || []);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
   }, [user.id]);
 
+  // Create new chat
   const createChat = useCallback(
     async (title: string, usedModel: string) => {
-      const chatId = await apiServices.chats.create(
-        user.id,
-        title
-      );
-      setChatId(chatId);
-      await fetchChats();
-      return chatId;
+      try {
+        const res = await fetch("/api/chats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: user.id, title }),
+        });
+        if (!res.ok) throw new Error("Failed to create chat");
+        const data = await res.json();
+        const newChatId = data.chat.id;
+        setChatId(newChatId);
+        await fetchChats();
+        return newChatId;
+      } catch (error) {
+        console.error("Error creating chat:", error);
+        throw error;
+      }
     },
     [user.id, setChatId, fetchChats]
   );
 
+  // Send message
   const sendMessage = useCallback(
     async (chatId: string, from: string, content: string) => {
-      await apiServices.messages.send(chatId, user.id, from, content);
+      try {
+        await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            user_id: user.id,
+            from,
+            content,
+          }),
+        });
+      } catch (error) {
+        console.error("Error sending message:", error);
+        throw error;
+      }
     },
     [user.id]
   );
 
+  // Fetch chat history
   const fetchChatHistory = useCallback(
     async (chatId: string) => {
-      const messages = await apiServices.chats.fetchHistory(chatId);
-      setMessages(messages);
+      try {
+        const res = await fetch(`/api/messages?chat_id=${chatId}`);
+        if (!res.ok) throw new Error("Failed to fetch chat history");
+        const data = await res.json();
+        const messages = data.messages.map(
+          (msg: { from: string; content: string }) => ({
+            from: msg.from === "user" ? "user" : "bot",
+            text: msg.content,
+          })
+        );
+        setMessages(messages);
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
     },
     [setMessages]
   );
@@ -68,25 +111,44 @@ export function useChatSidePanel({
     [fetchChatHistory, setChatId, setPhase]
   );
 
+  // Delete chat
   const deleteChat = useCallback(
     async (chatIdToDelete: string) => {
-      await apiServices.chats.delete(chatIdToDelete, user.id);
+      try {
+        await fetch("/api/chats", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatIdToDelete, user_id: user.id }),
+        });
 
-      setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
+        setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
 
-      if (chatIdToDelete === chatId) {
-        onResetSession();
+        if (chatIdToDelete === chatId) {
+          onResetSession();
+        }
+
+        await fetchChats();
+      } catch (error) {
+        console.error("Error deleting chat:", error);
+        throw error;
       }
-
-      await fetchChats();
     },
     [user.id, chatId, onResetSession, fetchChats]
   );
 
+  // Update chat title
   const updateChatTitle = useCallback(
     async (chatId: string, newTitle: string) => {
       try {
-        await apiServices.chats.updateTitle(chatId, user.id, newTitle);
+        await fetch("/api/chats", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            user_id: user.id,
+            title: newTitle,
+          }),
+        });
 
         setChats((prev) =>
           prev.map((chat) =>

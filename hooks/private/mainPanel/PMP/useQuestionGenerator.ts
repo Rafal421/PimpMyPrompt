@@ -1,6 +1,10 @@
 import { useCallback } from "react";
-import { createImprovePrompt } from "@/lib/ai-helpers";
-import { apiServices } from "@/lib/services/api";
+import {
+  createImprovePrompt,
+  createClarifyPrompt,
+  parseQuestionsWithOptions,
+} from "@/lib/ai-helpers";
+import { getQuestionProviderById } from "@/lib/ai-config";
 import type { QuestionData, Provider } from "@/lib/types";
 
 interface UseQuestionGeneratorProps {
@@ -18,11 +22,47 @@ export function useQuestionGenerator({
       payload: { question: string; answers?: string[] }
     ) => {
       if (action === "clarify") {
-        // Użycie nowego serwisu do generowania pytań
-        return apiServices.questions.generateClarifying(
-          payload.question,
-          provider
-        );
+        // Bezpośredni fetch do /api/clarify
+        const questionProvider = getQuestionProviderById(provider);
+        if (!questionProvider) {
+          throw new Error(`Provider ${provider} not found`);
+        }
+
+        const clarifyPrompt = createClarifyPrompt(payload.question);
+        const response = await fetch("/api/clarify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: clarifyPrompt,
+            provider,
+            model: questionProvider.model,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Check if questions are already parsed by the provider
+        if (data.questions && Array.isArray(data.questions)) {
+          return data.questions;
+        }
+
+        // Fallback to content parsing for legacy responses
+        const content = data.response || data.content;
+        if (!content) {
+          throw new Error("No content in response");
+        }
+
+        const questionsWithOptions = parseQuestionsWithOptions(content);
+        if (questionsWithOptions.length === 0) {
+          throw new Error(
+            "Unable to generate clarifying questions. Please try rephrasing your question with more detail."
+          );
+        }
+
+        return questionsWithOptions;
       }
 
       // Logika dla 'improve' pozostaje na razie taka sama,

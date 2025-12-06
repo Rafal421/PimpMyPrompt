@@ -2,7 +2,6 @@
 import type { Provider, Message, Phase } from "@/lib/types";
 import { getQuestionProviderById } from "@/lib/ai-config";
 import { createImprovePrompt } from "@/lib/ai-helpers";
-import { chatService } from "@/lib/services/api/chatService";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 
@@ -61,11 +60,17 @@ export const createPromptImprover = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate improved prompt");
+        throw new Error(
+          errorData.error || "Failed to generate improved prompt"
+        );
       }
 
       const data = await response.json();
-      const prompt = data.response || data.content || data.prompt || "Failed to generate prompt";
+      const prompt =
+        data.response ||
+        data.content ||
+        data.prompt ||
+        "Failed to generate prompt";
 
       setImprovedPrompt(prompt);
 

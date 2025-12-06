@@ -1,6 +1,5 @@
 // hooks/private/mainPanel/useModelSelection.ts
 import type { Provider, Message, Phase } from "@/lib/types";
-import { chatService } from "@/lib/services/api/chatService";
 import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 
@@ -57,11 +56,26 @@ export const createModelSelection = ({
     setPhase("final-response");
 
     try {
-      const finalResponse = await chatService.getLLMResponse(
-        improvedPrompt,
-        selectedProvider,
-        selectedModel
-      );
+      const response = await fetch(`/api/providers/${selectedProvider}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: improvedPrompt,
+          model: selectedModel,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate response");
+      }
+
+      const data = await response.json();
+      const finalResponse =
+        data.response ||
+        data.content ||
+        data.text ||
+        (typeof data === "string" ? data : JSON.stringify(data));
 
       // Typing animation for bot's final response
       addTypingMessage(setMessages, finalResponse, () => {

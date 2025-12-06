@@ -47,7 +47,7 @@ export const createQuestionFlow = ({
 }: QuestionFlowLogicProps) => {
   const { generateClarifyingQuestions } = useQuestionGenerator({
     provider,
-    getProviderEndpoint: (p: string) => `/api/chat/${p}`,
+    getProviderEndpoint: (p: string) => `/api/providers/${p}`,
   });
 
   const startQuestionFlow = async (
