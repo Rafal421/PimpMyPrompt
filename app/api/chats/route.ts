@@ -150,7 +150,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete the chat (messages will be deleted automatically due to cascade)
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("chats")
       .delete()
       .eq("id", chat_id)
@@ -159,6 +159,13 @@ export async function DELETE(req: NextRequest) {
     if (error) {
       console.error("Error deleting chat:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (count === 0) {
+      return NextResponse.json(
+        { error: "Chat not found or access denied" },
+        { status: 404 }
+      );
     }
 
     await AuditLogger.log("CHAT_DELETED", user_id, {

@@ -48,7 +48,7 @@ export function useQuestionGenerator({
         }
 
         // Fallback to content parsing for legacy responses
-  const content = data.response || data.content;
+        const content = data.response || data.content;
         if (!content) {
           throw new Error("No content in response");
         }

@@ -71,11 +71,11 @@ export const createModelSelection = ({
       }
 
       const data = await response.json();
-      const finalResponse =
-        data.response ||
-        data.content ||
-        data.text ||
-        (typeof data === "string" ? data : JSON.stringify(data));
+      const finalResponse = data.response;
+
+      if (typeof finalResponse !== "string") {
+        throw new Error("Invalid response format from AI provider.");
+      }
 
       // Typing animation for bot's final response
       addTypingMessage(setMessages, finalResponse, () => {

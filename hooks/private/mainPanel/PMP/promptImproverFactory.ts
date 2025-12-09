@@ -65,11 +65,11 @@ export const createPromptImprover = ({
       }
 
       const data = await response.json();
-      const prompt =
-        data.response ||
-        data.content ||
-        data.prompt ||
-        "Failed to generate prompt";
+      const prompt = data.response;
+
+      if (typeof prompt !== "string") {
+        throw new Error("Failed to generate improved prompt from API.");
+      }
 
       setImprovedPrompt(prompt);
 

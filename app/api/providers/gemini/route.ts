@@ -30,6 +30,15 @@ class GeminiProvider extends BaseAIProvider {
       }
     );
 
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(
+        `Gemini API error (${res.status}): ${
+          errorData.error?.message || "Unknown error"
+        }`
+      );
+    }
+
     const data = await res.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   }

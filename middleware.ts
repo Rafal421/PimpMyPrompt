@@ -11,11 +11,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/private/:path*", 
-    "/settings/:path*", 
+    "/private/:path*",
+    "/settings/:path*",
     "/api/:path*",
-    "/login", 
-    "/sign-in", 
-    "/sign-up"
+    "/login",
+    "/sign-in",
+    "/sign-up",
   ],
 };
