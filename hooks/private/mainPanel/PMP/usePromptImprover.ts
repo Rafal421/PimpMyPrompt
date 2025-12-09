@@ -2,7 +2,7 @@
 import type { Provider, Message, Phase } from "@/lib/types";
 import { getQuestionProviderById } from "@/lib/ai-config";
 import { createImprovePrompt } from "@/lib/ai-helpers";
-import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";

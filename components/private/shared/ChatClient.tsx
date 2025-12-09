@@ -2,11 +2,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@/lib/types";
-import ChatSidePanel from "@/components/private/ChatSidePanel";
+import ChatSidePanel from "@/components/private/shared/ChatSidePanel";
 import ChatMessages from "@/components/private/ChatMessages";
-import ChatInput from "@/components/private/ChatInput";
+import ChatInput from "@/components/private/shared/ChatInput";
 import { Background } from "@/components/ui/background";
-import { useChat } from "@/hooks/private/mainPanel/useChat";
+import { useChat } from "@/hooks/private/shared/useChat";
 import { Menu, X, Edit3 } from "lucide-react";
 
 export default function ChatClient({ user }: { user: User }) {

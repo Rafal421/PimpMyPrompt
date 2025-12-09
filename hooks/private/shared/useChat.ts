@@ -2,15 +2,15 @@
 "use client";
 import { useState, useRef } from "react";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
-import { useAutoScroll } from "@/hooks/private/mainPanel/useAutoScroll";
-import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { useAutoScroll } from "@/hooks/private/shared/useAutoScroll";
+import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { DEFAULT_QUESTION_PROVIDER, QUESTION_PROVIDER } from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
-import { useUsageLimit } from "@/hooks/private/mainPanel/useUsageLimit";
+import { useUsageLimit } from "@/hooks/private/shared/useUsageLimit";
 
-import { createQuestionFlow } from "./PMP/useQuestionFlow";
-import { createPromptImprover } from "./PMP/usePromptImprover";
-import { createModelSelection } from "./PMP/useModelSelection";
+import { createQuestionFlow } from "../mainPanel/PMP/useQuestionFlow";
+import { createPromptImprover } from "../mainPanel/PMP/usePromptImprover";
+import { createModelSelection } from "../mainPanel/PMP/useModelSelection";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 

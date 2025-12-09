@@ -1,6 +1,6 @@
 // hooks/private/mainPanel/useModelSelection.ts
 import type { Provider, Message, Phase } from "@/lib/types";
-import { ChatSidePanelHandle } from "@/components/private/ChatSidePanel";
+import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 
 interface ModelSelectionLogicProps {
