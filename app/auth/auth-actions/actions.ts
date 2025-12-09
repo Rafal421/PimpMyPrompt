@@ -10,7 +10,7 @@ import {
   type ActionResult,
 } from "@/lib/validation";
 import { AuditLogger } from "@/lib/audit-logger";
-import { ERROR_MESSAGES, mapSupabaseError } from "@/app/auth/actions";
+import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth-errors";
 
 export async function loginUser(
   email: string,

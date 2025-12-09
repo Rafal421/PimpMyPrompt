@@ -42,7 +42,6 @@ export abstract class BaseAIProvider {
 
       console.log(`[${this.config.name}] Using model:`, selectedModel);
 
-      // Handle message format (from ChatClient)
       if (message) {
         await auditAIRequest(
           this.config.name.toLowerCase(),
@@ -64,7 +63,6 @@ export abstract class BaseAIProvider {
         );
       }
 
-      // Handle legacy action format
       if (!action || !question) {
         throw new ValidationError("Action and question are required");
       }

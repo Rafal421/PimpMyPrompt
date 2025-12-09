@@ -11,8 +11,7 @@ class GeminiProvider extends BaseAIProvider {
 
   protected async callAI(
     prompt: string,
-    model: string,
-    _maxTokens?: number
+    model: string
   ): Promise<string> {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,

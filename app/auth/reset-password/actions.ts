@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { type ActionResult } from "@/lib/validation";
 import { AuditLogger } from "@/lib/audit-logger";
-import { ERROR_MESSAGES, mapSupabaseError } from "@/app/auth/actions";
+import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth-errors";
 
 export async function resetPassword(email: string): Promise<ActionResult> {
   const supabase = await createClient();
