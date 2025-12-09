@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
+import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class DeepSeekProvider extends BaseAIProvider {
   private deepseek: OpenAI;
@@ -8,7 +9,8 @@ class DeepSeekProvider extends BaseAIProvider {
   constructor() {
     super({
       name: "DeepSeek",
-      defaultModel: "deepseek-chat"
+      defaultModel: "deepseek-chat",
+      allowedModels: getAllowedModelsForProvider("deepseek"),
     });
     
     this.deepseek = new OpenAI({

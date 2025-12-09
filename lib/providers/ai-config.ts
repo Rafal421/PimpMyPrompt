@@ -216,3 +216,11 @@ export function getAllProviderIds() {
 export function getQuestionProviderById(providerId: string) {
   return QUESTION_PROVIDER.id === providerId ? QUESTION_PROVIDER : undefined;
 }
+
+export function getAllowedModelsForProvider(providerId: string): string[] {
+  const provider = RESPONSE_PROVIDERS.find((p) => p.id === providerId);
+  if (!provider) {
+    return [];
+  }
+  return provider.models.map((m) => m.id);
+}

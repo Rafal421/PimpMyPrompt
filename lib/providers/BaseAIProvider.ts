@@ -7,10 +7,12 @@ import {
 } from "@/lib/providers/ai-helpers";
 import { handleError, ValidationError } from "@/lib/error-handler";
 import { auditAIRequest } from "@/lib/providers/ai-audit";
+import { createClient } from "@/utils/supabase/server";
 
 export interface AIProviderConfig {
   name: string;
   defaultModel: string;
+  allowedModels?: string[];
 }
 
 export interface AIRequestBody {
@@ -34,11 +36,80 @@ export abstract class BaseAIProvider {
     maxTokens?: number
   ): Promise<string>;
 
+  private async verifyUserAuth(): Promise<string | null> {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return null;
+      }
+
+      return user.id;
+    } catch {
+      return null;
+    }
+  }
+
+  private async checkRateLimit(userId: string): Promise<boolean> {
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.rpc("check_user_request_count", {
+        p_user_id: userId,
+      });
+
+      if (error || !data) {
+        console.error("Rate limit check failed:", error);
+        return false;
+      }
+
+      return data.can_make_request === true;
+    } catch (error) {
+      console.error("Rate limit check error:", error);
+      return false;
+    }
+  }
+
+  private validateModel(model: string): boolean {
+    if (!this.config.allowedModels || this.config.allowedModels.length === 0) {
+      return true;
+    }
+    return this.config.allowedModels.includes(model);
+  }
+
   public async handleRequest(req: NextRequest): Promise<NextResponse> {
     try {
+      const userId = await this.verifyUserAuth();
+      if (!userId) {
+        return NextResponse.json(
+          { error: "Unauthorized - please log in" },
+          { status: 401 }
+        );
+      }
+
+      const canProceed = await this.checkRateLimit(userId);
+      if (!canProceed) {
+        return NextResponse.json(
+          {
+            error:
+              "Rate limit exceeded - 20 requests per 24 hours. Please try again later.",
+          },
+          { status: 429 }
+        );
+      }
+
       const { action, question, answers, model, message }: AIRequestBody =
         await req.json();
       const selectedModel = model || this.config.defaultModel;
+
+      if (!this.validateModel(selectedModel)) {
+        throw new ValidationError(
+          `Model '${selectedModel}' is not allowed for ${this.config.name}`
+        );
+      }
 
       console.log(`[${this.config.name}] Using model:`, selectedModel);
 

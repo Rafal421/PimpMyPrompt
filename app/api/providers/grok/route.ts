@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
+import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class GrokProvider extends BaseAIProvider {
   private grok: OpenAI;
@@ -8,7 +9,8 @@ class GrokProvider extends BaseAIProvider {
   constructor() {
     super({
       name: "Grok",
-      defaultModel: "grok-beta"
+      defaultModel: "grok-3-mini",
+      allowedModels: getAllowedModelsForProvider("grok"),
     });
     
     this.grok = new OpenAI({

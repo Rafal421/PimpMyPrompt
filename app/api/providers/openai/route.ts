@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
+import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class OpenAIProvider extends BaseAIProvider {
   private openai: OpenAI;
@@ -8,7 +9,8 @@ class OpenAIProvider extends BaseAIProvider {
   constructor() {
     super({
       name: "OpenAI",
-      defaultModel: "gpt-4o"
+      defaultModel: "gpt-4o-mini",
+      allowedModels: getAllowedModelsForProvider("openai"),
     });
     
     this.openai = new OpenAI({

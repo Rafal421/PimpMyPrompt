@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
+import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class PerplexityProvider extends BaseAIProvider {
   private perplexity: OpenAI;
@@ -8,7 +9,8 @@ class PerplexityProvider extends BaseAIProvider {
   constructor() {
     super({
       name: "Perplexity",
-      defaultModel: "sonar-pro"
+      defaultModel: "sonar-pro",
+      allowedModels: getAllowedModelsForProvider("perplexity"),
     });
     
     this.perplexity = new OpenAI({
