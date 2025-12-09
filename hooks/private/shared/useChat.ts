@@ -1,0 +1,250 @@
+// hooks/private/mainPanel/useChat.ts
+"use client";
+import { useState, useRef } from "react";
+import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
+import { useAutoScroll } from "@/hooks/private/shared/useAutoScroll";
+import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
+import {
+  DEFAULT_QUESTION_PROVIDER,
+  QUESTION_PROVIDER,
+} from "@/lib/providers/ai-config";
+import { addRegularMessage } from "@/lib/messageHelpers";
+import { useUsageLimit } from "@/hooks/private/shared/useUsageLimit";
+
+import { createQuestionFlow } from "@/hooks/private/mainPanel/PMP/questionFlowFactory";
+import { createPromptImprover } from "@/hooks/private/mainPanel/PMP/promptImproverFactory";
+import { createModelSelection } from "@/hooks/private/mainPanel/PMP/modelSelectionFactory";
+
+const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
+
+export const useChat = ({
+  user,
+  onError,
+}: {
+  user: User;
+  onError?: (error: any, context?: string) => void;
+}) => {
+  const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+
+  // Core state
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      from: "bot",
+      text: "Ask a question and I'll help you refine it!",
+      isTyping: false,
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isBotResponding, setIsBotResponding] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [provider, setProvider] = useState<Provider>(DEFAULT_QUESTION_PROVIDER);
+  const [phase, setPhase] = useState<Phase>("init");
+
+  // Question flow state
+  const [originalQuestion, setOriginalQuestion] = useState("");
+  const [improvedPrompt, setImprovedPrompt] = useState("");
+  const [clarifyingAnswers, setClarifyingAnswers] = useState<string[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
+  const [customAnswer, setCustomAnswer] = useState("");
+
+  // Auto scroll hook that tracks messages and phase changes
+  const messagesEndRef = useAutoScroll(messages, 200);
+
+  // Usage limit management
+  const {
+    incrementUsage,
+    canMakeRequest,
+    requestsRemaining,
+    getTimeUntilReset,
+    checkUsage,
+  } = useUsageLimit();
+
+  // Create logic handlers by passing state and setters
+  const { generateImprovedPrompt } = createPromptImprover({
+    originalQuestion,
+    clarifyingAnswers,
+    provider,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    setPhase,
+    setImprovedPrompt,
+    setIsBotResponding,
+    onError,
+  });
+
+  const { startQuestionFlow, handleAnswerSubmit } = createQuestionFlow({
+    provider,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    phase,
+    setPhase,
+    generateImprovedPrompt,
+    setOriginalQuestion,
+    setInput,
+    setQuestionsData,
+    setCurrentQuestionIndex,
+    setClarifyingAnswers,
+    setCustomAnswer,
+    clarifyingAnswers,
+    questionsData,
+    currentQuestionIndex,
+    setIsBotResponding,
+    onError,
+  });
+
+  const { handleModelSelect } = createModelSelection({
+    improvedPrompt,
+    chatId,
+    chatSidePanelRef,
+    setMessages,
+    setPhase,
+    onError,
+    onUsageIncrement: incrementUsage, // Pass the increment function
+  });
+
+  // Reset session
+  const resetSession = () => {
+    setMessages([
+      { from: "bot", text: "Ask a question and I'll help you refine it!" },
+    ]);
+    setInput("");
+    setPhase("init");
+    setOriginalQuestion("");
+    setImprovedPrompt("");
+    setClarifyingAnswers([]);
+    setCurrentQuestionIndex(0);
+    setQuestionsData([]);
+    setCustomAnswer("");
+    setChatId(null);
+  };
+
+  // Main message handling
+  const handleSend = async () => {
+    if (!input.trim() || isBotResponding) return;
+
+    // Refresh usage status before checking
+    await checkUsage();
+
+    // Check usage limit before proceeding with any message
+    if (!canMakeRequest) {
+      // Add error message about limit
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "You've reached your daily limit. Please wait for the reset or upgrade your plan.",
+        },
+      ]);
+      return;
+    }
+
+    let currentChatId = chatId;
+    if (!currentChatId) {
+      const currentModel = QUESTION_PROVIDER.model || DEFAULT_MODEL;
+      currentChatId =
+        (await chatSidePanelRef.current?.createChat(input, currentModel)) ||
+        null;
+      setChatId(currentChatId);
+    }
+
+    setIsBotResponding(true);
+    addRegularMessage(setMessages, input, "user");
+    if (currentChatId) {
+      await chatSidePanelRef.current?.sendMessage(currentChatId, "user", input);
+    }
+
+    try {
+      if (phase === "init") {
+        await startQuestionFlow(input, currentChatId);
+      }
+    } catch (error) {
+      onError?.(error, "sending message");
+
+      // Add error message to chat so user knows what happened
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "I encountered a problem processing your message. Please try again or rephrase your question.",
+        },
+      ]);
+    }
+    setIsBotResponding(false);
+  };
+
+  const wrappedHandleAnswerSubmit = async (answer: string) => {
+    if (isBotResponding) return;
+
+    // Set loading when user submits answer
+    setIsBotResponding(true);
+
+    // Handle answer submission
+    try {
+      await handleAnswerSubmit(answer);
+    } catch (error) {
+      onError?.(error, "submitting answer");
+
+      // Error message for answer submission
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "I encountered a problem processing your answer. Please try again or select a different option.",
+        },
+      ]);
+      setIsBotResponding(false);
+    }
+  };
+
+  const wrappedHandleModelSelect = async (
+    selectedProvider: Provider,
+    selectedModel: string
+  ) => {
+    if (isBotResponding) return;
+    setIsBotResponding(true);
+    try {
+      await handleModelSelect(selectedProvider, selectedModel);
+    } catch (error) {
+      onError?.(error, "selecting model");
+
+      // Add error message to chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot",
+          text: "I encountered a problem generating the response with the selected model. Please try a different model or try again.",
+        },
+      ]);
+    }
+    setIsBotResponding(false);
+  };
+
+  return {
+    chatSidePanelRef,
+    messages,
+    setMessages,
+    input,
+    setInput,
+    isBotResponding,
+    chatId,
+    setChatId,
+    phase,
+    setPhase,
+    questionsData,
+    currentQuestionIndex,
+    customAnswer,
+    setCustomAnswer,
+    messagesEndRef,
+    resetSession,
+    handleSend,
+    handleAnswerSubmit: wrappedHandleAnswerSubmit,
+    handleModelSelect: wrappedHandleModelSelect,
+    canMakeRequest,
+    requestsRemaining,
+    getTimeUntilReset,
+    checkUsage,
+  };
+};

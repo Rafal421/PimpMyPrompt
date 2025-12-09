@@ -1,6 +1,6 @@
 "use server";
 
-import { loginUser, signupUser } from "@/lib/services/auth/authService";
+import { loginUser, signupUser } from "@/app/auth/auth-actions/actions";
 import type { ActionResult } from "@/lib/validation";
 
 export async function login(formData: FormData): Promise<ActionResult | void> {

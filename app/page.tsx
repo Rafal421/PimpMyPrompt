@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bot } from "lucide-react";
-import { steps } from "@/lib/simpleData/steps";
-import { aiProviders } from "@/lib/simpleData/aiProviders";
+import { steps } from "@/components/main/steps";
+import { aiProviders } from "@/components/main/aiProviders";
 import { Background } from "@/components/ui/background";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
