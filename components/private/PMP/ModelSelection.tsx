@@ -1,6 +1,6 @@
 "use client";
 
-import { RESPONSE_PROVIDERS } from "@/lib/ai-config";
+import { RESPONSE_PROVIDERS } from "@/lib/providers/ai-config";
 import type { Provider } from "@/lib/types";
 import ProviderTile from "./ProviderTile";
 

@@ -4,7 +4,10 @@ import { useState, useRef } from "react";
 import type { Provider, Phase, Message, QuestionData, User } from "@/lib/types";
 import { useAutoScroll } from "@/hooks/private/shared/useAutoScroll";
 import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
-import { DEFAULT_QUESTION_PROVIDER, QUESTION_PROVIDER } from "@/lib/ai-config";
+import {
+  DEFAULT_QUESTION_PROVIDER,
+  QUESTION_PROVIDER,
+} from "@/lib/providers/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
 import { useUsageLimit } from "@/hooks/private/shared/useUsageLimit";
 

@@ -3,8 +3,8 @@ import {
   createImprovePrompt,
   createClarifyPrompt,
   parseQuestionsWithOptions,
-} from "@/lib/ai-helpers";
-import { getQuestionProviderById } from "@/lib/ai-config";
+} from "@/lib/providers/ai-helpers";
+import { getQuestionProviderById } from "@/lib/providers/ai-config";
 import type { QuestionData, Provider } from "@/lib/types";
 
 interface UseQuestionGeneratorProps {

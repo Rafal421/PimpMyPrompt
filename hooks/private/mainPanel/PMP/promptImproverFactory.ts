@@ -1,7 +1,7 @@
 // hooks/private/mainPanel/PMP/hooks/promptImproverFactory.ts
 import type { Provider, Message, Phase } from "@/lib/types";
-import { getQuestionProviderById } from "@/lib/ai-config";
-import { createImprovePrompt } from "@/lib/ai-helpers";
+import { getQuestionProviderById } from "@/lib/providers/ai-config";
+import { createImprovePrompt } from "@/lib/providers/ai-helpers";
 import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 

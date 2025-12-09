@@ -4,9 +4,9 @@ import {
   createClarifyPrompt,
   createImprovePrompt,
   TOKEN_LIMITS,
-} from "@/lib/ai-helpers";
+} from "@/lib/providers/ai-helpers";
 import { handleError, ValidationError } from "@/lib/error-handler";
-import { auditAIRequest } from "@/lib/ai-audit";
+import { auditAIRequest } from "@/lib/providers/ai-audit";
 
 export interface AIProviderConfig {
   name: string;

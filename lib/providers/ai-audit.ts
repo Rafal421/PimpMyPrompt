@@ -1,4 +1,4 @@
-import { AuditLogger } from "./audit-logger";
+import { AuditLogger } from "../audit-logger";
 
 export async function auditAIRequest(
   provider: string,
