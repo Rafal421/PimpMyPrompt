@@ -1,4 +1,4 @@
-// hooks/private/mainPanel/usePromptImprover.ts
+// hooks/private/mainPanel/PMP/hooks/promptImproverFactory.ts
 import type { Provider, Message, Phase } from "@/lib/types";
 import { getQuestionProviderById } from "@/lib/ai-config";
 import { createImprovePrompt } from "@/lib/ai-helpers";
@@ -46,7 +46,6 @@ export const createPromptImprover = ({
     );
 
     try {
-      // Call provider directly for improve action instead of using getLLMResponse
       const response = await fetch(`/api/providers/${provider}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

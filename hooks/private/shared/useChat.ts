@@ -8,9 +8,9 @@ import { DEFAULT_QUESTION_PROVIDER, QUESTION_PROVIDER } from "@/lib/ai-config";
 import { addRegularMessage } from "@/lib/messageHelpers";
 import { useUsageLimit } from "@/hooks/private/shared/useUsageLimit";
 
-import { createQuestionFlow } from "../mainPanel/PMP/useQuestionFlow";
-import { createPromptImprover } from "../mainPanel/PMP/usePromptImprover";
-import { createModelSelection } from "../mainPanel/PMP/useModelSelection";
+import { createQuestionFlow } from "@/hooks/private/mainPanel/PMP/questionFlowFactory";
+import { createPromptImprover } from "@/hooks/private/mainPanel/PMP/promptImproverFactory";
+import { createModelSelection } from "@/hooks/private/mainPanel/PMP/modelSelectionFactory";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 

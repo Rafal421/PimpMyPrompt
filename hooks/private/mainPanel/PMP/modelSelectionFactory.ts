@@ -1,4 +1,4 @@
-// hooks/private/mainPanel/useModelSelection.ts
+// hooks/private/mainPanel/PMP/hooks/modelSelectionFactory.ts
 import type { Provider, Message, Phase } from "@/lib/types";
 import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
@@ -10,7 +10,7 @@ interface ModelSelectionLogicProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   onError?: (error: any, context?: string) => void;
-  onUsageIncrement?: () => Promise<boolean>; // Add this prop
+  onUsageIncrement?: () => Promise<boolean>;
 }
 
 export const createModelSelection = ({
@@ -94,7 +94,6 @@ export const createModelSelection = ({
     } catch (error) {
       onError?.(error, "generating final response");
 
-      // Error message for final response generation
       setMessages((prev) => [
         ...prev,
         {

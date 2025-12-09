@@ -4,8 +4,8 @@ import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Phase, QuestionData, Provider } from "@/lib/types";
-import QuestionBlock from "@/components/private/QuestionBlock";
-import ModelSelection from "@/components/private/ModelSelection";
+import QuestionBlock from "@/components/private/PMP/QuestionBlock";
+import ModelSelection from "@/components/private/PMP/ModelSelection";
 
 interface Message {
   from: "user" | "bot";

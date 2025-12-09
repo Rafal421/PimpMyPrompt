@@ -1,6 +1,6 @@
-// hooks/private/mainPanel/useQuestionFlow.ts
+// hooks/private/mainPanel/PMP/hooks/questionFlowFactory.ts
 import type { Message, Phase, QuestionData, Provider } from "@/lib/types";
-import { useQuestionGenerator } from "@/hooks/private/mainPanel/PMP/useQuestionGenerator";
+import { useQuestionGenerator } from "./useQuestionGenerator";
 import { ChatSidePanelHandle } from "@/components/private/shared/ChatSidePanel";
 import { addTypingMessage } from "@/lib/messageHelpers";
 

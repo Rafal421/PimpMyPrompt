@@ -64,9 +64,6 @@ export function useQuestionGenerator({
 
         return questionsWithOptions;
       }
-
-      // Logika dla 'improve' pozostaje na razie taka sama,
-      // ale można ją również przenieść do serwisu w przyszłości
       const endpoint = getProviderEndpoint(provider);
       const promptContent = createImprovePrompt(
         payload.question,
@@ -91,7 +88,6 @@ export function useQuestionGenerator({
 
   const generateClarifyingQuestions = useCallback(
     async (question: string): Promise<QuestionData[]> => {
-      // callProvider zwraca teraz bezpośrednio QuestionData[] dla akcji 'clarify'
       const questions = await callProvider("clarify", { question });
       return questions || [];
     },
