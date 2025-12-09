@@ -1,19 +1,38 @@
 import { AuditLogger } from "../audit-logger";
 
+interface SafeAuditDetails {
+  messageLength?: number;
+  questionLength?: number;
+  answersCount?: number;
+  [key: string]: string | number | undefined;
+}
+
 export async function auditAIRequest(
   provider: string,
   model: string,
   action: string,
   userId?: string,
-  details?: Record<string, unknown>
+  details?: SafeAuditDetails
 ) {
   const auditAction = `AI_REQUEST_${provider.toUpperCase()}`;
-  const auditDetails = {
+
+  const safeDetails: Record<string, unknown> = {
     provider,
     model,
     action,
-    ...details,
   };
 
-  await AuditLogger.log(auditAction, userId || "anonymous", auditDetails);
+  if (details) {
+    if (details.messageLength !== undefined) {
+      safeDetails.messageLength = details.messageLength;
+    }
+    if (details.questionLength !== undefined) {
+      safeDetails.questionLength = details.questionLength;
+    }
+    if (details.answersCount !== undefined) {
+      safeDetails.answersCount = details.answersCount;
+    }
+  }
+
+  await AuditLogger.log(auditAction, userId || "anonymous", safeDetails);
 }

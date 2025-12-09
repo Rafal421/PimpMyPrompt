@@ -119,7 +119,7 @@ export abstract class BaseAIProvider {
           selectedModel,
           "message",
           "user",
-          { message_length: message?.length }
+          { messageLength: message?.length }
         );
 
         const content = await this.callAI(
@@ -143,7 +143,7 @@ export abstract class BaseAIProvider {
         selectedModel,
         action,
         "user",
-        { question_length: question?.length }
+        { questionLength: question?.length }
       );
 
       let content: string;

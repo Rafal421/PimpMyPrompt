@@ -1,11 +1,24 @@
+'use client';
+
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import DOMPurify from "dompurify";
 
 interface MarkdownRendererProps {
   content: string;
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  // Sanitize HTML content to prevent XSS attacks
+  const sanitizedContent = DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: [
+      'b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre',
+      'table', 'thead', 'tbody', 'tr', 'td', 'th', 'hr', 'div', 'span'
+    ],
+    ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'class'],
+  });
+
   return (
     <ReactMarkdown
       rehypePlugins={[rehypeRaw]}
@@ -118,7 +131,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
       }}
     >
-      {content}
+      {sanitizedContent}
     </ReactMarkdown>
   );
 }
