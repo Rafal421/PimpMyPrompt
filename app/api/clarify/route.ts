@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const cookieHeader = req.headers.get("cookie");
 
     const response = await fetch(
       new URL(`/api/providers/${provider}`, req.url),
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(cookieHeader ? { Cookie: cookieHeader } : {}),
         },
         body: JSON.stringify({
           action: "clarify",
@@ -24,6 +26,21 @@ export async function POST(req: NextRequest) {
         }),
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `Provider error (${response.status}):`,
+        errorText.substring(0, 200)
+      );
+      return NextResponse.json(
+        {
+          error: `Provider returned ${response.status}: ${response.statusText}`,
+          debug: errorText.substring(0, 500),
+        },
+        { status: response.status }
+      );
+    }
 
     const result = await response.json();
     return NextResponse.json(result, { status: response.status });

@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import {
   createImprovePrompt,
-  createClarifyPrompt,
   parseQuestionsWithOptions,
 } from "@/lib/providers/ai-helpers";
 import { getQuestionProviderById } from "@/lib/providers/ai-config";
@@ -28,13 +27,12 @@ export function useQuestionGenerator({
           throw new Error(`Provider ${provider} not found`);
         }
 
-        const clarifyPrompt = createClarifyPrompt(payload.question);
         const response = await fetch("/api/clarify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: clarifyPrompt,
             provider,
+            question: payload.question,
             model: questionProvider.model,
           }),
         });
@@ -50,7 +48,7 @@ export function useQuestionGenerator({
         }
 
         // Fallback to content parsing for legacy responses
-        const content = data.response || data.content;
+  const content = data.response || data.content;
         if (!content) {
           throw new Error("No content in response");
         }

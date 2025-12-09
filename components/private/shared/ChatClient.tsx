@@ -7,9 +7,11 @@ import ChatMessages from "@/components/private/PMP/ChatMessages";
 import ChatInput from "@/components/private/PMP/ChatInput";
 import { Background } from "@/components/ui/background";
 import { useChat } from "@/hooks/private/shared/useChat";
+import { useSessionTimeout } from "@/hooks/auth/useSessionTimeout";
 import { Menu, X, Edit3 } from "lucide-react";
 
 export default function ChatClient({ user }: { user: User }) {
+  useSessionTimeout();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [currentChat, setCurrentChat] = useState<{
