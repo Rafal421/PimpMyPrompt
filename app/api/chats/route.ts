@@ -2,21 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { AuditLogger } from "@/lib/audit-logger";
 
-// GET /api/chats?user_id={userId} - Fetch all chats for a user
+// GET /api/chats - Fetch all chats for authenticated user
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
-  const { searchParams } = new URL(req.url);
-  const user_id = searchParams.get("user_id");
 
-  if (!user_id) {
-    return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { data: chats, error } = await supabase
       .from("chats")
       .select("*")
-      .eq("user_id", user_id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await AuditLogger.log("CHATS_FETCHED", user_id, {
+    await AuditLogger.log("CHATS_FETCHED", user.id, {
       count: chats?.length || 0,
     });
 
@@ -42,12 +45,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  try {
-    const { user_id, title, mode } = await req.json();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    if (!user_id) {
-      return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
-    }
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { title, mode } = await req.json();
 
     if (!title) {
       return NextResponse.json({ error: "Missing title" }, { status: 400 });
@@ -56,7 +64,7 @@ export async function POST(req: NextRequest) {
     const { data: chat, error } = await supabase
       .from("chats")
       .insert({
-        user_id,
+        user_id: user.id,
         title,
         mode: mode || "PMP",
       })
@@ -68,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await AuditLogger.log("CHAT_CREATED", user_id, {
+    await AuditLogger.log("CHAT_CREATED", user.id, {
       chat_id: chat.id,
       title,
     });
@@ -87,12 +95,21 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const supabase = await createClient();
 
-  try {
-    const { chat_id, user_id, title } = await req.json();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    if (!chat_id || !user_id) {
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { chat_id, title } = await req.json();
+
+    if (!chat_id) {
       return NextResponse.json(
-        { error: "Missing chat_id or user_id" },
+        { error: "Missing chat_id" },
         { status: 400 }
       );
     }
@@ -105,7 +122,7 @@ export async function PUT(req: NextRequest) {
       .from("chats")
       .update({ title })
       .eq("id", chat_id)
-      .eq("user_id", user_id)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -121,7 +138,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    await AuditLogger.log("CHAT_UPDATED", user_id, {
+    await AuditLogger.log("CHAT_UPDATED", user.id, {
       chat_id,
       new_title: title,
     });
@@ -140,12 +157,21 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const supabase = await createClient();
 
-  try {
-    const { chat_id, user_id } = await req.json();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    if (!chat_id || !user_id) {
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { chat_id } = await req.json();
+
+    if (!chat_id) {
       return NextResponse.json(
-        { error: "Missing chat_id or user_id" },
+        { error: "Missing chat_id" },
         { status: 400 }
       );
     }
@@ -155,7 +181,7 @@ export async function DELETE(req: NextRequest) {
       .from("chats")
       .delete()
       .eq("id", chat_id)
-      .eq("user_id", user_id);
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error deleting chat:", error);
@@ -169,7 +195,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await AuditLogger.log("CHAT_DELETED", user_id, {
+    await AuditLogger.log("CHAT_DELETED", user.id, {
       chat_id,
     });
 
