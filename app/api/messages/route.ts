@@ -4,7 +4,7 @@ import { AuditLogger } from "@/lib/audit-logger";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  
+
   const {
     data: { user },
     error: authError,
@@ -15,6 +15,45 @@ export async function POST(req: NextRequest) {
   }
 
   const { chat_id, from, content } = await req.json();
+
+  // Validate required fields
+  if (!chat_id || typeof chat_id !== "string") {
+    return NextResponse.json(
+      { error: "Missing or invalid chat_id" },
+      { status: 400 }
+    );
+  }
+
+  if (!from || typeof from !== "string") {
+    return NextResponse.json(
+      { error: "Missing or invalid from field" },
+      { status: 400 }
+    );
+  }
+
+  if (!content || typeof content !== "string") {
+    return NextResponse.json(
+      { error: "Missing or invalid content" },
+      { status: 400 }
+    );
+  }
+
+  // Validate from field against allowlist
+  const validFromValues = ["user", "assistant"] as const;
+  if (!validFromValues.includes(from as any)) {
+    return NextResponse.json(
+      { error: "Invalid 'from' field value" },
+      { status: 400 }
+    );
+  }
+
+  // Validate content length
+  if (content.length > 5000) {
+    return NextResponse.json(
+      { error: "Content too long (max 5000 characters)" },
+      { status: 400 }
+    );
+  }
 
   // Verify that the chat belongs to the authenticated user
   const { data: chat, error: chatError } = await supabase
@@ -55,7 +94,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
-  
+
   const {
     data: { user },
     error: authError,

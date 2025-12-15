@@ -157,8 +157,9 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         state.setMessages,
         "I encountered a problem processing your message. Please try again."
       );
+    } finally {
+      state.setIsLoading(false);
     }
-    state.setIsLoading(false);
   };
 
   // Wrapped handlers with error handling
@@ -191,8 +192,9 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         state.setMessages,
         "I encountered a problem generating the response. Please try a different model."
       );
+    } finally {
+      state.setIsLoading(false);
     }
-    state.setIsLoading(false);
   };
 
   const stopGeneration = () => {

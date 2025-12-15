@@ -57,16 +57,36 @@ export async function POST(req: NextRequest) {
   try {
     const { title, mode } = await req.json();
 
-    if (!title) {
-      return NextResponse.json({ error: "Missing title" }, { status: 400 });
+    if (!title || typeof title !== "string") {
+      return NextResponse.json(
+        { error: "Missing or invalid title" },
+        { status: 400 }
+      );
     }
+
+    if (title.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Title cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (title.trim().length > 255) {
+      return NextResponse.json(
+        { error: "Title too long (max 255 characters)" },
+        { status: 400 }
+      );
+    }
+
+    const validModes = ["PMP", "CHAT", "COMPARE"] as const;
+    const sanitizedMode = mode && validModes.includes(mode) ? mode : "PMP";
 
     const { data: chat, error } = await supabase
       .from("chats")
       .insert({
         user_id: user.id,
-        title,
-        mode: mode || "PMP",
+        title: title.trim(),
+        mode: sanitizedMode,
       })
       .select()
       .single();
@@ -108,19 +128,33 @@ export async function PUT(req: NextRequest) {
     const { chat_id, title } = await req.json();
 
     if (!chat_id) {
+      return NextResponse.json({ error: "Missing chat_id" }, { status: 400 });
+    }
+
+    if (!title || typeof title !== "string") {
       return NextResponse.json(
-        { error: "Missing chat_id" },
+        { error: "Missing or invalid title" },
         { status: 400 }
       );
     }
 
-    if (!title) {
-      return NextResponse.json({ error: "Missing title" }, { status: 400 });
+    if (title.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Title cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (title.trim().length > 255) {
+      return NextResponse.json(
+        { error: "Title too long (max 255 characters)" },
+        { status: 400 }
+      );
     }
 
     const { data: chat, error } = await supabase
       .from("chats")
-      .update({ title })
+      .update({ title: title.trim() })
       .eq("id", chat_id)
       .eq("user_id", user.id)
       .select()
@@ -170,10 +204,7 @@ export async function DELETE(req: NextRequest) {
     const { chat_id } = await req.json();
 
     if (!chat_id) {
-      return NextResponse.json(
-        { error: "Missing chat_id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing chat_id" }, { status: 400 });
     }
 
     // Delete the chat (messages will be deleted automatically due to cascade)

@@ -19,7 +19,7 @@ const validateRequired = (fields: Record<string, unknown>) => {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     const {
       data: { user },
       error: authError,
@@ -31,8 +31,14 @@ export async function POST(req: NextRequest) {
 
     const { title } = await req.json();
 
-    const validationError = validateRequired({ title });
-    if (validationError) return errorResponse(validationError, 400);
+    // Enhanced validation
+    if (!title || typeof title !== "string") {
+      return errorResponse("Missing or invalid title", 400);
+    }
+
+    if (title.trim().length === 0) {
+      return errorResponse("Title cannot be empty", 400);
+    }
 
     if (title.trim().length > 255) {
       return errorResponse("Title too long (max 255 characters)", 400);
@@ -58,7 +64,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     const {
       data: { user },
       error: authError,
@@ -88,7 +94,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     const {
       data: { user },
       error: authError,
@@ -100,8 +106,10 @@ export async function DELETE(req: NextRequest) {
 
     const { chat_id } = await req.json();
 
-    const validationError = validateRequired({ chat_id });
-    if (validationError) return errorResponse(validationError, 400);
+    // Enhanced validation
+    if (!chat_id || typeof chat_id !== "string") {
+      return errorResponse("Missing or invalid chat_id", 400);
+    }
 
     const { error } = await supabase.rpc("delete_user_chat", {
       p_chat_id: chat_id,
@@ -127,7 +135,7 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     const {
       data: { user },
       error: authError,
@@ -139,8 +147,18 @@ export async function PUT(req: NextRequest) {
 
     const { chat_id, title } = await req.json();
 
-    const validationError = validateRequired({ chat_id, title });
-    if (validationError) return errorResponse(validationError, 400);
+    // Enhanced validation
+    if (!chat_id || typeof chat_id !== "string") {
+      return errorResponse("Missing or invalid chat_id", 400);
+    }
+
+    if (!title || typeof title !== "string") {
+      return errorResponse("Missing or invalid title", 400);
+    }
+
+    if (title.trim().length === 0) {
+      return errorResponse("Title cannot be empty", 400);
+    }
 
     if (title.trim().length > 255) {
       return errorResponse("Title too long (max 255 characters)", 400);
