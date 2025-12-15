@@ -1,12 +1,14 @@
 "use client";
-import { Send, Plus } from "lucide-react";
+import { Send, Plus, Square } from "lucide-react";
 
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
+  onStop?: () => void;
   onReset: () => void;
   disabled?: boolean;
+  isLoading?: boolean;
   placeholder?: string;
   showResetButton?: boolean;
   requestsRemaining?: number;
@@ -22,8 +24,10 @@ export default function ChatInput({
   value,
   onChange,
   onSend,
+  onStop,
   onReset,
   disabled = false,
+  isLoading = false,
   placeholder = "Type your message...",
   showResetButton = false,
   requestsRemaining,
@@ -77,19 +81,31 @@ export default function ChatInput({
             <button
               onClick={onReset}
               disabled={disabled}
-              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-semibold flex items-center gap-2"
               title="New session"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>New</span>
+            </button>
+          ) : isLoading ? (
+            <button
+              onClick={onStop}
+              disabled={!onStop}
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-semibold flex items-center gap-2"
+              title="Stop generating"
+            >
+              <Square className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Stop</span>
             </button>
           ) : (
             <button
               onClick={onSend}
               disabled={disabled || !value.trim()}
-              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-semibold flex items-center gap-2"
               title="Send message"
             >
               <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Send</span>
             </button>
           )}
         </div>

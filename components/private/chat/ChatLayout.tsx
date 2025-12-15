@@ -137,7 +137,7 @@ export default function ChatLayout({
             </button>
 
             {/* Title */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
               {header ? (
                 <div className="flex items-center gap-2">
                   {isEditingTitle ? (
@@ -180,7 +180,7 @@ export default function ChatLayout({
             </div>
 
             {/* Mode Selector & Provider Info */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               {header?.mode && (
                 <ModeToggle
                   currentMode={header.mode as ChatMode}

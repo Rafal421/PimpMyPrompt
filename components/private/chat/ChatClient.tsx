@@ -186,7 +186,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
   };
 
   const showResetButton =
-    chat.mode === "pmp" && (chat.phase === "done" || chat.phase === "init");
+    chat.mode === "pmp" && chat.phase === "done" && chat.messages.length > 0;
 
   const isInputDisabled =
     chat.isLoading ||
@@ -217,7 +217,6 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
               title: currentChat.title,
               onTitleEdit: handleTitleUpdate,
               canEditTitle: !chat.isLoading,
-              providerInfo: "GPT-4o Mini",
               mode,
             }
           : {
@@ -245,8 +244,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
         value={chat.input}
         onChange={chat.setInput}
         onSend={chat.handleSend}
+        onStop={chat.stopGeneration}
         onReset={chat.resetSession}
         disabled={isInputDisabled}
+        isLoading={chat.isLoading}
         placeholder={getPlaceholder()}
         showResetButton={showResetButton}
         requestsRemaining={chat.requestsRemaining}

@@ -77,7 +77,8 @@ export function useSimpleChat({
       currentChatId =
         (await chatSidePanelRef.current?.createChat(
           state.input,
-          DEFAULT_MODEL
+          DEFAULT_MODEL,
+          "CHAT"
         )) || null;
       state.setChatId(currentChatId);
     }
@@ -133,6 +134,11 @@ export function useSimpleChat({
     state.setIsLoading(false);
   };
 
+  const stopGeneration = () => {
+    state.setIsLoading(false);
+    // Note: We could add AbortController here for API requests if needed
+  };
+
   return {
     // Mode identifier
     mode: "simple" as const,
@@ -146,6 +152,7 @@ export function useSimpleChat({
 
     // Actions
     handleSend,
+    stopGeneration,
     resetSession,
 
     // Usage limits

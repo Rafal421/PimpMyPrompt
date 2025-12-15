@@ -70,4 +70,4 @@ create index if not exists compare_responses_session_id_idx on public.compare_re
 create index if not exists compare_responses_created_at_idx on public.compare_responses(created_at desc);
 
 -- Update chats table to support chat mode if not exists
-alter table public.chats add column if not exists chat_mode text check (chat_mode in ('pmp', 'cais')) default 'pmp';
+alter table public.chats add column if not exists mode text check (mode in ('PMP', 'CHAT', 'COMPARE')) default 'PMP';

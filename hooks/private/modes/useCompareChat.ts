@@ -79,6 +79,11 @@ export function useCompareChat({
     );
   };
 
+  const stopGeneration = () => {
+    state.setIsLoading(false);
+    // Note: We could add AbortController here for API requests if needed
+  };
+
   return {
     // Mode identifier
     mode: "compare" as const,
@@ -92,6 +97,7 @@ export function useCompareChat({
 
     // Actions
     handleSend,
+    stopGeneration,
     resetSession,
 
     // Usage limits

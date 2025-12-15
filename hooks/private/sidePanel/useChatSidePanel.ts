@@ -36,12 +36,20 @@ export function useChatSidePanel({
 
   // Create new chat
   const createChat = useCallback(
-    async (title: string, usedModel: string) => {
+    async (
+      title: string,
+      usedModel: string,
+      chatMode?: "PMP" | "CHAT" | "COMPARE"
+    ) => {
       try {
         const res = await fetch("/api/chats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user.id, title }),
+          body: JSON.stringify({
+            user_id: user.id,
+            title,
+            mode: chatMode || "PMP",
+          }),
         });
         if (!res.ok) throw new Error("Failed to create chat");
         const data = await res.json();

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
   try {
-    const { user_id, title } = await req.json();
+    const { user_id, title, mode } = await req.json();
 
     if (!user_id) {
       return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id,
         title,
+        mode: mode || "PMP",
       })
       .select()
       .single();

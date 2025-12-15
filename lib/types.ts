@@ -36,6 +36,7 @@ export interface Chat {
   id: string;
   title: string;
   created_at?: string;
+  mode?: "PMP" | "CHAT" | "COMPARE";
 }
 
 export interface ProviderConfig {

@@ -130,7 +130,8 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       currentChatId =
         (await chatSidePanelRef.current?.createChat(
           state.input,
-          DEFAULT_MODEL
+          DEFAULT_MODEL,
+          "PMP"
         )) || null;
       state.setChatId(currentChatId);
     }
@@ -194,6 +195,11 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     state.setIsLoading(false);
   };
 
+  const stopGeneration = () => {
+    state.setIsLoading(false);
+    // Note: We could add AbortController here for API requests if needed
+  };
+
   return {
     // Mode identifier
     mode: "pmp" as const,
@@ -216,6 +222,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
     // Actions
     handleSend,
+    stopGeneration,
     handleAnswerSubmit: wrappedHandleAnswerSubmit,
     handleModelSelect: wrappedHandleModelSelect,
     resetSession,
