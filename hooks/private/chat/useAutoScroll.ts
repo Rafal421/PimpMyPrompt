@@ -1,8 +1,13 @@
 import { useEffect, useRef } from "react";
 
+/**
+ * useAutoScroll - Automatic scroll to bottom on new messages
+ * Returns a ref to attach to the scroll target element
+ */
 export function useAutoScroll(messages: any[], delay: number = 100) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /** scrollToBottom - Smoothly scrolls to the bottom of messages */
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
