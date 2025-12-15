@@ -25,23 +25,30 @@ export function useChatSidePanel({
   // Fetch all chats for user
   const fetchChats = useCallback(async () => {
     try {
-      const res = await fetch(`/api/chats?user_id=${user.id}`);
+      const res = await fetch(`/api/chats`);
       if (!res.ok) throw new Error("Failed to fetch chats");
       const data = await res.json();
       setChats(data.chats || []);
     } catch (error) {
       console.error("Error fetching chats:", error);
     }
-  }, [user.id]);
+  }, []);
 
   // Create new chat
   const createChat = useCallback(
-    async (title: string, usedModel: string) => {
+    async (
+      title: string,
+      usedModel: string,
+      chatMode?: "PMP" | "CHAT" | "COMPARE"
+    ) => {
       try {
         const res = await fetch("/api/chats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: user.id, title }),
+          body: JSON.stringify({
+            title,
+            mode: chatMode || "PMP",
+          }),
         });
         if (!res.ok) throw new Error("Failed to create chat");
         const data = await res.json();
@@ -54,7 +61,7 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [user.id, setChatId, fetchChats]
+    [setChatId, fetchChats]
   );
 
   // Send message
@@ -66,7 +73,6 @@ export function useChatSidePanel({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            user_id: user.id,
             from,
             content,
           }),
@@ -76,7 +82,7 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [user.id]
+    []
   );
 
   // Fetch chat history
@@ -118,7 +124,7 @@ export function useChatSidePanel({
         await fetch("/api/chats", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatIdToDelete, user_id: user.id }),
+          body: JSON.stringify({ chat_id: chatIdToDelete }),
         });
 
         setChats((prev) => prev.filter((chat) => chat.id !== chatIdToDelete));
@@ -133,7 +139,7 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [user.id, chatId, onResetSession, fetchChats]
+    [chatId, onResetSession, fetchChats]
   );
 
   // Update chat title
@@ -145,7 +151,6 @@ export function useChatSidePanel({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            user_id: user.id,
             title: newTitle,
           }),
         });
@@ -162,7 +167,7 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [user.id, fetchChats]
+    [fetchChats]
   );
 
   // Fetch chats on component mount

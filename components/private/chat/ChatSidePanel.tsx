@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 
 export interface ChatSidePanelHandle {
-  createChat: (title: string, usedModel: string) => Promise<string | null>;
+  createChat: (
+    title: string,
+    usedModel: string,
+    chatMode?: "PMP" | "CHAT" | "COMPARE"
+  ) => Promise<string | null>;
   sendMessage: (
     chat_id: string,
     from: string,
@@ -171,9 +175,16 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
                       <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
                         {chat.title || "Untitled"}
                       </p>
-                      <p className="text-xs text-gray-500 group-hover:text-gray-400 mt-0.5">
-                        {formatChatDate(chat.created_at)}
-                      </p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <p className="text-xs text-gray-500 group-hover:text-gray-400">
+                          {formatChatDate(chat.created_at)}
+                        </p>
+                        {chat.mode && (
+                          <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white/90 shadow-sm">
+                            {chat.mode}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -192,12 +203,12 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-800/50 transition-all duration-200 group"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                 <UserIcon className="w-4 h-4 text-white" />
               </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors">
+              <div className="text-left min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors truncate">
                   {props.user.email || "User"}
                 </p>
                 <p className="text-xs text-gray-400">Online</p>

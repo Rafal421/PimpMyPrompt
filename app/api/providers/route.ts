@@ -19,10 +19,26 @@ const validateRequired = (fields: Record<string, unknown>) => {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { user_id, title } = await req.json();
 
-    const validationError = validateRequired({ user_id, title });
-    if (validationError) return errorResponse(validationError, 400);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const { title } = await req.json();
+
+    // Enhanced validation
+    if (!title || typeof title !== "string") {
+      return errorResponse("Missing or invalid title", 400);
+    }
+
+    if (title.trim().length === 0) {
+      return errorResponse("Title cannot be empty", 400);
+    }
 
     if (title.trim().length > 255) {
       return errorResponse("Title too long (max 255 characters)", 400);
@@ -30,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase
       .from("chats")
-      .insert({ user_id, title: title.trim() })
+      .insert({ user_id: user.id, title: title.trim() })
       .select()
       .single();
 
@@ -38,7 +54,7 @@ export async function POST(req: NextRequest) {
       return errorResponse("Failed to create chat", 500);
     }
 
-    await AuditLogger.log("CHAT_CREATED", user_id, { chat_id: data.id });
+    await AuditLogger.log("CHAT_CREATED", user.id, { chat_id: data.id });
     return NextResponse.json({ chat: data });
   } catch {
     return errorResponse("Invalid request", 400);
@@ -48,15 +64,20 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const user_id = new URL(req.url).searchParams.get("user_id");
 
-    const validationError = validateRequired({ user_id });
-    if (validationError) return errorResponse(validationError, 400);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse("Unauthorized", 401);
+    }
 
     const { data, error } = await supabase
       .from("chats")
       .select("id, title, created_at")
-      .eq("user_id", user_id)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -73,14 +94,26 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { chat_id, user_id } = await req.json();
 
-    const validationError = validateRequired({ chat_id, user_id });
-    if (validationError) return errorResponse(validationError, 400);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const { chat_id } = await req.json();
+
+    // Enhanced validation
+    if (!chat_id || typeof chat_id !== "string") {
+      return errorResponse("Missing or invalid chat_id", 400);
+    }
 
     const { error } = await supabase.rpc("delete_user_chat", {
       p_chat_id: chat_id,
-      p_user_id: user_id,
+      p_user_id: user.id,
     });
 
     if (error) {
@@ -92,7 +125,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await AuditLogger.log("CHAT_DELETED", user_id, { chat_id });
+    await AuditLogger.log("CHAT_DELETED", user.id, { chat_id });
     return NextResponse.json({ success: true });
   } catch {
     return errorResponse("Invalid request", 400);
@@ -102,10 +135,30 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { chat_id, user_id, title } = await req.json();
 
-    const validationError = validateRequired({ chat_id, user_id, title });
-    if (validationError) return errorResponse(validationError, 400);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return errorResponse("Unauthorized", 401);
+    }
+
+    const { chat_id, title } = await req.json();
+
+    // Enhanced validation
+    if (!chat_id || typeof chat_id !== "string") {
+      return errorResponse("Missing or invalid chat_id", 400);
+    }
+
+    if (!title || typeof title !== "string") {
+      return errorResponse("Missing or invalid title", 400);
+    }
+
+    if (title.trim().length === 0) {
+      return errorResponse("Title cannot be empty", 400);
+    }
 
     if (title.trim().length > 255) {
       return errorResponse("Title too long (max 255 characters)", 400);
@@ -115,7 +168,7 @@ export async function PUT(req: NextRequest) {
       .from("chats")
       .update({ title: title.trim() })
       .eq("id", chat_id)
-      .eq("user_id", user_id)
+      .eq("user_id", user.id)
       .select("id, title")
       .single();
 
@@ -127,7 +180,7 @@ export async function PUT(req: NextRequest) {
       return errorResponse("Chat not found", 404);
     }
 
-    await AuditLogger.log("CHAT_TITLE_UPDATED", user_id, {
+    await AuditLogger.log("CHAT_TITLE_UPDATED", user.id, {
       chat_id,
       title: "[REDACTED]",
     });
