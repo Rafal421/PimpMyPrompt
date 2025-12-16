@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import { CompareResponses } from "@/components/private/PMP/CompareResponses";
+import { CompareResponses } from "@/components/private/modes/Compare/CompareResponses";
 import type { Message } from "@/lib/types";
 
 interface ChatMessagesProps {
