@@ -127,11 +127,8 @@ export abstract class BaseAIProvider {
           selectedModel,
           TOKEN_LIMITS.GENERAL
         );
-        const questions = parseQuestionsWithOptions(content);
 
-        return NextResponse.json(
-          questions.length > 0 ? { questions } : { response: content }
-        );
+        return NextResponse.json({ response: content });
       }
 
       if (!action || !question) {

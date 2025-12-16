@@ -9,9 +9,9 @@ import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
 import { DEFAULT_QUESTION_PROVIDER } from "@/lib/providers/ai-config";
 
 // Import existing factories
-import { createQuestionFlow } from "@/hooks/private/PMP/questionFlowFactory";
-import { createPromptImprover } from "@/hooks/private/PMP/promptImproverFactory";
-import { createModelSelection } from "@/hooks/private/PMP/modelSelectionFactory";
+import { createQuestionFlow } from "@/hooks/private/modes/PMP/questionFlowFactory";
+import { createPromptImprover } from "@/hooks/private/modes/PMP/promptImproverFactory";
+import { createModelSelection } from "@/hooks/private/modes/PMP/modelSelectionFactory";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 

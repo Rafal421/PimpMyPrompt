@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate from field against allowlist
-  const validFromValues = ["user", "assistant"] as const;
+  const validFromValues = ["user", "assistant", "bot"] as const;
   if (!validFromValues.includes(from as any)) {
     return NextResponse.json(
       { error: "Invalid 'from' field value" },
