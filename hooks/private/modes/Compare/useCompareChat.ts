@@ -6,8 +6,7 @@ import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
 import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
-
-const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
+import { COMPARE_MODELS } from "@/lib/compare-config";
 
 export interface CompareChatConfig {
   user: User;
@@ -87,6 +86,23 @@ export function useCompareChat({
         throw new Error("Chat ID not available");
       }
 
+      // Show loading placeholders for all models
+      const loadingResponses = COMPARE_MODELS.map((model) => ({
+        modelId: model.id,
+        model: model.name,
+        response: "",
+        success: true,
+      }));
+
+      state.setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot" as const,
+          text: "",
+          compareResponses: loadingResponses,
+        },
+      ]);
+
       const response = await fetch("/api/chat/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,14 +120,15 @@ export function useCompareChat({
       const data = await response.json();
 
       if (data.success && data.responses) {
-        state.setMessages((prev) => [
-          ...prev,
-          {
-            from: "bot" as const,
-            text: "",
-            compareResponses: data.responses,
-          },
-        ]);
+        // Update with actual responses
+        state.setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.from === "bot") {
+            lastMessage.compareResponses = data.responses;
+          }
+          return newMessages;
+        });
 
         await incrementUsage();
       } else {

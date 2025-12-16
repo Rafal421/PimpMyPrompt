@@ -233,6 +233,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
             messages={chat.messages}
             isLoading={chat.isLoading}
             renderExtras={renderExtras}
+            chatId={chat.chatId}
           />
           {/* Scroll target */}
           <div ref={chat.messagesEndRef} className="h-4" />

@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-
-const COMPARE_MODELS = [
-  { id: "gpt-4o-mini", name: "GPT-4o-mini", provider: "openai" },
-  {
-    id: "claude-3-haiku-20240307",
-    name: "Claude Haiku 3",
-    provider: "anthropic",
-  },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "gemini" },
-  {
-    id: "grok-4-fast-reasoning",
-    name: "Grok 4 fast reasoning",
-    provider: "grok",
-  },
-  { id: "sonar", name: "Perplexity Sonar", provider: "perplexity" },
-  { id: "deepseek-chat", name: "DeepSeek Chat", provider: "deepseek" },
-];
+import { COMPARE_MODELS } from "@/lib/compare-config";
 
 export async function POST(request: NextRequest) {
   try {
