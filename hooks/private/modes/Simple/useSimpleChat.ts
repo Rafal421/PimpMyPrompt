@@ -30,16 +30,6 @@ export function useSimpleChat({
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
 
-  // Dummy states to match PMP hook structure (for React Hooks consistency)
-  const [_unused1] = useState(null);
-  const [_unused2] = useState(null);
-  const [_unused3] = useState("");
-  const [_unused4] = useState("");
-  const [_unused5] = useState<string[]>([]);
-  const [_unused6] = useState(0);
-  const [_unused7] = useState([]);
-  const [_unused8] = useState("");
-
   // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
 
@@ -97,31 +87,29 @@ export function useSimpleChat({
     }
 
     try {
-      // Simple API call - adjust endpoint as needed
+      // Send to simple chat endpoint
       const response = await fetch(`/api/chat/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage,
-          chatId: currentChatId,
+          chat_id: currentChatId,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response");
+      }
 
       const data = await response.json();
-      messageHelpers.addBotMessage(state.setMessages, data.message, true);
-
-      // Increment usage after successful response
-      await incrementUsage();
-
-      // Save to DB
-      if (currentChatId) {
-        await chatSidePanelRef.current?.sendMessage(
-          currentChatId,
-          "bot",
-          data.message
-        );
+      
+      if (data.success && data.response) {
+        messageHelpers.addBotMessage(state.setMessages, data.response, true);
+        // Increment usage after successful response
+        await incrementUsage();
+      } else {
+        throw new Error("Invalid response from AI");
       }
     } catch (error) {
       onError?.(error, "sending message");
@@ -129,9 +117,9 @@ export function useSimpleChat({
         state.setMessages,
         "I encountered a problem processing your message. Please try again."
       );
+    } finally {
+      state.setIsLoading(false);
     }
-
-    state.setIsLoading(false);
   };
 
   const stopGeneration = () => {

@@ -1,7 +1,10 @@
 "use client";
-import { usePMPChat, type PMPChatConfig } from "./modes/usePMPChat";
-import { useSimpleChat, type SimpleChatConfig } from "./modes/useSimpleChat";
-import { useCompareChat, type CompareChatConfig } from "./modes/useCompareChat";
+import { usePMPChat, PMPChatConfig } from "./modes/PMP/usePMPChat";
+import { useSimpleChat, SimpleChatConfig } from "./modes/Simple/useSimpleChat";
+import {
+  useCompareChat,
+  CompareChatConfig,
+} from "./modes/Compare/useCompareChat";
 
 export type ChatMode = "pmp" | "simple" | "compare";
 
