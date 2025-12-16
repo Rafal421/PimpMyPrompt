@@ -111,8 +111,6 @@ export abstract class BaseAIProvider {
         );
       }
 
-      console.log(`[${this.config.name}] Using model:`, selectedModel);
-
       if (message) {
         await auditAIRequest(
           this.config.name.toLowerCase(),

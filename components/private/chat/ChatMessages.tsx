@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import { CompareResponses } from "@/components/private/PMP/CompareResponses";
 import type { Message } from "@/lib/types";
 
 interface ChatMessagesProps {
@@ -42,7 +43,9 @@ export default function ChatMessages({
               }`}
             >
               <div className="leading-relaxed font-medium text-sm sm:text-base prose prose-invert max-w-none">
-                {msg.from === "bot" && msg.isTyping ? (
+                {msg.from === "bot" && msg.compareResponses ? (
+                  <CompareResponses responses={msg.compareResponses} />
+                ) : msg.from === "bot" && msg.isTyping ? (
                   <MarkdownTypewriter
                     text={msg.text}
                     speed={15}

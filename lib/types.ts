@@ -20,6 +20,14 @@ export interface Message {
   from: "user" | "bot";
   text: string;
   isTyping?: boolean;
+  compareResponses?: CompareResponse[];
+}
+
+export interface CompareResponse {
+  model: string;
+  modelId: string;
+  response: string;
+  success: boolean;
 }
 
 export interface QuestionData {

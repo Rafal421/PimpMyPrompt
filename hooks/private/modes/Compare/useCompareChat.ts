@@ -26,16 +26,6 @@ export function useCompareChat({
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
 
-  // Dummy states to match PMP hook structure (for React Hooks consistency)
-  const [_unused1] = useState(null);
-  const [_unused2] = useState(null);
-  const [_unused3] = useState("");
-  const [_unused4] = useState("");
-  const [_unused5] = useState<string[]>([]);
-  const [_unused6] = useState(0);
-  const [_unused7] = useState([]);
-  const [_unused8] = useState("");
-
   // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
 
@@ -53,7 +43,7 @@ export function useCompareChat({
     state.reset(welcomeMessage);
   };
 
-  // Compare handler - TODO: implement
+  // Compare handler
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
@@ -67,16 +57,75 @@ export function useCompareChat({
       return;
     }
 
-    // TODO: Implement comparison logic
-    // 1. Create/get chat ID
-    // 2. Send to multiple models
-    // 3. Display results in comparison view
+    // Create or get chat ID
+    let currentChatId = state.chatId;
+    if (!currentChatId) {
+      currentChatId =
+        (await chatSidePanelRef.current?.createChat(
+          state.input,
+          "compare", // Special model identifier for compare mode
+          "COMPARE"
+        )) || null;
+      state.setChatId(currentChatId);
+    }
 
-    console.log("Compare mode - not yet implemented");
-    messageHelpers.addBotMessage(
-      state.setMessages,
-      "Compare mode is coming soon! This will allow you to compare responses from multiple AI models."
-    );
+    state.setIsLoading(true);
+    const userMessage = state.input;
+    messageHelpers.addUserMessage(state.setMessages, userMessage);
+    state.setInput("");
+
+    if (currentChatId) {
+      await chatSidePanelRef.current?.sendMessage(
+        currentChatId,
+        "user",
+        userMessage
+      );
+    }
+
+    try {
+      if (!currentChatId) {
+        throw new Error("Chat ID not available");
+      }
+
+      const response = await fetch("/api/chat/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage,
+          chat_id: currentChatId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.responses) {
+        state.setMessages((prev) => [
+          ...prev,
+          {
+            from: "bot" as const,
+            text: "",
+            compareResponses: data.responses,
+          },
+        ]);
+
+        await incrementUsage();
+      } else {
+        throw new Error("Invalid response from comparison service");
+      }
+    } catch (error) {
+      onError?.(error, "comparing models");
+      messageHelpers.addBotMessage(
+        state.setMessages,
+        "I encountered a problem comparing responses. Please try again."
+      );
+    } finally {
+      state.setIsLoading(false);
+    }
   };
 
   const stopGeneration = () => {

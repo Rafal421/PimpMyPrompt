@@ -3,26 +3,28 @@ import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
 import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class GeminiProvider extends BaseAIProvider {
+  private apiKey: string;
+
   constructor() {
     super({
       name: "Gemini",
       defaultModel: "gemini-2.5-flash",
       allowedModels: getAllowedModelsForProvider("gemini"),
     });
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not set");
+    }
+    this.apiKey = process.env.GEMINI_API_KEY;
   }
 
-  protected async callAI(
-    prompt: string,
-    model: string
-  ): Promise<string> {
-    // ✅ Use Authorization header instead of query-string key
+  protected async callAI(prompt: string, model: string): Promise<string> {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+          "x-goog-api-key": this.apiKey,
         },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
