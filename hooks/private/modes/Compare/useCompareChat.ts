@@ -14,12 +14,19 @@ export interface CompareChatConfig {
   onError?: (error: any, context?: string) => void;
 }
 
+export interface CompareSession {
+  id: string;
+  title: string;
+  created_at: string;
+}
+
 export function useCompareChat({
   user,
   welcomeMessage = "Compare responses from different AI models!",
   onError,
 }: CompareChatConfig) {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+  const [compareSessionId, setCompareSessionId] = useState<string | null>(null);
 
   // Core state
   const state = useChatState(welcomeMessage);
@@ -40,6 +47,7 @@ export function useCompareChat({
   // Reset session
   const resetSession = () => {
     state.reset(welcomeMessage);
+    setCompareSessionId(null);
   };
 
   // Compare handler
@@ -62,7 +70,7 @@ export function useCompareChat({
       currentChatId =
         (await chatSidePanelRef.current?.createChat(
           state.input,
-          "compare", // Special model identifier for compare mode
+          "compare",
           "COMPARE"
         )) || null;
       state.setChatId(currentChatId);
@@ -82,16 +90,14 @@ export function useCompareChat({
     }
 
     try {
-      if (!currentChatId) {
-        throw new Error("Chat ID not available");
-      }
-
       // Show loading placeholders for all models
       const loadingResponses = COMPARE_MODELS.map((model) => ({
         modelId: model.id,
         model: model.name,
-        response: "",
+        provider: model.provider,
+        response: "Loading...",
         success: true,
+        isLoading: true,
       }));
 
       state.setMessages((prev) => [
@@ -103,7 +109,7 @@ export function useCompareChat({
         },
       ]);
 
-      const response = await fetch("/api/chat/compare", {
+      const response = await fetch("/api/modes/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,15 +126,33 @@ export function useCompareChat({
       const data = await response.json();
 
       if (data.success && data.responses) {
-        // Update with actual responses
+        if (data.session_id && !compareSessionId) {
+          setCompareSessionId(data.session_id);
+        }
+
         state.setMessages((prev) => {
           const newMessages = [...prev];
           const lastMessage = newMessages[newMessages.length - 1];
           if (lastMessage && lastMessage.from === "bot") {
             lastMessage.compareResponses = data.responses;
+            lastMessage.summary = data.summary;
           }
           return newMessages;
         });
+
+        if (currentChatId) {
+          await chatSidePanelRef.current?.sendMessage(
+            currentChatId,
+            "bot",
+            `Compared ${data.responses.length} AI models: ${data.responses
+              .map((r: any) => r.model)
+              .join(", ")}${
+              data.summary
+                ? `\n\nSummary: ${data.summary.slice(0, 100)}...`
+                : ""
+            }`
+          );
+        }
 
         await incrementUsage();
       } else {
@@ -136,9 +160,24 @@ export function useCompareChat({
       }
     } catch (error) {
       onError?.(error, "comparing models");
+      console.error("Compare error:", error);
+
+      state.setMessages((prev) => {
+        const newMessages = [...prev];
+        if (
+          newMessages.length > 0 &&
+          newMessages[newMessages.length - 1].from === "bot"
+        ) {
+          newMessages.pop();
+        }
+        return newMessages;
+      });
+
       messageHelpers.addBotMessage(
         state.setMessages,
-        "I encountered a problem comparing responses. Please try again."
+        `I encountered a problem comparing responses: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Please try again.`
       );
     } finally {
       state.setIsLoading(false);
@@ -156,6 +195,10 @@ export function useCompareChat({
 
     // Core state
     ...state,
+
+    // Compare-specific state
+    compareSessionId,
+    setCompareSessionId,
 
     // Refs
     chatSidePanelRef,

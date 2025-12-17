@@ -21,13 +21,16 @@ export interface Message {
   text: string;
   isTyping?: boolean;
   compareResponses?: CompareResponse[];
+  summary?: string;
 }
 
 export interface CompareResponse {
   model: string;
   modelId: string;
+  provider: string;
   response: string;
   success: boolean;
+  isLoading?: boolean;
 }
 
 export interface QuestionData {

@@ -9,6 +9,7 @@ interface CompareResponsesProps {
   isLoading?: boolean;
   messageIndex?: number;
   chatId?: string | null;
+  summary?: string;
 }
 
 export function CompareResponses({
@@ -16,6 +17,7 @@ export function CompareResponses({
   isLoading,
   messageIndex = 0,
   chatId,
+  summary,
 }: CompareResponsesProps) {
   const storageKey = `compare-expanded-${chatId || "temp"}-${messageIndex}`;
   const [expandedResponses, setExpandedResponses] = useState<Set<string>>(
@@ -157,6 +159,21 @@ export function CompareResponses({
           </div>
         );
       })}
+
+      {/* Summary at the bottom */}
+      {summary && !isLoading && (
+        <div className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-blue-400" />
+            <h3 className="font-semibold text-blue-200 text-lg">
+              AI Analysis Summary
+            </h3>
+          </div>
+          <div className="prose prose-invert max-w-none">
+            <MarkdownRenderer content={summary} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

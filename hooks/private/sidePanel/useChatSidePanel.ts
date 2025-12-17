@@ -89,13 +89,31 @@ export function useChatSidePanel({
   const fetchChatHistory = useCallback(
     async (chatId: string) => {
       try {
-        const res = await fetch(`/api/messages?chat_id=${chatId}`);
+        const chatRes = await fetch(`/api/chats`);
+        const chatData = await chatRes.json();
+        const currentChat = chatData.chats?.find((c: any) => c.id === chatId);
+
+        const apiUrl =
+          currentChat?.mode === "COMPARE"
+            ? `/api/modes/compare/messages?chat_id=${chatId}`
+            : `/api/messages?chat_id=${chatId}`;
+
+        const res = await fetch(apiUrl);
         if (!res.ok) throw new Error("Failed to fetch chat history");
         const data = await res.json();
+
         const messages = data.messages.map(
-          (msg: { from: string; content: string }) => ({
+          (msg: {
+            from: string;
+            content?: string;
+            text?: string;
+            compareResponses?: any;
+            summary?: string;
+          }) => ({
             from: msg.from === "user" ? "user" : "bot",
-            text: msg.content,
+            text: msg.content || msg.text || "",
+            compareResponses: msg.compareResponses,
+            summary: msg.summary,
           })
         );
         setMessages(messages);

@@ -60,6 +60,7 @@ export default function ChatMessages({
                       isLoading={isLoading && idx === messages.length - 1}
                       messageIndex={idx}
                       chatId={chatId}
+                      summary={msg.summary}
                     />
                   ) : msg.from === "bot" && msg.isTyping ? (
                     <MarkdownTypewriter

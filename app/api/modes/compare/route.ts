@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { COMPARE_MODELS } from "@/lib/compare-config";
+import {
+  createCompareAnalysisPrompt,
+  TOKEN_LIMITS,
+} from "@/lib/providers/ai-helpers";
+import OpenAI from "openai";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Make API calls to all providers in parallel
     const responses = await Promise.allSettled(
       COMPARE_MODELS.map(async (model) => {
         try {
@@ -60,6 +66,7 @@ export async function POST(request: NextRequest) {
           return {
             model: model.name,
             modelId: model.id,
+            provider: model.provider,
             response: data.response || "No response",
             success: true,
           };
@@ -68,6 +75,7 @@ export async function POST(request: NextRequest) {
           return {
             model: model.name,
             modelId: model.id,
+            provider: model.provider,
             response: `Error: ${
               error instanceof Error ? error.message : "Unknown error"
             }`,
@@ -77,6 +85,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    // Process results
     const results = responses.map((result, index) => {
       const model = COMPARE_MODELS[index];
       if (result.status === "fulfilled") {
@@ -85,37 +94,89 @@ export async function POST(request: NextRequest) {
         return {
           model: model.name,
           modelId: model.id,
+          provider: model.provider,
           response: `Failed to get response: ${result.reason}`,
           success: false,
         };
       }
     });
 
-    if (chat_id) {
-      console.log("[CompareChat] Saving to database...");
-
-      const combinedContent = results
-        .map((r) => `**${r.model}:**\n${r.response}`)
-        .join("\n\n---\n\n");
-
-      await supabase.from("messages").insert({
-        chat_id,
-        user_id: user.id,
-        from: "bot",
-        content: combinedContent,
+    let summary = "";
+    try {
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
       });
 
-      console.log("[CompareChat] Saved to database successfully");
+      const summaryPrompt = createCompareAnalysisPrompt(message, results);
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini", // Using cheapest OpenAI model
+        messages: [{ role: "user", content: summaryPrompt }],
+        max_tokens: TOKEN_LIMITS.GENERAL,
+      });
+
+      summary = completion.choices[0]?.message?.content || "";
+    } catch (error) {
+      console.error("[CompareChat] Error generating summary:", error);
+    }
+
+    // Create the record with all responses in separate columns
+    const responseData: any = {
+      user_id: user.id,
+      chat_id: chat_id || null,
+      user_question: message,
+      summary: summary || null,
+    };
+
+    results.forEach((result) => {
+      switch (result.provider) {
+        case "openai":
+          responseData.openai_response = result.response;
+          break;
+        case "anthropic":
+          responseData.anthropic_response = result.response;
+          break;
+        case "gemini":
+          responseData.gemini_response = result.response;
+          break;
+        case "deepseek":
+          responseData.deepseek_response = result.response;
+          break;
+        case "perplexity":
+          responseData.perplexity_response = result.response;
+          break;
+        case "grok":
+          responseData.grok_response = result.response;
+          break;
+        default:
+          console.warn(`[CompareChat] Unknown provider: ${result.provider}`);
+      }
+    });
+
+    const { data: sessionData, error: sessionError } = await supabase
+      .from("compare_sessions")
+      .insert(responseData)
+      .select("id")
+      .single();
+
+    if (sessionError) {
+      console.error("[CompareChat] Error saving session:", sessionError);
+      throw new Error(`Failed to save session: ${sessionError.message}`);
     }
 
     return NextResponse.json({
       success: true,
       responses: results,
+      summary,
+      session_id: sessionData.id,
     });
   } catch (error) {
     console.error("[CompareChat] Error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+        details: error instanceof Error ? error.stack : undefined,
+      },
       { status: 500 }
     );
   }
