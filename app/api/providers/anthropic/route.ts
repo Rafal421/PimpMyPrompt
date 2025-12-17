@@ -12,19 +12,23 @@ class AnthropicProvider extends BaseAIProvider {
       defaultModel: "claude-sonnet-4-5-20250929",
       allowedModels: getAllowedModelsForProvider("anthropic"),
     });
-    
+
     this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
   }
 
-  protected async callAI(prompt: string, model: string, maxTokens: number = 1000): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const msg = await this.anthropic.messages.create({
       model,
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
     });
-    
+
     const textBlock = msg.content.find((block) => block.type === "text");
     return textBlock?.text || "";
   }

@@ -17,9 +17,13 @@ class GeminiProvider extends BaseAIProvider {
     this.apiKey = process.env.GEMINI_API_KEY;
   }
 
-  protected async callAI(prompt: string, model: string): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -28,6 +32,9 @@ class GeminiProvider extends BaseAIProvider {
         },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+          },
         }),
       }
     );

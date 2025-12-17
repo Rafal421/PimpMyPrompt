@@ -13,6 +13,7 @@ export interface AIProviderConfig {
   name: string;
   defaultModel: string;
   allowedModels?: string[];
+  defaultMaxTokens?: number;
 }
 
 export interface AIRequestBody {
@@ -27,13 +28,16 @@ export abstract class BaseAIProvider {
   protected config: AIProviderConfig;
 
   constructor(config: AIProviderConfig) {
-    this.config = config;
+    this.config = {
+      defaultMaxTokens: 1000,
+      ...config,
+    };
   }
 
   protected abstract callAI(
     prompt: string,
     model: string,
-    maxTokens?: number
+    maxTokens: number
   ): Promise<string>;
 
   private async verifyUserAuth(): Promise<string | null> {
@@ -123,7 +127,7 @@ export abstract class BaseAIProvider {
         const content = await this.callAI(
           message,
           selectedModel,
-          TOKEN_LIMITS.GENERAL
+          TOKEN_LIMITS.GENERAL ?? this.config.defaultMaxTokens!
         );
 
         return NextResponse.json({ response: content });
@@ -148,7 +152,7 @@ export abstract class BaseAIProvider {
           content = await this.callAI(
             createClarifyPrompt(question),
             selectedModel,
-            TOKEN_LIMITS.CLARIFY
+            TOKEN_LIMITS.CLARIFY ?? this.config.defaultMaxTokens! // ⬅️ Fallback
           );
           const questions = parseQuestionsWithOptions(content);
           return NextResponse.json({ questions });
@@ -162,7 +166,7 @@ export abstract class BaseAIProvider {
           content = await this.callAI(
             createImprovePrompt(question, answers),
             selectedModel,
-            TOKEN_LIMITS.IMPROVE
+            TOKEN_LIMITS.IMPROVE ?? this.config.defaultMaxTokens! // ⬅️ Fallback
           );
           return NextResponse.json({ response: content });
 

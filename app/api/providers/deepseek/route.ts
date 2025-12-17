@@ -12,20 +12,24 @@ class DeepSeekProvider extends BaseAIProvider {
       defaultModel: "deepseek-chat",
       allowedModels: getAllowedModelsForProvider("deepseek"),
     });
-    
+
     this.deepseek = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY,
       baseURL: "https://api.deepseek.com/v1",
     });
   }
 
-  protected async callAI(prompt: string, model: string, maxTokens: number = 1000): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const completion = await this.deepseek.chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
     });
-    
+
     return completion.choices[0]?.message?.content || "";
   }
 }

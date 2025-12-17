@@ -12,20 +12,24 @@ class GrokProvider extends BaseAIProvider {
       defaultModel: "grok-3-mini",
       allowedModels: getAllowedModelsForProvider("grok"),
     });
-    
+
     this.grok = new OpenAI({
       apiKey: process.env.GROK_API_KEY,
       baseURL: "https://api.x.ai/v1",
     });
   }
 
-  protected async callAI(prompt: string, model: string, maxTokens: number = 1000): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const completion = await this.grok.chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
     });
-    
+
     return completion.choices[0]?.message?.content || "";
   }
 }

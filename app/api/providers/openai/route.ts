@@ -12,19 +12,23 @@ class OpenAIProvider extends BaseAIProvider {
       defaultModel: "gpt-4o-mini",
       allowedModels: getAllowedModelsForProvider("openai"),
     });
-    
+
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
   }
 
-  protected async callAI(prompt: string, model: string, maxTokens: number = 1000): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const completion = await this.openai.chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
     });
-    
+
     return completion.choices[0]?.message?.content || "";
   }
 }
