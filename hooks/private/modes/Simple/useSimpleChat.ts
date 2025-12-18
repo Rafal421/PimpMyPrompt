@@ -12,7 +12,7 @@ const DEFAULT_MODEL = "gpt-4o-mini";
 export interface SimpleChatConfig {
   user: User;
   welcomeMessage?: string;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
 }
 
 /**

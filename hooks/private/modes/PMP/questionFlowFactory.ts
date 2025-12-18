@@ -22,7 +22,7 @@ interface QuestionFlowLogicProps {
   questionsData: QuestionData[];
   currentQuestionIndex: number;
   setIsBotResponding: React.Dispatch<React.SetStateAction<boolean>>;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
 }
 
 export const createQuestionFlow = ({

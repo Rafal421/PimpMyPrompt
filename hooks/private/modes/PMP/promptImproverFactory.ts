@@ -17,7 +17,7 @@ interface PromptImproverLogicProps {
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
   setImprovedPrompt: React.Dispatch<React.SetStateAction<string>>;
   setIsBotResponding: React.Dispatch<React.SetStateAction<boolean>>;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
 }
 
 export const createPromptImprover = ({

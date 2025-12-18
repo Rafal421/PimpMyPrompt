@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import type { User } from "@/lib/types";
+import type { User, CompareResponse } from "@/lib/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
@@ -11,7 +11,7 @@ import { COMPARE_MODELS } from "@/lib/compare-config";
 export interface CompareChatConfig {
   user: User;
   welcomeMessage?: string;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
 }
 
 export interface CompareSession {
@@ -145,7 +145,7 @@ export function useCompareChat({
             currentChatId,
             "bot",
             `Compared ${data.responses.length} AI models: ${data.responses
-              .map((r: any) => r.model)
+              .map((r: CompareResponse) => r.model)
               .join(", ")}${
               data.summary
                 ? `\n\nSummary: ${data.summary.slice(0, 100)}...`

@@ -9,7 +9,7 @@ interface ModelSelectionLogicProps {
   chatSidePanelRef: React.RefObject<ChatSidePanelHandle | null>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setPhase: React.Dispatch<React.SetStateAction<Phase>>;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
   onUsageIncrement?: () => Promise<boolean>;
 }
 
