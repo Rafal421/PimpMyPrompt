@@ -12,8 +12,8 @@ import ChatInput from "./ChatInput";
 import ChatSidePanel from "@/components/private/chat/ChatSidePanel";
 
 // PMP-specific components
-import QuestionBlock from "@/components/private/PMP/QuestionBlock";
-import ModelSelection from "@/components/private/PMP/ModelSelection";
+import QuestionBlock from "@/components/private/modes/PMP/QuestionBlock";
+import ModelSelection from "@/components/private/modes/PMP/ModelSelection";
 
 interface ChatClientProps {
   user: User;
@@ -233,6 +233,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
             messages={chat.messages}
             isLoading={chat.isLoading}
             renderExtras={renderExtras}
+            chatId={chat.chatId}
           />
           {/* Scroll target */}
           <div ref={chat.messagesEndRef} className="h-4" />

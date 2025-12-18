@@ -12,25 +12,30 @@ class PerplexityProvider extends BaseAIProvider {
       defaultModel: "sonar-pro",
       allowedModels: getAllowedModelsForProvider("perplexity"),
     });
-    
+
     this.perplexity = new OpenAI({
       apiKey: process.env.PERPLEXITY_API_KEY,
       baseURL: "https://api.perplexity.ai",
     });
   }
 
-  protected async callAI(prompt: string, model: string, maxTokens: number = 1000): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number
+  ): Promise<string> {
     const completion = await this.perplexity.chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
     });
-    
+
     return completion.choices[0]?.message?.content || "";
   }
 }
 
 const perplexityProvider = new PerplexityProvider();
+export { perplexityProvider };
 
 export async function POST(req: NextRequest) {
   return perplexityProvider.handleRequest(req);

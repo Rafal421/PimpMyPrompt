@@ -151,3 +151,38 @@ Create the final optimized prompt that incorporates all clarifying information. 
 
 Respond with ONLY the final improved prompt - no explanations or meta-commentary.`;
 }
+
+// Template for compare analysis prompt
+export function createCompareAnalysisPrompt(
+  question: string,
+  responses: Array<{
+    model: string;
+    modelId: string;
+    provider: string;
+    response: string;
+    success: boolean;
+  }>
+): string {
+  const responsesText = responses
+    .map((resp) => {
+      const status = resp.success ? "✓" : "✗";
+      return `**${resp.model} (${resp.provider}) ${status}:**\n${resp.response}\n`;
+    })
+    .join("\n");
+
+  return `You are an expert AI analyst. Compare and analyze these AI model responses to provide valuable insights.
+
+**Original Question:** "${question}"
+
+**AI Responses:**
+${responsesText}
+
+**Analysis Task:**
+Provide a concise comparison focusing on:
+1. **Key Differences**: How do the approaches/answers differ?
+2. **Strengths**: What does each model do best?
+3. **Accuracy**: Which responses seem most reliable/accurate?
+4. **Use Cases**: When would you choose each model's approach?
+
+Keep your analysis under 200 words and be specific about trade-offs between the responses.`;
+}

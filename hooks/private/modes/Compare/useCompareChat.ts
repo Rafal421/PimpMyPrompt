@@ -1,18 +1,23 @@
 "use client";
 import { useRef, useState } from "react";
-import type { User } from "@/lib/types";
+import type { User, CompareResponse } from "@/lib/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
 import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
-
-const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
+import { COMPARE_MODELS } from "@/lib/compare-config";
 
 export interface CompareChatConfig {
   user: User;
   welcomeMessage?: string;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
+}
+
+export interface CompareSession {
+  id: string;
+  title: string;
+  created_at: string;
 }
 
 export function useCompareChat({
@@ -21,20 +26,11 @@ export function useCompareChat({
   onError,
 }: CompareChatConfig) {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+  const [compareSessionId, setCompareSessionId] = useState<string | null>(null);
 
   // Core state
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
-
-  // Dummy states to match PMP hook structure (for React Hooks consistency)
-  const [_unused1] = useState(null);
-  const [_unused2] = useState(null);
-  const [_unused3] = useState("");
-  const [_unused4] = useState("");
-  const [_unused5] = useState<string[]>([]);
-  const [_unused6] = useState(0);
-  const [_unused7] = useState([]);
-  const [_unused8] = useState("");
 
   // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
@@ -51,9 +47,10 @@ export function useCompareChat({
   // Reset session
   const resetSession = () => {
     state.reset(welcomeMessage);
+    setCompareSessionId(null);
   };
 
-  // Compare handler - TODO: implement
+  // Compare handler
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
@@ -67,16 +64,124 @@ export function useCompareChat({
       return;
     }
 
-    // TODO: Implement comparison logic
-    // 1. Create/get chat ID
-    // 2. Send to multiple models
-    // 3. Display results in comparison view
+    // Create or get chat ID
+    let currentChatId = state.chatId;
+    if (!currentChatId) {
+      currentChatId =
+        (await chatSidePanelRef.current?.createChat(
+          state.input,
+          "compare",
+          "COMPARE"
+        )) || null;
+      state.setChatId(currentChatId);
+    }
 
-    console.log("Compare mode - not yet implemented");
-    messageHelpers.addBotMessage(
-      state.setMessages,
-      "Compare mode is coming soon! This will allow you to compare responses from multiple AI models."
-    );
+    state.setIsLoading(true);
+    const userMessage = state.input;
+    messageHelpers.addUserMessage(state.setMessages, userMessage);
+    state.setInput("");
+
+    if (currentChatId) {
+      await chatSidePanelRef.current?.sendMessage(
+        currentChatId,
+        "user",
+        userMessage
+      );
+    }
+
+    try {
+      // Show loading placeholders for all models
+      const loadingResponses = COMPARE_MODELS.map((model) => ({
+        modelId: model.id,
+        model: model.name,
+        provider: model.provider,
+        response: "Loading...",
+        success: true,
+        isLoading: true,
+      }));
+
+      state.setMessages((prev) => [
+        ...prev,
+        {
+          from: "bot" as const,
+          text: "",
+          compareResponses: loadingResponses,
+        },
+      ]);
+
+      const response = await fetch("/api/modes/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage,
+          chat_id: currentChatId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.responses) {
+        if (data.session_id && !compareSessionId) {
+          setCompareSessionId(data.session_id);
+        }
+
+        state.setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage && lastMessage.from === "bot") {
+            lastMessage.compareResponses = data.responses;
+            lastMessage.summary = data.summary;
+          }
+          return newMessages;
+        });
+
+        if (currentChatId) {
+          await chatSidePanelRef.current?.sendMessage(
+            currentChatId,
+            "bot",
+            `Compared ${data.responses.length} AI models: ${data.responses
+              .map((r: CompareResponse) => r.model)
+              .join(", ")}${
+              data.summary
+                ? `\n\nSummary: ${data.summary.slice(0, 100)}...`
+                : ""
+            }`
+          );
+        }
+
+        await incrementUsage();
+      } else {
+        throw new Error("Invalid response from comparison service");
+      }
+    } catch (error) {
+      onError?.(error, "comparing models");
+      console.error("Compare error:", error);
+
+      state.setMessages((prev) => {
+        const newMessages = [...prev];
+        if (
+          newMessages.length > 0 &&
+          newMessages[newMessages.length - 1].from === "bot"
+        ) {
+          newMessages.pop();
+        }
+        return newMessages;
+      });
+
+      messageHelpers.addBotMessage(
+        state.setMessages,
+        `I encountered a problem comparing responses: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Please try again.`
+      );
+    } finally {
+      state.setIsLoading(false);
+    }
   };
 
   const stopGeneration = () => {
@@ -90,6 +195,10 @@ export function useCompareChat({
 
     // Core state
     ...state,
+
+    // Compare-specific state
+    compareSessionId,
+    setCompareSessionId,
 
     // Refs
     chatSidePanelRef,

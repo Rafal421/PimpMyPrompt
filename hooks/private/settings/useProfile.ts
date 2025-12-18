@@ -53,7 +53,7 @@ export function useProfile(user: UserType | null) {
         setDateOfBirth("");
         setProfile(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError("An unexpected error occurred. Please refresh and try again.");
     }
   }, [user]);
@@ -101,16 +101,31 @@ export function useProfile(user: UserType | null) {
       await AuditLogger.log("PROFILE_UPDATED", user.id);
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to save profile. Please try again.";
 
-      if (error.code === "42P01") {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "42P01"
+      ) {
         errorMessage =
           "Service temporarily unavailable. Please contact support.";
-      } else if (error.code === "23505") {
+      } else if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "23505"
+      ) {
         errorMessage =
           "Profile conflict detected. Please refresh and try again.";
-      } else if (error.code === "PGRST301") {
+      } else if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "PGRST301"
+      ) {
         errorMessage = "Permission denied. Please re-authenticate.";
       }
 

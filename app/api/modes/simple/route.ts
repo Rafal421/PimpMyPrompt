@@ -10,7 +10,7 @@ class SimpleChatProvider extends BaseAIProvider {
     super({
       name: "SimpleChat",
       defaultModel: "gpt-4o-mini",
-      allowedModels: ["gpt-4o-mini", "gpt-4o"],
+      allowedModels: ["gpt-4o-mini"],
     });
 
     this.openai = new OpenAI({
@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
 
     if (chat_id && data.response) {
       const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (user) {
         await supabase.from("messages").insert({

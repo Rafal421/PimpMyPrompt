@@ -7,12 +7,12 @@ import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
 import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
 
-const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
+const DEFAULT_MODEL = "gpt-4o-mini";
 
 export interface SimpleChatConfig {
   user: User;
   welcomeMessage?: string;
-  onError?: (error: any, context?: string) => void;
+  onError?: (error: unknown, context?: string) => void;
 }
 
 /**
@@ -88,7 +88,7 @@ export function useSimpleChat({
 
     try {
       // Send to simple chat endpoint
-      const response = await fetch(`/api/chat/simple`, {
+      const response = await fetch(`/api/modes/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -103,10 +103,9 @@ export function useSimpleChat({
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.response) {
         messageHelpers.addBotMessage(state.setMessages, data.response, true);
-        // Increment usage after successful response
         await incrementUsage();
       } else {
         throw new Error("Invalid response from AI");

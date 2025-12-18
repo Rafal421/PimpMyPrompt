@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const result = await response.json();
     return NextResponse.json(result, { status: response.status });
   } catch (error) {
-    console.error("Error in /api/clarify:", error);
+    console.error("Error in /api/modes/clarify:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(

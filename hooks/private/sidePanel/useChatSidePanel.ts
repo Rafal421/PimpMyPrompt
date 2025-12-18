@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import type { User, Chat, Message, Phase } from "@/lib/types";
+import type {
+  User,
+  Chat,
+  Message,
+  Phase,
+  ChatsListResponse,
+  ChatMessage,
+} from "@/lib/types";
 
 interface UseChatSidePanelProps {
   user: User;
@@ -89,15 +96,28 @@ export function useChatSidePanel({
   const fetchChatHistory = useCallback(
     async (chatId: string) => {
       try {
-        const res = await fetch(`/api/messages?chat_id=${chatId}`);
+        const chatRes = await fetch(`/api/chats`);
+        if (!chatRes.ok) {
+          throw new Error("Failed to fetch chat list for mode detection");
+        }
+        const chatData: ChatsListResponse = await chatRes.json();
+        const currentChat = chatData.chats?.find((c) => c.id === chatId);
+
+        const apiUrl =
+          currentChat?.mode === "COMPARE"
+            ? `/api/modes/compare/messages?chat_id=${chatId}`
+            : `/api/messages?chat_id=${chatId}`;
+
+        const res = await fetch(apiUrl);
         if (!res.ok) throw new Error("Failed to fetch chat history");
         const data = await res.json();
-        const messages = data.messages.map(
-          (msg: { from: string; content: string }) => ({
-            from: msg.from === "user" ? "user" : "bot",
-            text: msg.content,
-          })
-        );
+
+        const messages = data.messages.map((msg: ChatMessage) => ({
+          from: msg.from === "user" ? "user" : "bot",
+          text: msg.content || msg.text || "",
+          compareResponses: msg.compareResponses,
+          summary: msg.summary,
+        }));
         setMessages(messages);
       } catch (error) {
         console.error("Error fetching chat history:", error);

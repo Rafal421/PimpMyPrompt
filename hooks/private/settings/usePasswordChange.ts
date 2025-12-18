@@ -67,10 +67,12 @@ export function usePasswordChange() {
       setSuccess("Password updated successfully!");
       clearFields();
       setTimeout(() => setSuccess(""), 3000);
-    } catch (error: any) {
-      const sanitizedError = error.message?.includes("email")
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      const sanitizedError = errorMessage.includes("email")
         ? "Authentication failed"
-        : error.message;
+        : errorMessage;
       setError(sanitizedError || "Failed to change password");
     } finally {
       setIsSaving(false);

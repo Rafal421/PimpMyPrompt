@@ -27,7 +27,7 @@ export function useQuestionGenerator({
           throw new Error(`Provider ${provider} not found`);
         }
 
-        const response = await fetch("/api/clarify", {
+        const response = await fetch("/api/modes/clarify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
