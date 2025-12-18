@@ -97,6 +97,9 @@ export function useChatSidePanel({
     async (chatId: string) => {
       try {
         const chatRes = await fetch(`/api/chats`);
+        if (!chatRes.ok) {
+          throw new Error("Failed to fetch chat list for mode detection");
+        }
         const chatData: ChatsListResponse = await chatRes.json();
         const currentChat = chatData.chats?.find((c) => c.id === chatId);
 

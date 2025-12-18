@@ -84,6 +84,18 @@ export abstract class BaseAIProvider {
     return this.config.allowedModels.includes(model);
   }
 
+  public async generateResponse(
+    message: string,
+    model?: string,
+    maxTokens?: number
+  ): Promise<string> {
+    const selectedModel = model || this.config.defaultModel;
+    const tokens =
+      maxTokens || TOKEN_LIMITS.GENERAL || this.config.defaultMaxTokens!;
+
+    return this.callAI(message, selectedModel, tokens);
+  }
+
   public async handleRequest(req: NextRequest): Promise<NextResponse> {
     try {
       const userId = await this.verifyUserAuth();

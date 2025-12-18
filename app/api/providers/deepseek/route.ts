@@ -35,6 +35,7 @@ class DeepSeekProvider extends BaseAIProvider {
 }
 
 const deepSeekProvider = new DeepSeekProvider();
+export { deepSeekProvider };
 
 export async function POST(req: NextRequest) {
   return deepSeekProvider.handleRequest(req);

@@ -34,6 +34,7 @@ class OpenAIProvider extends BaseAIProvider {
 }
 
 const openAIProvider = new OpenAIProvider();
+export { openAIProvider };
 
 export async function POST(req: NextRequest) {
   return openAIProvider.handleRequest(req);

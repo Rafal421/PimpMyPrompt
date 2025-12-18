@@ -1,4 +1,5 @@
 // Configuration for Compare mode models
+import type { DatabaseResponseData } from "@/lib/types";
 
 export interface CompareModel {
   id: string;
@@ -22,3 +23,12 @@ export const COMPARE_MODELS: CompareModel[] = [
   { id: "sonar", name: "Perplexity Sonar", provider: "perplexity" },
   { id: "deepseek-chat", name: "DeepSeek Chat", provider: "deepseek" },
 ];
+
+export const PROVIDER_COLUMN: Record<string, keyof DatabaseResponseData> = {
+  openai: "openai_response",
+  anthropic: "anthropic_response",
+  gemini: "gemini_response",
+  grok: "grok_response",
+  perplexity: "perplexity_response",
+  deepseek: "deepseek_response",
+};

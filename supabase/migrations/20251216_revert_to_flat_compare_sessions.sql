@@ -41,9 +41,6 @@ CREATE POLICY "Users can update their own compare sessions" ON public.compare_se
 CREATE POLICY "Users can delete their own compare sessions" ON public.compare_sessions
   FOR DELETE USING (auth.uid() = user_id);
 
-CREATE POLICY "Allow all operations for debugging" ON public.compare_sessions
-  FOR ALL USING (true) WITH CHECK (true);
-
 -- Create indexes
 CREATE INDEX IF NOT EXISTS compare_sessions_user_id_idx ON public.compare_sessions USING btree (user_id) TABLESPACE pg_default;
 

@@ -35,6 +35,7 @@ class PerplexityProvider extends BaseAIProvider {
 }
 
 const perplexityProvider = new PerplexityProvider();
+export { perplexityProvider };
 
 export async function POST(req: NextRequest) {
   return perplexityProvider.handleRequest(req);

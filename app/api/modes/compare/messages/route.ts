@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { COMPARE_MODELS } from "@/lib/compare-config";
-
-const PROVIDER_COLUMN: Record<string, string> = {
-  openai: "openai_response",
-  anthropic: "anthropic_response",
-  gemini: "gemini_response",
-  grok: "grok_response",
-  perplexity: "perplexity_response",
-  deepseek: "deepseek_response",
-};
+import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/compare-config";
 
 export async function GET(req: NextRequest) {
   try {

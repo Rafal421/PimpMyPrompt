@@ -35,6 +35,7 @@ class GrokProvider extends BaseAIProvider {
 }
 
 const grokProvider = new GrokProvider();
+export { grokProvider };
 
 export async function POST(req: NextRequest) {
   return grokProvider.handleRequest(req);

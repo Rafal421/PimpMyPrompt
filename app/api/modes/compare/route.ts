@@ -1,71 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { COMPARE_MODELS } from "@/lib/compare-config";
+import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/compare-config";
 import {
   createCompareAnalysisPrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
 import OpenAI from "openai";
 import { DatabaseResponseData, ProviderResponse } from "@/lib/types";
+import { AuditLogger } from "@/lib/audit-logger";
+import { openAIProvider } from "@/app/api/providers/openai/route";
+import { anthropicProvider } from "@/app/api/providers/anthropic/route";
+import { geminiProvider } from "@/app/api/providers/gemini/route";
+import { deepSeekProvider } from "@/app/api/providers/deepseek/route";
+import { perplexityProvider } from "@/app/api/providers/perplexity/route";
+import { grokProvider } from "@/app/api/providers/grok/route";
 
-const PROVIDER_COLUMN: Record<string, keyof DatabaseResponseData> = {
-  openai: "openai_response",
-  anthropic: "anthropic_response",
-  gemini: "gemini_response",
-  grok: "grok_response",
-  perplexity: "perplexity_response",
-  deepseek: "deepseek_response",
-};
-
-// ✅ Helper: Get base URL
-function getBaseUrl(): string {
-  if (process.env.NODE_ENV === "development") {
-    return "http://localhost:3000";
-  }
-  return process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+function getProviderInstance(providerName: string) {
+  const providers: Record<string, any> = {
+    openai: openAIProvider,
+    anthropic: anthropicProvider,
+    gemini: geminiProvider,
+    deepseek: deepSeekProvider,
+    perplexity: perplexityProvider,
+    grok: grokProvider,
+  };
+  return providers[providerName];
 }
 
-// ✅ Helper: Call a single provider
+// ✅ Helper: Call a single provider directly (no HTTP overhead)
 async function callProvider(
   model: (typeof COMPARE_MODELS)[number],
-  message: string,
-  requestHeaders: Headers
+  message: string
 ): Promise<ProviderResponse> {
   try {
-    const baseUrl = getBaseUrl();
-    const apiUrl = `${baseUrl}/api/providers/${model.provider}`;
+    const provider = getProviderInstance(model.provider);
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: requestHeaders.get("Cookie") || "",
-      },
-      body: JSON.stringify({
-        message,
-        model: model.id,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[CompareChat] ${model.provider} error:`, {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-      });
-      throw new Error(
-        `${model.provider} API error: ${response.status} - ${errorText}`
-      );
+    if (!provider) {
+      throw new Error(`Unknown provider: ${model.provider}`);
     }
 
-    const data = await response.json();
+    // Direct method call - no HTTP request!
+    const response = await provider.generateResponse(
+      message,
+      model.id,
+      TOKEN_LIMITS.GENERAL
+    );
 
     return {
       model: model.name,
       modelId: model.id,
       provider: model.provider,
-      response: data.response || "No response",
+      response: response || "No response",
       success: true,
     };
   } catch (error) {
@@ -154,9 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     const responses = await Promise.allSettled(
-      COMPARE_MODELS.map((model) =>
-        callProvider(model, message, request.headers)
-      )
+      COMPARE_MODELS.map((model) => callProvider(model, message))
     );
 
     const results: ProviderResponse[] = responses.map((result, index) => {
@@ -174,7 +157,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Generate summary
     const summary = await generateSummary(message, results);
 
     // Prepare and save response data
@@ -194,8 +176,19 @@ export async function POST(request: NextRequest) {
 
     if (sessionError) {
       console.error("[CompareChat] Error saving session:", sessionError);
+      await AuditLogger.log("COMPARE_SESSION_FAILED", user.id, {
+        reason: "Database insert failed",
+        chat_id,
+      });
       throw new Error(`Failed to save session: ${sessionError.message}`);
     }
+
+    await AuditLogger.log("COMPARE_SESSION_CREATED", user.id, {
+      session_id: sessionData.id,
+      chat_id,
+      providers_count: results.length,
+      successful_providers: results.filter((r) => r.success).length,
+    });
 
     return NextResponse.json({
       success: true,
@@ -205,12 +198,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[CompareChat] Error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 }
-    );
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+
+    const response: { error: string; debug?: string } = {
+      error: "Failed to process comparison request",
+    };
+
+    if (process.env.NODE_ENV === "development") {
+      response.debug = errorMessage;
+    }
+
+    return NextResponse.json(response, { status: 500 });
   }
 }

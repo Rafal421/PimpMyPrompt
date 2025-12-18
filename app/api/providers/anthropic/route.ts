@@ -35,6 +35,7 @@ class AnthropicProvider extends BaseAIProvider {
 }
 
 const anthropicProvider = new AnthropicProvider();
+export { anthropicProvider };
 
 export async function POST(req: NextRequest) {
   return anthropicProvider.handleRequest(req);

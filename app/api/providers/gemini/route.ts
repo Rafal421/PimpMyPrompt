@@ -54,6 +54,7 @@ class GeminiProvider extends BaseAIProvider {
 }
 
 const geminiProvider = new GeminiProvider();
+export { geminiProvider };
 
 export async function POST(req: NextRequest) {
   return geminiProvider.handleRequest(req);
