@@ -1,4 +1,4 @@
-import { AuditLogger } from "../audit-logger";
+import { AuditLogger } from "./audit-logger";
 
 interface SafeAuditDetails {
   messageLength?: number;

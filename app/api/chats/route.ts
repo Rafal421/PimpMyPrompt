@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { AuditLogger } from "@/lib/audit-logger";
+import { AuditLogger } from "@/lib/logging/audit-logger";
 
 // GET /api/chats - Fetch all chats for authenticated user
 export async function GET(req: NextRequest) {

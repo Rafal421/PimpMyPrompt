@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, AlertCircle } from "lucide-react";
 import { AuthInput } from "./AuthInput";
-import { validatePassword } from "@/lib/validation";
+import { validatePassword } from "@/lib/shared/validation";
 
 interface PasswordValidationProps {
   password: string;

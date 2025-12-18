@@ -1,6 +1,6 @@
 // Helper functions for managing message animations and sequencing
 
-import type { Message } from "@/lib/types";
+import type { Message } from "@/lib/shared/types";
 
 export const addTypingMessage = (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,

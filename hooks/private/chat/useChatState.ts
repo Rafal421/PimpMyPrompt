@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { Message } from "@/lib/types";
+import type { Message } from "@/lib/shared/types";
 
 /**
  * useChatState - Core chat state management

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/compare-config";
+import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/chat/compare-config";
 
 export async function GET(req: NextRequest) {
   try {

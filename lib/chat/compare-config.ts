@@ -1,5 +1,5 @@
 // Configuration for Compare mode models
-import type { DatabaseResponseData } from "@/lib/types";
+import type { DatabaseResponseData } from "@/lib/shared/types";
 
 export interface CompareModel {
   id: string;

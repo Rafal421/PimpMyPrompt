@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import type { Provider, Phase, QuestionData, User } from "@/lib/types";
+import type { Provider, Phase, QuestionData, User } from "@/lib/shared/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
@@ -13,7 +13,7 @@ import {
   parseQuestionsWithOptions,
   createImprovePrompt,
 } from "@/lib/providers/ai-helpers";
-import { addTypingMessage } from "@/lib/messageHelpers";
+import { addTypingMessage } from "@/lib/chat/messageHelpers";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 

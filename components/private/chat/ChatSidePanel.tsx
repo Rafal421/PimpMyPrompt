@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useChatSidePanel } from "@/hooks/private/sidePanel/useChatSidePanel";
-import type { User, Message, Phase } from "@/lib/types";
+import type { User, Message, Phase } from "@/lib/shared/types";
 import { logout } from "@/app/auth/logout/actions";
 import {
   Plus,

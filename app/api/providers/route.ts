@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { AuditLogger } from "@/lib/audit-logger";
+import { AuditLogger } from "@/lib/logging/audit-logger";
 
 // Helper function for consistent error responses
 const errorResponse = (message: string, status: number) =>

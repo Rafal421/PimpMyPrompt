@@ -1,12 +1,12 @@
 "use client";
 import { useRef, useState } from "react";
-import type { User, CompareResponse } from "@/lib/types";
+import type { User, CompareResponse } from "@/lib/shared/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
 import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
-import { COMPARE_MODELS } from "@/lib/compare-config";
+import { COMPARE_MODELS } from "@/lib/chat/compare-config";
 
 export interface CompareChatConfig {
   user: User;

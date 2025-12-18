@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import type { CompareResponse } from "@/lib/types";
+import type { CompareResponse } from "@/lib/shared/types";
 
 interface CompareResponsesProps {
   responses: CompareResponse[];

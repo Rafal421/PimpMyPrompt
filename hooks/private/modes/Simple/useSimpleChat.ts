@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import type { User } from "@/lib/types";
+import type { User } from "@/lib/shared/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";

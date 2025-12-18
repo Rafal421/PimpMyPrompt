@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ChevronDown, Check, ArrowRight, Sparkles } from "lucide-react";
-import type { Provider, ProviderConfig } from "@/lib/types";
+import type { Provider, ProviderConfig } from "@/lib/shared/types";
 
 interface ProviderTileProps {
   providerConfig: ProviderConfig;

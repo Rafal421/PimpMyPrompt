@@ -5,8 +5,8 @@ import {
   createImprovePrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
-import { handleError, ValidationError } from "@/lib/error-handler";
-import { auditAIRequest } from "@/lib/providers/ai-audit";
+import { handleError, ValidationError } from "@/lib/api/error-handler";
+import { auditAIRequest } from "@/lib/logging/ai-audit";
 import { createClient } from "@/utils/supabase/server";
 
 export interface AIProviderConfig {
