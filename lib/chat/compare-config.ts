@@ -1,5 +1,5 @@
 // Configuration for Compare mode models
-import type { DatabaseResponseData } from "@/lib/types";
+import type { DatabaseResponseData } from "@/lib/shared/types";
 
 export interface CompareModel {
   id: string;
@@ -14,7 +14,11 @@ export const COMPARE_MODELS: CompareModel[] = [
     name: "Claude Haiku 3",
     provider: "anthropic",
   },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "gemini" },
+  {
+    id: "gemini-3-flash-preview",
+    name: "Gemini 3.0 Flash",
+    provider: "gemini",
+  },
   {
     id: "grok-4-fast-reasoning",
     name: "Grok 4 fast reasoning",

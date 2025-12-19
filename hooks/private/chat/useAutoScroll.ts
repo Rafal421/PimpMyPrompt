@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { Message } from "@/lib/types";
+import type { Message } from "@/lib/shared/types";
 
 /**
  * useAutoScroll - Automatic scroll to bottom on new messages

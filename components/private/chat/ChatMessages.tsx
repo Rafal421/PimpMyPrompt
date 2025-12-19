@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import MarkdownTypewriter from "@/components/ui/MarkdownTypewriter";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { CompareResponses } from "@/components/private/modes/Compare/CompareResponses";
-import type { Message } from "@/lib/types";
+import type { Message } from "@/lib/shared/types";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -23,7 +23,7 @@ export default function ChatMessages({
   chatId,
 }: ChatMessagesProps) {
   return (
-    <div className="w-full h-full px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="w-full px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
       {/* Messages */}
       {messages.map((msg, idx) => {
         const isCompare = msg.from === "bot" && msg.compareResponses;

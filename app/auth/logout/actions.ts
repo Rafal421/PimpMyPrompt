@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { AuditLogger } from "@/lib/audit-logger";
+import { AuditLogger } from "@/lib/logging/audit-logger";
 
 export async function logoutUser(): Promise<void> {
   const supabase = await createClient();

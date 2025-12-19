@@ -1,3 +1,3 @@
 "use server";
 
-export { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth-errors";
+export { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth/auth-errors";

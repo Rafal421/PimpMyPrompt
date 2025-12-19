@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { validateProfile } from "@/lib/validation";
-import { AuditLogger } from "@/lib/audit-logger";
-import type { User as UserType } from "@/lib/types";
+import { validateProfile } from "@/lib/shared/validation";
+import { AuditLogger } from "@/lib/logging/audit-logger";
+import type { User as UserType } from "@/lib/shared/types";
 
 interface UserProfile {
   id: string;

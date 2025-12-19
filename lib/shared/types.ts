@@ -1,4 +1,5 @@
 // Shared types across the application
+import { type LucideIcon } from "lucide-react";
 
 // ========================================
 // Core Types & Enums
@@ -68,17 +69,34 @@ export interface ChatsListResponse {
 // AI Provider Types
 // ========================================
 
-export interface ProviderConfig {
+export interface AIModel {
   id: string;
   name: string;
-  icon: string;
-  models: Array<{
-    id: string;
-    name: string;
-    description?: string;
-  }>;
-  recommendedModel: string;
+  description?: string;
 }
+
+export interface AIProvider {
+  id: string;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  emoji: string;
+  recommendedModel: string;
+  models: AIModel[];
+  colors: {
+    icon: string;
+    bg: string;
+    border: string;
+    hover: string;
+    text: string;
+    glow: string;
+    fadeBg: string;
+    fadeBorder: string;
+  };
+}
+
+/** @deprecated Use AIProvider instead */
+export interface ProviderConfig extends AIProvider {}
 
 export interface ProviderResponse {
   model: string;

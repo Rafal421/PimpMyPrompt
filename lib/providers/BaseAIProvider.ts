@@ -5,9 +5,10 @@ import {
   createImprovePrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
-import { handleError, ValidationError } from "@/lib/error-handler";
-import { auditAIRequest } from "@/lib/providers/ai-audit";
+import { handleError, ValidationError } from "@/lib/api/error-handler";
+import { auditAIRequest } from "@/lib/logging/ai-audit";
 import { createClient } from "@/utils/supabase/server";
+import { validateHistory, validatePMPRequest } from "@/lib/shared/validation";
 
 export interface AIProviderConfig {
   name: string;
@@ -22,6 +23,7 @@ export interface AIRequestBody {
   answers?: string[];
   model?: string;
   message?: string;
+  history?: { role: "user" | "assistant"; content: string }[];
 }
 
 export abstract class BaseAIProvider {
@@ -37,7 +39,8 @@ export abstract class BaseAIProvider {
   protected abstract callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string>;
 
   private async verifyUserAuth(): Promise<string | null> {
@@ -87,13 +90,14 @@ export abstract class BaseAIProvider {
   public async generateResponse(
     message: string,
     model?: string,
-    maxTokens?: number
+    maxTokens?: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
     const selectedModel = model || this.config.defaultModel;
     const tokens =
       maxTokens || TOKEN_LIMITS.GENERAL || this.config.defaultMaxTokens!;
 
-    return this.callAI(message, selectedModel, tokens);
+    return this.callAI(message, selectedModel, tokens, history);
   }
 
   public async handleRequest(req: NextRequest): Promise<NextResponse> {
@@ -117,9 +121,16 @@ export abstract class BaseAIProvider {
         );
       }
 
-      const { action, question, answers, model, message }: AIRequestBody =
-        await req.json();
+      const {
+        action,
+        question,
+        answers,
+        model,
+        message,
+        history,
+      }: AIRequestBody = await req.json();
       const selectedModel = model || this.config.defaultModel;
+      const validatedHistory = validateHistory(history);
 
       if (!this.validateModel(selectedModel)) {
         throw new ValidationError(
@@ -128,6 +139,12 @@ export abstract class BaseAIProvider {
       }
 
       if (message) {
+        if (message.length > 10000) {
+          throw new ValidationError(
+            "Wiadomość jest za długa (max 10000 znaków)"
+          );
+        }
+
         await auditAIRequest(
           this.config.name.toLowerCase(),
           selectedModel,
@@ -139,7 +156,8 @@ export abstract class BaseAIProvider {
         const content = await this.callAI(
           message,
           selectedModel,
-          TOKEN_LIMITS.GENERAL ?? this.config.defaultMaxTokens!
+          TOKEN_LIMITS.GENERAL ?? this.config.defaultMaxTokens!,
+          validatedHistory || undefined
         );
 
         return NextResponse.json({ response: content });
@@ -148,6 +166,7 @@ export abstract class BaseAIProvider {
       if (!action || !question) {
         throw new ValidationError("Action and question are required");
       }
+      validatePMPRequest(question, answers);
 
       await auditAIRequest(
         this.config.name.toLowerCase(),

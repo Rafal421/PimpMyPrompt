@@ -1,7 +1,7 @@
 "use server";
 
 import { loginUser, signupUser } from "@/app/auth/auth-actions/actions";
-import type { ActionResult } from "@/lib/validation";
+import type { ActionResult } from "@/lib/shared/validation";
 
 export async function login(formData: FormData): Promise<ActionResult | void> {
   const email = formData.get("email") as string;

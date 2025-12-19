@@ -183,6 +183,7 @@ Provide a concise comparison focusing on:
 2. **Strengths**: What does each model do best?
 3. **Accuracy**: Which responses seem most reliable/accurate?
 4. **Use Cases**: When would you choose each model's approach?
+ - IMPORTANT RESPOND IN THE SAME LANGUAGE AS THE USER'S ORIGINAL QUESTION
 
-Keep your analysis under 200 words and be specific about trade-offs between the responses.`;
+Keep your analysis under 500 words and be specific about trade-offs between the responses.`;
 }

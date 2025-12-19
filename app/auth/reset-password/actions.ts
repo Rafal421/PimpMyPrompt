@@ -1,9 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { type ActionResult } from "@/lib/validation";
-import { AuditLogger } from "@/lib/audit-logger";
-import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth-errors";
+import { type ActionResult } from "@/lib/shared/validation";
+import { AuditLogger } from "@/lib/logging/audit-logger";
+import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth/auth-errors";
 
 export async function resetPassword(email: string): Promise<ActionResult> {
   const supabase = await createClient();

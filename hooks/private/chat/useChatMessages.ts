@@ -1,5 +1,5 @@
 "use client";
-import type { Message } from "@/lib/types";
+import type { Message } from "@/lib/shared/types";
 
 /**
  * useChatMessages - Message manipulation utilities

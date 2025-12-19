@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
+import { GoogleGenAI } from "@google/genai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
 import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class GeminiProvider extends BaseAIProvider {
-  private apiKey: string;
+  private client: GoogleGenAI;
 
   constructor() {
     super({
@@ -14,42 +15,40 @@ class GeminiProvider extends BaseAIProvider {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not set");
     }
-    this.apiKey = process.env.GEMINI_API_KEY;
+    this.client = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
   }
 
   protected async callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": this.apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: maxTokens,
-          },
-        }),
-      }
-    );
+    const contents: any[] = [];
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(
-        `Gemini API error (${res.status}): ${
-          errorData.error?.message || "Unknown error"
-        }`
-      );
+    if (history && history.length > 0) {
+      history.forEach((msg) => {
+        contents.push({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content }],
+        });
+      });
     }
 
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // Add current prompt
+    contents.push({ role: "user", parts: [{ text: prompt }] });
+
+    const response = await this.client.models.generateContent({
+      model,
+      contents,
+      config: {
+        maxOutputTokens: maxTokens,
+      },
+    });
+
+    return response.text || "";
   }
 }
 

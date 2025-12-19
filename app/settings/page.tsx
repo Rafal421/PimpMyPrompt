@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User, ArrowLeft } from "lucide-react";
-import type { User as UserType } from "@/lib/types";
+import type { User as UserType } from "@/lib/shared/types";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { useProfile } from "@/hooks/private/settings/useProfile";

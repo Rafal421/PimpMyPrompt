@@ -1,7 +1,7 @@
 "use client";
 
 import { RESPONSE_PROVIDERS } from "@/lib/providers/ai-config";
-import type { Provider } from "@/lib/types";
+import type { Provider } from "@/lib/shared/types";
 import ProviderTile from "./ProviderTile";
 
 interface ModelSelectionProps {

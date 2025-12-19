@@ -8,9 +8,9 @@ import {
   signupSchema,
   type ValidationError,
   type ActionResult,
-} from "@/lib/validation";
-import { AuditLogger } from "@/lib/audit-logger";
-import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth-errors";
+} from "@/lib/shared/validation";
+import { AuditLogger } from "@/lib/logging/audit-logger";
+import { ERROR_MESSAGES, mapSupabaseError } from "@/lib/auth/auth-errors";
 
 export async function loginUser(
   email: string,

@@ -4,7 +4,7 @@ import {
   validateEmailReal,
   validatePassword,
   type ActionResult,
-} from "@/lib/validation";
+} from "@/lib/shared/validation";
 
 export function useAuthForm() {
   const [mode, setMode] = useState<"login" | "signup">("login");

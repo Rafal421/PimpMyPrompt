@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ChevronDown, Check, ArrowRight, Sparkles } from "lucide-react";
-import type { Provider, ProviderConfig } from "@/lib/types";
+import type { Provider, AIProvider } from "@/lib/shared/types";
 
 interface ProviderTileProps {
-  providerConfig: ProviderConfig;
+  providerConfig: AIProvider;
   onSelect: (provider: Provider, model: string) => void;
   disabled: boolean;
 }
@@ -34,23 +34,23 @@ export default function ProviderTile({
 
   return (
     <div
-      className={`group relative bg-black/40 backdrop-blur-sm border border-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-black/60 hover:border-gray-700/50 transition-all duration-300 ${
+      className={`group relative bg-black/40 backdrop-blur-sm border ${providerConfig.colors.border} rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-black/60 ${providerConfig.colors.hover} transition-all duration-300 ${
         isExpanded ? "z-[1000]" : "z-10"
       }`}
     >
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
       {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300" />
+      <div className={`absolute inset-0 bg-gradient-to-r ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300`} />
 
       <div className="relative z-10">
         <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
-            {providerConfig.icon}
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${providerConfig.colors.fadeBg} rounded-lg sm:rounded-xl flex items-center justify-center ${providerConfig.colors.text} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+            <providerConfig.icon className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h5 className="font-bold text-white text-base sm:text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300">
+            <h5 className={`font-bold text-white text-base sm:text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-white group-hover:to-gray-400 transition-all duration-300`}>
               {providerConfig.name}
             </h5>
             <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors">

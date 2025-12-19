@@ -6,7 +6,7 @@ import type {
   Phase,
   ChatsListResponse,
   ChatMessage,
-} from "@/lib/types";
+} from "@/lib/shared/types";
 
 interface UseChatSidePanelProps {
   user: User;

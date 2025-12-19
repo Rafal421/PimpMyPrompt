@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import type { User } from "@/lib/types";
+import type { User } from "@/lib/shared/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
@@ -75,6 +75,12 @@ export function useSimpleChat({
 
     state.setIsLoading(true);
     const userMessage = state.input;
+
+    const history = state.messages.slice(-4).map((msg) => ({
+      role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
+      content: msg.text,
+    }));
+
     messageHelpers.addUserMessage(state.setMessages, userMessage);
     state.setInput("");
 
@@ -94,6 +100,7 @@ export function useSimpleChat({
         body: JSON.stringify({
           message: userMessage,
           chat_id: currentChatId,
+          history,
         }),
       });
 

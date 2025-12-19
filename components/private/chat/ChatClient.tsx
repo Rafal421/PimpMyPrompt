@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { User } from "@/lib/types";
+import type { User } from "@/lib/shared/types";
 import { useSessionTimeout } from "@/hooks/auth/useSessionTimeout";
 import { useChatAdapter, type ChatMode } from "@/hooks/private/useChatAdapter";
 

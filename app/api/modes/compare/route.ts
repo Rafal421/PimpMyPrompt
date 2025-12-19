@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/compare-config";
+import { COMPARE_MODELS, PROVIDER_COLUMN } from "@/lib/chat/compare-config";
 import {
   createCompareAnalysisPrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
 import OpenAI from "openai";
-import { DatabaseResponseData, ProviderResponse } from "@/lib/types";
-import { AuditLogger } from "@/lib/audit-logger";
+import { DatabaseResponseData, ProviderResponse } from "@/lib/shared/types";
+import { AuditLogger } from "@/lib/logging/audit-logger";
 import { openAIProvider } from "@/app/api/providers/openai/route";
 import { anthropicProvider } from "@/app/api/providers/anthropic/route";
 import { geminiProvider } from "@/app/api/providers/gemini/route";

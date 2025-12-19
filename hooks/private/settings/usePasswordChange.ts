@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { AuditLogger } from "@/lib/audit-logger";
+import { AuditLogger } from "@/lib/logging/audit-logger";
 
 export function usePasswordChange() {
   const [currentPassword, setCurrentPassword] = useState("");

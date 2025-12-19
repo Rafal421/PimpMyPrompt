@@ -1,7 +1,7 @@
 "use client";
 
 import { User, Save } from "lucide-react";
-import type { User as UserType } from "@/lib/types";
+import type { User as UserType } from "@/lib/shared/types";
 
 interface ProfileSectionProps {
   user: UserType | null;
