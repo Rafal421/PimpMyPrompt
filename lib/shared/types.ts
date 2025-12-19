@@ -47,6 +47,7 @@ export interface Message {
   isTyping?: boolean;
   compareResponses?: CompareResponse[];
   summary?: string;
+  fullWidth?: boolean;
 }
 
 export interface ChatMessage {

@@ -161,7 +161,7 @@ export function useCompareChat({
         throw new Error("Invalid response from comparison service");
       }
     } catch (error) {
-      onError?.(error, "comparing models");
+      onError?.(error, "sending compare message");
       console.error("Compare error:", error);
 
       state.setMessages((prev) => {

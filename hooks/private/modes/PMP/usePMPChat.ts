@@ -229,12 +229,18 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
       setImprovedPrompt(prompt);
 
-      addTypingMessage(state.setMessages, prompt, () => {
-        setTimeout(
-          () => setPhase("model-selection"),
-          TYPING_DELAYS.IMPROVED_PROMPT
-        );
-      });
+      addTypingMessage(
+        state.setMessages,
+        prompt,
+        () => {
+          setTimeout(
+            () => setPhase("model-selection"),
+            TYPING_DELAYS.IMPROVED_PROMPT
+          );
+        },
+        undefined,
+        true
+      );
 
       await sendToSidePanel("bot", prompt);
       state.setIsLoading(false);
@@ -339,9 +345,15 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         throw new Error("Invalid response format from AI provider.");
       }
 
-      addTypingMessage(state.setMessages, finalResponse, () => {
-        setTimeout(() => setPhase("done"), TYPING_DELAYS.FINAL_RESPONSE);
-      });
+      addTypingMessage(
+        state.setMessages,
+        finalResponse,
+        () => {
+          setTimeout(() => setPhase("done"), TYPING_DELAYS.FINAL_RESPONSE);
+        },
+        undefined,
+        true
+      );
 
       await sendToSidePanel("bot", finalResponse);
       state.setIsLoading(false);

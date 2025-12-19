@@ -37,7 +37,7 @@ export default function ChatMessages({
           >
             <div
               className={`${
-                isCompare ? "w-full" : "max-w-[85%] sm:max-w-2xl"
+                isCompare || msg.fullWidth ? "w-full" : "max-w-[85%] sm:max-w-2xl"
               } ${msg.from === "user" ? "order-first" : ""}`}
             >
               <div
