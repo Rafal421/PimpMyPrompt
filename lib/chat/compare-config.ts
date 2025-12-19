@@ -14,7 +14,11 @@ export const COMPARE_MODELS: CompareModel[] = [
     name: "Claude Haiku 3",
     provider: "anthropic",
   },
-  { id: "gemini-3.0-flash", name: "Gemini 3.0 Flash", provider: "gemini" },
+  {
+    id: "gemini-3-flash-preview",
+    name: "Gemini 3.0 Flash",
+    provider: "gemini",
+  },
   {
     id: "grok-4-fast-reasoning",
     name: "Grok 4 fast reasoning",

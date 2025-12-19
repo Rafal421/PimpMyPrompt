@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
+import { GoogleGenAI } from "@google/genai";
 import { BaseAIProvider } from "@/lib/providers/BaseAIProvider";
 import { getAllowedModelsForProvider } from "@/lib/providers/ai-config";
 
 class GeminiProvider extends BaseAIProvider {
-  private apiKey: string;
+  private client: GoogleGenAI;
 
   constructor() {
     super({
@@ -14,7 +15,9 @@ class GeminiProvider extends BaseAIProvider {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not set");
     }
-    this.apiKey = process.env.GEMINI_API_KEY;
+    this.client = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
   }
 
   protected async callAI(
@@ -34,36 +37,18 @@ class GeminiProvider extends BaseAIProvider {
       });
     }
 
+    // Add current prompt
     contents.push({ role: "user", parts: [{ text: prompt }] });
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": this.apiKey,
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            maxOutputTokens: maxTokens,
-          },
-        }),
-      }
-    );
+    const response = await this.client.models.generateContent({
+      model,
+      contents,
+      config: {
+        maxOutputTokens: maxTokens,
+      },
+    });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(
-        `Gemini API error (${res.status}): ${
-          errorData.error?.message || "Unknown error"
-        }`
-      );
-    }
-
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return response.text || "";
   }
 }
 

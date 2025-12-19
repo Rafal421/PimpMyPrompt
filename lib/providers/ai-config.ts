@@ -19,9 +19,21 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "🧠",
     recommendedModel: "gpt-4o-mini",
     models: [
-      { id: "gpt-4o", name: "GPT-4o", description: "Best for writing and creativity" },
-      { id: "o3", name: "o3 (Reasoning)", description: "Ideal for complex problems" },
-      { id: "gpt-4o-mini", name: "GPT-4o Mini", description: "Fast and efficient" },
+      {
+        id: "gpt-4o",
+        name: "GPT-4o",
+        description: "Best for writing and creativity",
+      },
+      {
+        id: "o3",
+        name: "o3 (Reasoning)",
+        description: "Ideal for complex problems",
+      },
+      {
+        id: "gpt-4o-mini",
+        name: "GPT-4o Mini",
+        description: "Fast and efficient",
+      },
     ],
     colors: {
       icon: "text-green-400",
@@ -42,9 +54,21 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "☁️",
     recommendedModel: "claude-sonnet-4-5-20250929",
     models: [
-      { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5", description: "Smartest model" },
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", description: "Fastest model" },
-      { id: "claude-3-7-sonnet-20250219", name: "Sonnet 3.7", description: "Precise and balanced" },
+      {
+        id: "claude-sonnet-4-5-20250929",
+        name: "Claude Sonnet 4.5",
+        description: "Smartest model",
+      },
+      {
+        id: "claude-haiku-4-5-20251001",
+        name: "Claude Haiku 4.5",
+        description: "Fastest model",
+      },
+      {
+        id: "claude-3-7-sonnet-20250219",
+        name: "Sonnet 3.7",
+        description: "Precise and balanced",
+      },
     ],
     colors: {
       icon: "text-orange-400",
@@ -65,9 +89,21 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "✨",
     recommendedModel: "gemini-2.5-flash",
     models: [
-      { id: "gemini-3.0-flash", name: "Gemini 3.0 Flash", description: "High volume tasks" },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "Best for long texts" },
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Fast and cheap" },
+      {
+        id: "gemini-3-flash-preview",
+        name: "Gemini 3.0 Flash",
+        description: "High volume tasks",
+      },
+      {
+        id: "gemini-2.5-pro",
+        name: "Gemini 2.5 Pro",
+        description: "Best for long texts",
+      },
+      {
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash",
+        description: "Fast and cheap",
+      },
     ],
     colors: {
       icon: "text-blue-400",
@@ -88,9 +124,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "⚡",
     recommendedModel: "grok-3-mini",
     models: [
-      { id: "grok-4-fast-reasoning", name: "Grok 4 Fast", description: "Complex tasks" },
+      {
+        id: "grok-4-fast-reasoning",
+        name: "Grok 4 Fast",
+        description: "Complex tasks",
+      },
       { id: "grok-3", name: "Grok 3", description: "Intelligent choice" },
-      { id: "grok-3-mini", name: "Grok 3 Mini", description: "Logical and cheap" },
+      {
+        id: "grok-3-mini",
+        name: "Grok 3 Mini",
+        description: "Logical and cheap",
+      },
     ],
     colors: {
       icon: "text-purple-400",
@@ -111,7 +155,11 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "💻",
     recommendedModel: "deepseek-chat",
     models: [
-      { id: "deepseek-chat", name: "Chat", description: "General conversations" },
+      {
+        id: "deepseek-chat",
+        name: "Chat",
+        description: "General conversations",
+      },
       { id: "deepseek-coder", name: "Coder", description: "Coding tasks" },
     ],
     colors: {
@@ -133,7 +181,11 @@ export const PROVIDERS: Record<string, AIProvider> = {
     emoji: "🔍",
     recommendedModel: "llama-3.1-sonar-large-128k-online",
     models: [
-      { id: "llama-3.1-sonar-large-128k-online", name: "Sonar Large", description: "Fact-checked search" },
+      {
+        id: "llama-3.1-sonar-large-128k-online",
+        name: "Sonar Large",
+        description: "Fact-checked search",
+      },
     ],
     colors: {
       icon: "text-rose-400",

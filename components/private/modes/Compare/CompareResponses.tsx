@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import type { CompareResponse } from "@/lib/shared/types";
 import { getProvider } from "@/lib/providers/ai-config";
@@ -77,8 +78,11 @@ export function CompareResponses({
         const provider = getProvider(response.provider);
 
         return (
-          <div
+          <motion.div
             key={response.modelId}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
             className="w-full bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:border-gray-700/50 transition-all duration-300"
           >
             {/* Model Header - Clickable */}
@@ -126,34 +130,44 @@ export function CompareResponses({
             </button>
 
             {/* Response Content - Expandable */}
-            {isExpanded && (
-              <div className="px-4 pb-4 sm:px-6 sm:pb-6 pt-2 border-t border-gray-800/50">
-                <div className="prose prose-invert max-w-none">
-                  {showLoading ? (
-                    <div className="flex items-center gap-2 text-gray-400 py-4">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">Loading response...</span>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden border-t border-gray-800/50"
+                >
+                  <div className="px-4 pb-4 sm:px-6 sm:pb-6 pt-2">
+                    <div className="prose prose-invert max-w-none">
+                      {showLoading ? (
+                        <div className="flex items-center gap-2 text-gray-400 py-4">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                            <div
+                              className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.1s" }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.2s" }}
+                            ></div>
+                          </div>
+                          <span className="text-sm">Loading response...</span>
+                        </div>
+                      ) : response.response ? (
+                        <MarkdownRenderer content={response.response} />
+                      ) : (
+                        <div className="text-gray-400 text-sm py-2">
+                          No response available
+                        </div>
+                      )}
                     </div>
-                  ) : response.response ? (
-                    <MarkdownRenderer content={response.response} />
-                  ) : (
-                    <div className="text-gray-400 text-sm py-2">
-                      No response available
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Collapsed Preview */}
             {!isExpanded && response.response && !showLoading && (
@@ -162,13 +176,18 @@ export function CompareResponses({
                 {response.response.length > 150 && "..."}
               </div>
             )}
-          </div>
+          </motion.div>
         );
       })}
 
       {/* Summary at the bottom */}
       {summary && !isLoading && (
-        <div className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4">
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+          className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4 shadow-2xl shadow-blue-500/10"
+        >
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-blue-400" />
             <h3 className="font-semibold text-blue-200 text-lg">
@@ -178,7 +197,7 @@ export function CompareResponses({
           <div className="prose prose-invert max-w-none">
             <MarkdownRenderer content={summary} />
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
