@@ -140,3 +140,31 @@ export type ActionResult = {
   fieldErrors?: ValidationError[];
   message?: string;
 };
+
+// AI History validation
+const historySchema = z
+  .array(
+    z.object({
+      role: z.enum(["user", "assistant"]),
+      content: z.string().min(1).max(4000),
+    })
+  )
+  .max(10);
+
+export const validateHistory = (history: unknown) => {
+  if (!history) return null;
+  const result = historySchema.safeParse(history);
+  if (!result.success) throw new Error("Błąd historii");
+  return result.data;
+};
+
+const pmpRequestSchema = z.object({
+  question: z.string().min(1).max(5000),
+  answers: z.array(z.string().max(2000)).max(20).optional(),
+});
+
+export const validatePMPRequest = (question: string, answers?: string[]) => {
+  const result = pmpRequestSchema.safeParse({ question, answers });
+  if (!result.success) throw new Error("Błąd danych wejściowych");
+  return result.data;
+};
