@@ -18,10 +18,28 @@ class SimpleChatProvider extends BaseAIProvider {
     });
   }
 
-  protected async callAI(prompt: string, model: string): Promise<string> {
+  protected async callAI(
+    prompt: string,
+    model: string,
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
+  ): Promise<string> {
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+
+    if (history && history.length > 0) {
+      history.forEach((msg) => {
+        messages.push({
+          role: msg.role,
+          content: msg.content,
+        });
+      });
+    }
+
+    messages.push({ role: "user", content: prompt });
+
     const completion = await this.openai.chat.completions.create({
       model,
-      messages: [{ role: "user", content: prompt }],
+      messages,
     });
 
     return completion.choices[0]?.message?.content || "";
@@ -33,7 +51,7 @@ const simpleChatProvider = new SimpleChatProvider();
 export async function POST(request: NextRequest) {
   try {
     // Parse request to get the message and chat_id
-    const { message, chat_id } = await request.json();
+    const { message, chat_id, history } = await request.json();
 
     if (!message?.trim()) {
       return NextResponse.json(
@@ -46,7 +64,7 @@ export async function POST(request: NextRequest) {
     const providerRequest = new Request(request.url, {
       method: "POST",
       headers: request.headers,
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history }),
     });
 
     const response = await simpleChatProvider.handleRequest(

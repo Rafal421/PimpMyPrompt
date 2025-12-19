@@ -75,6 +75,12 @@ export function useSimpleChat({
 
     state.setIsLoading(true);
     const userMessage = state.input;
+
+    const history = state.messages.slice(-4).map((msg) => ({
+      role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
+      content: msg.text,
+    }));
+
     messageHelpers.addUserMessage(state.setMessages, userMessage);
     state.setInput("");
 
@@ -94,6 +100,7 @@ export function useSimpleChat({
         body: JSON.stringify({
           message: userMessage,
           chat_id: currentChatId,
+          history,
         }),
       });
 

@@ -22,11 +22,25 @@ class GrokProvider extends BaseAIProvider {
   protected async callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+
+    if (history && history.length > 0) {
+      history.forEach((msg) => {
+        messages.push({
+          role: msg.role,
+          content: msg.content,
+        });
+      });
+    }
+
+    messages.push({ role: "user", content: prompt });
+
     const completion = await this.grok.chat.completions.create({
       model,
-      messages: [{ role: "user", content: prompt }],
+      messages,
       max_tokens: maxTokens,
     });
 

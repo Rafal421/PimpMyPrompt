@@ -21,12 +21,26 @@ class AnthropicProvider extends BaseAIProvider {
   protected async callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
+    const messages: Anthropic.MessageParam[] = [];
+
+    if (history && history.length > 0) {
+      history.forEach((msg) => {
+        messages.push({
+          role: msg.role,
+          content: msg.content,
+        });
+      });
+    }
+
+    messages.push({ role: "user", content: prompt });
+
     const msg = await this.anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }],
+      messages,
     });
 
     const textBlock = msg.content.find((block) => block.type === "text");

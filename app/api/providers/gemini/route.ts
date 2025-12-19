@@ -20,8 +20,22 @@ class GeminiProvider extends BaseAIProvider {
   protected async callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
+    const contents: any[] = [];
+
+    if (history && history.length > 0) {
+      history.forEach((msg) => {
+        contents.push({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content }],
+        });
+      });
+    }
+
+    contents.push({ role: "user", parts: [{ text: prompt }] });
+
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`,
       {
@@ -31,7 +45,7 @@ class GeminiProvider extends BaseAIProvider {
           "x-goog-api-key": this.apiKey,
         },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents,
           generationConfig: {
             maxOutputTokens: maxTokens,
           },

@@ -22,6 +22,7 @@ export interface AIRequestBody {
   answers?: string[];
   model?: string;
   message?: string;
+  history?: { role: "user" | "assistant"; content: string }[];
 }
 
 export abstract class BaseAIProvider {
@@ -37,7 +38,8 @@ export abstract class BaseAIProvider {
   protected abstract callAI(
     prompt: string,
     model: string,
-    maxTokens: number
+    maxTokens: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string>;
 
   private async verifyUserAuth(): Promise<string | null> {
@@ -87,13 +89,14 @@ export abstract class BaseAIProvider {
   public async generateResponse(
     message: string,
     model?: string,
-    maxTokens?: number
+    maxTokens?: number,
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
     const selectedModel = model || this.config.defaultModel;
     const tokens =
       maxTokens || TOKEN_LIMITS.GENERAL || this.config.defaultMaxTokens!;
 
-    return this.callAI(message, selectedModel, tokens);
+    return this.callAI(message, selectedModel, tokens, history);
   }
 
   public async handleRequest(req: NextRequest): Promise<NextResponse> {
@@ -117,8 +120,14 @@ export abstract class BaseAIProvider {
         );
       }
 
-      const { action, question, answers, model, message }: AIRequestBody =
-        await req.json();
+      const {
+        action,
+        question,
+        answers,
+        model,
+        message,
+        history,
+      }: AIRequestBody = await req.json();
       const selectedModel = model || this.config.defaultModel;
 
       if (!this.validateModel(selectedModel)) {
@@ -139,7 +148,8 @@ export abstract class BaseAIProvider {
         const content = await this.callAI(
           message,
           selectedModel,
-          TOKEN_LIMITS.GENERAL ?? this.config.defaultMaxTokens!
+          TOKEN_LIMITS.GENERAL ?? this.config.defaultMaxTokens!,
+          history
         );
 
         return NextResponse.json({ response: content });
