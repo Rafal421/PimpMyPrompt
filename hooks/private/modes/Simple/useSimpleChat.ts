@@ -51,6 +51,8 @@ export function useSimpleChat({
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    state.setIsLoading(true);
+
     // Check usage limit
     await checkUsage();
     if (!canMakeRequest) {
@@ -58,41 +60,41 @@ export function useSimpleChat({
         state.setMessages,
         "You've reached your daily limit. Please wait for the reset or upgrade your plan."
       );
+      state.setIsLoading(false);
       return;
     }
 
     // Create or get chat ID
     let currentChatId = state.chatId;
-    if (!currentChatId) {
-      currentChatId =
-        (await chatSidePanelRef.current?.createChat(
-          state.input,
-          DEFAULT_MODEL,
-          "CHAT"
-        )) || null;
-      state.setChatId(currentChatId);
-    }
-
-    state.setIsLoading(true);
-    const userMessage = state.input;
-
-    const history = state.messages.slice(-4).map((msg) => ({
-      role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
-      content: msg.text,
-    }));
-
-    messageHelpers.addUserMessage(state.setMessages, userMessage);
-    state.setInput("");
-
-    if (currentChatId) {
-      await chatSidePanelRef.current?.sendMessage(
-        currentChatId,
-        "user",
-        userMessage
-      );
-    }
-
     try {
+      if (!currentChatId) {
+        currentChatId =
+          (await chatSidePanelRef.current?.createChat(
+            state.input,
+            DEFAULT_MODEL,
+            "CHAT"
+          )) || null;
+        state.setChatId(currentChatId);
+      }
+
+      const userMessage = state.input;
+
+      const history = state.messages.slice(-4).map((msg) => ({
+        role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
+        content: msg.text,
+      }));
+
+      messageHelpers.addUserMessage(state.setMessages, userMessage);
+      state.setInput("");
+
+      if (currentChatId) {
+        await chatSidePanelRef.current?.sendMessage(
+          currentChatId,
+          "user",
+          userMessage
+        );
+      }
+
       // Send to simple chat endpoint
       const response = await fetch(`/api/modes/simple`, {
         method: "POST",

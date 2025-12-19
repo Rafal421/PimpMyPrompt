@@ -77,7 +77,7 @@ export default function ChatLayout({
   };
 
   return (
-    <div className="flex h-[100svh] bg-black overflow-hidden">
+    <div className="fixed inset-0 flex h-[100svh] bg-black overflow-hidden overscroll-none">
       <Background />
 
       {/* Mobile Sidebar Overlay */}
@@ -113,14 +113,14 @@ export default function ChatLayout({
       </motion.div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm max-h-[100svh]">
+      <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-black/40 backdrop-blur-md border-b border-gray-800/50 p-2 sm:p-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-black/40 backdrop-blur-md border-b border-gray-800/50 p-2 sm:p-4 flex-shrink-0 relative z-50">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg"
+              className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg flex-shrink-0"
             >
               <div className="relative w-5 h-5">
                 <Menu
@@ -137,9 +137,9 @@ export default function ChatLayout({
             </button>
 
             {/* Title */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+            <div className="flex-1 min-w-0 flex items-center justify-start lg:justify-center">
               {header ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   {isEditingTitle ? (
                     <input
                       type="text"
@@ -147,7 +147,7 @@ export default function ChatLayout({
                       onChange={(e) => setEditTitle(e.target.value)}
                       onKeyDown={handleTitleKeyDown}
                       onBlur={handleTitleSave}
-                      className="bg-gray-800/50 text-white text-base font-semibold px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none max-w-48"
+                      className="bg-gray-800/50 text-white text-base font-semibold px-3 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none w-full max-w-48"
                       autoFocus
                     />
                   ) : (
@@ -155,14 +155,14 @@ export default function ChatLayout({
                       <button
                         onClick={handleTitleClick}
                         disabled={!header.canEditTitle}
-                        className="text-base font-semibold text-white hover:text-blue-300 transition-colors truncate max-w-48 text-center disabled:cursor-not-allowed disabled:hover:text-white"
+                        className="text-base font-semibold text-white hover:text-blue-300 transition-colors truncate max-w-[150px] sm:max-w-48 text-left lg:text-center disabled:cursor-not-allowed disabled:hover:text-white"
                         title={header.canEditTitle ? "Click to edit" : ""}
                       >
                         {header.title}
                       </button>
                       {header.canEditTitle && (
                         <div
-                          className="cursor-pointer"
+                          className="cursor-pointer flex-shrink-0"
                           onClick={handleTitleClick}
                           title="Edit chat name"
                         >
@@ -180,7 +180,7 @@ export default function ChatLayout({
             </div>
 
             {/* Mode Selector & Provider Info */}
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {header?.mode && (
                 <ModeToggle
                   currentMode={header.mode as ChatMode}

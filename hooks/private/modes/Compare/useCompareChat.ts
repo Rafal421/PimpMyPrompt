@@ -54,6 +54,8 @@ export function useCompareChat({
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    state.setIsLoading(true);
+
     // Check usage limit
     await checkUsage();
     if (!canMakeRequest) {
@@ -61,35 +63,35 @@ export function useCompareChat({
         state.setMessages,
         "You've reached your daily limit. Please wait for the reset or upgrade your plan."
       );
+      state.setIsLoading(false);
       return;
     }
 
     // Create or get chat ID
     let currentChatId = state.chatId;
-    if (!currentChatId) {
-      currentChatId =
-        (await chatSidePanelRef.current?.createChat(
-          state.input,
-          "compare",
-          "COMPARE"
-        )) || null;
-      state.setChatId(currentChatId);
-    }
-
-    state.setIsLoading(true);
-    const userMessage = state.input;
-    messageHelpers.addUserMessage(state.setMessages, userMessage);
-    state.setInput("");
-
-    if (currentChatId) {
-      await chatSidePanelRef.current?.sendMessage(
-        currentChatId,
-        "user",
-        userMessage
-      );
-    }
-
     try {
+      if (!currentChatId) {
+        currentChatId =
+          (await chatSidePanelRef.current?.createChat(
+            state.input,
+            "compare",
+            "COMPARE"
+          )) || null;
+        state.setChatId(currentChatId);
+      }
+
+      const userMessage = state.input;
+      messageHelpers.addUserMessage(state.setMessages, userMessage);
+      state.setInput("");
+
+      if (currentChatId) {
+        await chatSidePanelRef.current?.sendMessage(
+          currentChatId,
+          "user",
+          userMessage
+        );
+      }
+
       // Show loading placeholders for all models
       const loadingResponses = COMPARE_MODELS.map((model) => ({
         modelId: model.id,

@@ -119,21 +119,22 @@
   html {
     background: #000000 !important;
     color-scheme: dark;
+    overflow: hidden;
+    height: 100%;
   }
   body {
-    @apply bg-background text-foreground min-h-screen;
+    @apply bg-background text-foreground;
     background: #000000 !important;
+    overflow: hidden;
+    height: 100%;
+    overscroll-behavior: none;
+    position: fixed;
+    width: 100%;
+    left: 0;
+    top: 0;
   }
 
-  /* Fix for Dynamic Island */
-  @supports (padding-top: env(safe-area-inset-top)) {
-    body {
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-  }
+  /* Safe area handling moved to components */
 }
 
 /* Mobile optimizations */
