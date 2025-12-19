@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import type { CompareResponse } from "@/lib/shared/types";
+import { getProvider } from "@/lib/providers/ai-config";
 
 interface CompareResponsesProps {
   responses: CompareResponse[];
@@ -73,6 +74,7 @@ export function CompareResponses({
       {responses.map((response, index) => {
         const isExpanded = expandedResponses.has(response.modelId);
         const showLoading = isLoading && !response.response;
+        const provider = getProvider(response.provider);
 
         return (
           <div
@@ -85,9 +87,13 @@ export function CompareResponses({
               className="w-full px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between hover:bg-gray-900/30 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                  {index + 1}
-                </span>
+                <div
+                  className={`w-9 h-9 bg-gradient-to-br ${provider.colors.fadeBg} ${provider.colors.text} ${provider.colors.fadeBorder} rounded-xl flex items-center justify-center flex-shrink-0 border shadow-inner backdrop-blur-sm`}
+                >
+                  {React.createElement(provider.icon, {
+                    className: "w-5 h-5",
+                  })}
+                </div>
                 <h4 className="font-semibold text-white text-base sm:text-lg">
                   {response.model}
                 </h4>

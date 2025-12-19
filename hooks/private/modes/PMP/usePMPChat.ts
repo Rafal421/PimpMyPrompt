@@ -115,7 +115,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         body: JSON.stringify({
           provider,
           question,
-          model: questionProvider.model,
+          model: questionProvider.recommendedModel,
         }),
       });
 
@@ -199,7 +199,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     state.setIsLoading(true);
 
     const questionProvider = getQuestionProviderById(provider);
-    const currentModel = questionProvider?.model || DEFAULT_MODEL;
+    const currentModel = questionProvider?.recommendedModel || DEFAULT_MODEL;
 
     try {
       const response = await fetch(`/api/providers/${provider}`, {

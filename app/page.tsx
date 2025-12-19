@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bot } from "lucide-react";
 import { steps } from "@/components/main/steps";
-import { aiProviders } from "@/components/main/aiProviders";
+import { getAllProviders } from "@/lib/providers/ai-config";
 import { Background } from "@/components/ui/background";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
@@ -167,7 +167,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-            {aiProviders.map((provider, index) => {
+            {getAllProviders().map((provider, index) => {
               const IconComponent = provider.icon;
               return (
                 <motion.div
@@ -179,11 +179,11 @@ export default function HomePage() {
                   whileHover={{ y: -3, scale: 1.02 }}
                 >
                   <Card
-                    className={`bg-black/40 backdrop-blur-md border border-gray-800/50 transition-all duration-300 ${provider.hoverColor} h-full`}
+                    className={`bg-black/40 backdrop-blur-md border border-gray-800/50 transition-all duration-300 ${provider.colors.hover} h-full`}
                   >
                     <CardContent className="p-4 sm:p-6 text-center">
                       <motion.div
-                        className={`w-10 h-10 sm:w-12 sm:h-12 ${provider.bgColor} rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 border ${provider.borderColor}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 ${provider.colors.bg} rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 border ${provider.colors.border}`}
                         initial={{ scale: 0, rotate: -45 }}
                         whileInView={{ scale: 1, rotate: 0 }}
                         viewport={{ once: true }}
@@ -191,7 +191,7 @@ export default function HomePage() {
                         whileHover={{ scale: 1.1, rotate: 5 }}
                       >
                         <IconComponent
-                          className={`w-5 h-5 sm:w-6 sm:h-6 ${provider.textColor}`}
+                          className={`w-5 h-5 sm:w-6 sm:h-6 ${provider.colors.text}`}
                         />
                       </motion.div>
                       <h3 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">
