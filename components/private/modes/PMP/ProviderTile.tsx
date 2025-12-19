@@ -34,36 +34,46 @@ export default function ProviderTile({
 
   return (
     <div
-      className={`group relative bg-black/40 backdrop-blur-sm border ${providerConfig.colors.border} rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-black/60 ${providerConfig.colors.hover} transition-all duration-300 ${
-        isExpanded ? "z-[1000]" : "z-10"
-      }`}
+      className={`group relative bg-black/40 backdrop-blur-sm border ${
+        providerConfig.colors.border
+      } rounded-xl sm:rounded-2xl p-3 sm:p-6 hover:bg-black/60 ${
+        providerConfig.colors.hover
+      } transition-all duration-300 ${isExpanded ? "z-[1000]" : "z-10"}`}
     >
       {/* Animated gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+      />
 
       {/* Glow effect */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-r ${providerConfig.colors.fadeBg} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300`}
+      />
 
       <div className="relative z-10">
-        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${providerConfig.colors.fadeBg} rounded-lg sm:rounded-xl flex items-center justify-center ${providerConfig.colors.text} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-            <providerConfig.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-6">
+          <div
+            className={`w-9 h-9 sm:w-12 sm:h-12 bg-gradient-to-br ${providerConfig.colors.fadeBg} rounded-lg sm:rounded-xl flex items-center justify-center ${providerConfig.colors.text} shadow-lg group-hover:scale-110 transition-transform duration-300`}
+          >
+            <providerConfig.icon className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h5 className={`font-bold text-white text-base sm:text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-white group-hover:to-gray-400 transition-all duration-300`}>
+            <h5
+              className={`font-bold text-white text-sm sm:text-lg group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-white group-hover:to-gray-400 transition-all duration-300`}
+            >
               {providerConfig.name}
             </h5>
-            <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+            <p className="text-[10px] sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
               AI Provider
             </p>
           </div>
         </div>
 
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           <div className="relative">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="w-full flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium text-gray-200 hover:bg-gray-800/50 hover:border-gray-600/50 transition-all duration-200"
+              className="w-full flex items-center justify-between px-2.5 py-2 sm:px-4 sm:py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-medium text-gray-200 hover:bg-gray-800/50 hover:border-gray-600/50 transition-all duration-200"
               disabled={disabled}
             >
               <span className="flex items-center gap-2">

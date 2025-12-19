@@ -370,30 +370,32 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    state.setIsLoading(true);
+
     await checkUsage();
     if (!canMakeRequest) {
       addBotMessage(
         "You've reached your daily limit. Please wait for the reset or upgrade your plan."
       );
+      state.setIsLoading(false);
       return;
     }
 
     let currentChatId = state.chatId;
-    if (!currentChatId) {
-      currentChatId =
-        (await chatSidePanelRef.current?.createChat(
-          state.input,
-          DEFAULT_MODEL,
-          "PMP"
-        )) || null;
-      state.setChatId(currentChatId);
-    }
-
-    state.setIsLoading(true);
-    addUserMessage(state.input);
-    await sendToSidePanel("user", state.input);
-
     try {
+      if (!currentChatId) {
+        currentChatId =
+          (await chatSidePanelRef.current?.createChat(
+            state.input,
+            DEFAULT_MODEL,
+            "PMP"
+          )) || null;
+        state.setChatId(currentChatId);
+      }
+
+      addUserMessage(state.input);
+      await sendToSidePanel("user", state.input);
+
       if (phase === "init") {
         await startQuestionFlow(state.input, currentChatId);
       }

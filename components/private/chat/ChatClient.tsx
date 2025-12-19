@@ -228,7 +228,11 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     >
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
-        <div className="w-full max-w-4xl mx-auto px-2 sm:px-1 py-2 sm:py-2">
+        <div
+          className={`w-full ${
+            mode === "compare" ? "max-w-5xl" : "max-w-4xl"
+          } mx-auto px-2 sm:px-1 py-2 sm:py-2`}
+        >
           <ChatMessages
             messages={chat.messages}
             isLoading={chat.isLoading}
@@ -236,7 +240,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
             chatId={chat.chatId}
           />
           {/* Scroll target */}
-          <div ref={chat.messagesEndRef} className="h-4" />
+          <div ref={chat.messagesEndRef} className="h-12 sm:h-20" />
         </div>
       </div>
 

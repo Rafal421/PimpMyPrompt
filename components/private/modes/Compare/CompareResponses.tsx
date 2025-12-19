@@ -171,7 +171,7 @@ export function CompareResponses({
 
             {/* Collapsed Preview */}
             {!isExpanded && response.response && !showLoading && (
-              <div className="px-4 pb-3 sm:px-6 sm:pb-4 text-sm text-gray-400 line-clamp-2">
+              <div className="px-4 pb-7 sm:px-6 sm:pb-4 text-sm text-gray-400 line-clamp-2">
                 {response.response.slice(0, 150)}
                 {response.response.length > 150 && "..."}
               </div>

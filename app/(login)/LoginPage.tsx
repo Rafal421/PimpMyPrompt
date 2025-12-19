@@ -157,7 +157,7 @@ export default function OptimizedAuthPage({
               animate={{ y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              <CardTitle className="text-3xl font-bold text-white mb-2">
+              <CardTitle className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
                 {mode === "login" ? (
                   <>
                     Sign in to{" "}
@@ -174,14 +174,14 @@ export default function OptimizedAuthPage({
                   </>
                 )}
               </CardTitle>
-              <CardDescription className="text-gray-400 text-lg">
+              <CardDescription className="text-gray-400 text-base sm:text-lg">
                 {mode === "login"
                   ? "Sign in to your account"
                   : "Create an account and start using AI"}
               </CardDescription>
             </motion.div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
             <AnimatePresence mode="wait">
               {/* Success message display */}
               {successMessage && (
@@ -221,7 +221,7 @@ export default function OptimizedAuthPage({
                     const formData = new FormData(e.currentTarget);
                     await handleLogin(formData);
                   }}
-                  className="space-y-6"
+                  className="space-y-4 sm:space-y-6"
                   initial={{ opacity: 0, y: 40, scale: 0.95 }}
                   animate={{
                     opacity: 1,
@@ -289,7 +289,7 @@ export default function OptimizedAuthPage({
                     <Button
                       type="submit"
                       disabled={isLoading || !isFormValid}
-                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center gap-2">
@@ -310,7 +310,7 @@ export default function OptimizedAuthPage({
                     const formData = new FormData(e.currentTarget);
                     await handleSignup(formData);
                   }}
-                  className="space-y-6"
+                  className="space-y-4 sm:space-y-6"
                   initial={{ opacity: 0, y: 40, scale: 0.95 }}
                   animate={{
                     opacity: 1,
@@ -372,7 +372,7 @@ export default function OptimizedAuthPage({
                     <Button
                       type="submit"
                       disabled={isLoading || !isFormValid}
-                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center gap-2">
