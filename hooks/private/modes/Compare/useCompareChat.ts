@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import type { User, CompareResponse } from "@/lib/shared/types";
 import { useChatState } from "@/hooks/private/chat/useChatState";
 import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
@@ -28,6 +28,18 @@ export function useCompareChat({
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
   const [compareSessionId, setCompareSessionId] = useState<string | null>(null);
 
+  const [selectedProviders, setSelectedProviders] = useState<string[]>(() =>
+    COMPARE_MODELS.map((m) => m.provider)
+  );
+  const toggleProvider = useCallback((providerId: string) => {
+    setSelectedProviders((prev) => {
+      if (prev.includes(providerId)) {
+        return prev.filter((p) => p !== providerId);
+      }
+      return [...prev, providerId];
+    });
+  }, []);
+
   // Core state
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
@@ -44,19 +56,24 @@ export function useCompareChat({
     checkUsage,
   } = useUsageLimit();
 
-  // Reset session
   const resetSession = () => {
     state.reset(welcomeMessage);
     setCompareSessionId(null);
   };
 
-  // Compare handler
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    if (selectedProviders.length === 0) {
+      messageHelpers.addBotMessage(
+        state.setMessages,
+        "Please select at least one AI model to compare."
+      );
+      return;
+    }
+
     state.setIsLoading(true);
 
-    // Check usage limit
     await checkUsage();
     if (!canMakeRequest) {
       messageHelpers.addBotMessage(
@@ -67,7 +84,10 @@ export function useCompareChat({
       return;
     }
 
-    // Create or get chat ID
+    const selectedModels = COMPARE_MODELS.filter((m) =>
+      selectedProviders.includes(m.provider)
+    );
+
     let currentChatId = state.chatId;
     try {
       if (!currentChatId) {
@@ -92,12 +112,11 @@ export function useCompareChat({
         );
       }
 
-      // Show loading placeholders for all models
-      const loadingResponses = COMPARE_MODELS.map((model) => ({
+      const loadingResponses = selectedModels.map((model) => ({
         modelId: model.id,
         model: model.name,
         provider: model.provider,
-        response: "Loading...",
+        response: "",
         success: true,
         isLoading: true,
       }));
@@ -117,6 +136,7 @@ export function useCompareChat({
         body: JSON.stringify({
           message: userMessage,
           chat_id: currentChatId,
+          selectedProviders: selectedProviders,
         }),
       });
 
@@ -125,41 +145,92 @@ export function useCompareChat({
         throw new Error(errorData.error || "Failed to get response");
       }
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.success && data.responses) {
-        if (data.session_id && !compareSessionId) {
-          setCompareSessionId(data.session_id);
-        }
-
-        state.setMessages((prev) => {
-          const newMessages = [...prev];
-          const lastMessage = newMessages[newMessages.length - 1];
-          if (lastMessage && lastMessage.from === "bot") {
-            lastMessage.compareResponses = data.responses;
-            lastMessage.summary = data.summary;
-          }
-          return newMessages;
-        });
-
-        if (currentChatId) {
-          await chatSidePanelRef.current?.sendMessage(
-            currentChatId,
-            "bot",
-            `Compared ${data.responses.length} AI models: ${data.responses
-              .map((r: CompareResponse) => r.model)
-              .join(", ")}${
-              data.summary
-                ? `\n\nSummary: ${data.summary.slice(0, 100)}...`
-                : ""
-            }`
-          );
-        }
-
-        await incrementUsage();
-      } else {
-        throw new Error("Invalid response from comparison service");
+      if (!reader) {
+        throw new Error("No response body");
       }
+
+      let finalSummary = "";
+      let sessionId: string | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === "response") {
+                state.setMessages((prev) => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (
+                    lastMessage &&
+                    lastMessage.from === "bot" &&
+                    lastMessage.compareResponses
+                  ) {
+                    const updatedResponses = lastMessage.compareResponses.map(
+                      (r) =>
+                        r.modelId === data.response.modelId
+                          ? { ...data.response, isLoading: false }
+                          : r
+                    );
+                    lastMessage.compareResponses = updatedResponses;
+                  }
+                  return newMessages;
+                });
+              } else if (data.type === "generating_summary") {
+                state.setMessages((prev) => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage && lastMessage.from === "bot") {
+                    lastMessage.summaryLoading = true;
+                  }
+                  return newMessages;
+                });
+              } else if (data.type === "complete") {
+                finalSummary = data.summary || "";
+                sessionId = data.session_id;
+
+                state.setMessages((prev) => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage && lastMessage.from === "bot") {
+                    lastMessage.summary = finalSummary;
+                    lastMessage.summaryLoading = false;
+                  }
+                  return newMessages;
+                });
+
+                if (sessionId && !compareSessionId) {
+                  setCompareSessionId(sessionId);
+                }
+              }
+            } catch (e) {
+              console.error("Error parsing SSE data:", e);
+            }
+          }
+        }
+      }
+
+      if (currentChatId) {
+        await chatSidePanelRef.current?.sendMessage(
+          currentChatId,
+          "bot",
+          `Compared ${selectedModels.length} AI models${
+            finalSummary ? `\n\nSummary: ${finalSummary.slice(0, 100)}...` : ""
+          }`
+        );
+      }
+
+      await incrementUsage();
     } catch (error) {
       onError?.(error, "sending compare message");
       console.error("Compare error:", error);
@@ -188,30 +259,20 @@ export function useCompareChat({
 
   const stopGeneration = () => {
     state.setIsLoading(false);
-    // Note: We could add AbortController here for API requests if needed
   };
 
   return {
-    // Mode identifier
     mode: "compare" as const,
-
-    // Core state
     ...state,
-
-    // Compare-specific state
     compareSessionId,
     setCompareSessionId,
-
-    // Refs
+    selectedProviders,
+    toggleProvider,
     chatSidePanelRef,
     messagesEndRef,
-
-    // Actions
     handleSend,
     stopGeneration,
     resetSession,
-
-    // Usage limits
     canMakeRequest,
     requestsRemaining,
     getTimeUntilReset,

@@ -37,7 +37,9 @@ export default function ChatMessages({
           >
             <div
               className={`${
-                isCompare || msg.fullWidth ? "w-full" : "max-w-[85%] sm:max-w-2xl"
+                isCompare || msg.fullWidth
+                  ? "w-full"
+                  : "max-w-[85%] sm:max-w-2xl"
               } ${msg.from === "user" ? "order-first" : ""}`}
             >
               <div
@@ -61,6 +63,7 @@ export default function ChatMessages({
                       messageIndex={idx}
                       chatId={chatId}
                       summary={msg.summary}
+                      summaryLoading={msg.summaryLoading}
                     />
                   ) : msg.from === "bot" && msg.isTyping ? (
                     <MarkdownTypewriter

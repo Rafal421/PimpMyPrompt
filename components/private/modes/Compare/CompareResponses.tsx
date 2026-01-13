@@ -12,6 +12,7 @@ interface CompareResponsesProps {
   messageIndex?: number;
   chatId?: string | null;
   summary?: string;
+  summaryLoading?: boolean;
 }
 
 export function CompareResponses({
@@ -20,6 +21,7 @@ export function CompareResponses({
   messageIndex = 0,
   chatId,
   summary,
+  summaryLoading,
 }: CompareResponsesProps) {
   const storageKey = `compare-expanded-${chatId || "temp"}-${messageIndex}`;
   const [expandedResponses, setExpandedResponses] = useState<Set<string>>(
@@ -74,7 +76,8 @@ export function CompareResponses({
 
       {responses.map((response, index) => {
         const isExpanded = expandedResponses.has(response.modelId);
-        const showLoading = isLoading && !response.response;
+        const showLoading =
+          response.isLoading || (!response.response && isLoading);
         const provider = getProvider(response.provider);
 
         return (
@@ -85,7 +88,6 @@ export function CompareResponses({
             transition={{ duration: 0.4, delay: index * 0.1 }}
             className="w-full bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:border-gray-700/50 transition-all duration-300"
           >
-            {/* Model Header - Clickable */}
             <button
               onClick={() => toggleExpanded(response.modelId)}
               className="w-full px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between hover:bg-gray-900/30 transition-colors"
@@ -129,7 +131,6 @@ export function CompareResponses({
               </div>
             </button>
 
-            {/* Response Content - Expandable */}
             <AnimatePresence>
               {isExpanded && (
                 <motion.div
@@ -169,7 +170,6 @@ export function CompareResponses({
               )}
             </AnimatePresence>
 
-            {/* Collapsed Preview */}
             {!isExpanded && response.response && !showLoading && (
               <div className="px-4 pb-7 sm:px-6 sm:pb-4 text-sm text-gray-400 line-clamp-2">
                 {response.response.slice(0, 150)}
@@ -180,8 +180,37 @@ export function CompareResponses({
         );
       })}
 
-      {/* Summary at the bottom */}
-      {summary && !isLoading && (
+      {summaryLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4 shadow-2xl shadow-blue-500/10"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-blue-400" />
+            <h3 className="font-semibold text-blue-200 text-lg">
+              AI Analysis Summary
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 text-gray-400 py-4">
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+              <div
+                className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+            </div>
+            <span className="text-sm">Generating analysis summary...</span>
+          </div>
+        </motion.div>
+      )}
+
+      {summary && !isLoading && !summaryLoading && (
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

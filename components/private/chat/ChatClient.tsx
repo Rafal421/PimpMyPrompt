@@ -4,26 +4,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@/lib/shared/types";
 import { useSessionTimeout } from "@/hooks/auth/useSessionTimeout";
 import { useChatAdapter, type ChatMode } from "@/hooks/private/useChatAdapter";
-
-// Layout & Core Components
 import ChatLayout from "./ChatLayout";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ChatSidePanel from "@/components/private/chat/ChatSidePanel";
-
-// PMP-specific components
 import QuestionBlock from "@/components/private/modes/PMP/QuestionBlock";
 import ModelSelection from "@/components/private/modes/PMP/ModelSelection";
+import CompareModelSelection from "@/components/private/modes/Compare/CompareModelSelection";
 
 interface ChatClientProps {
   user: User;
   mode?: ChatMode;
 }
-
-/**
- * ChatClient - Main chat container component
- * Connects layout, components, and logic from the appropriate mode hook
- */
 export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
   useSessionTimeout();
 
@@ -63,8 +55,19 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     }
   };
 
-  /** renderExtras - Renders mode-specific UI elements (QuestionBlock, ModelSelection) */
   const renderExtras = () => {
+    if (chat.mode === "compare") {
+      return (
+        <div className="w-full px-2 py-4">
+          <CompareModelSelection
+            selectedProviders={chat.selectedProviders || []}
+            onToggleProvider={chat.toggleProvider || (() => {})}
+            disabled={chat.isLoading}
+          />
+        </div>
+      );
+    }
+
     if (chat.mode !== "pmp") return null;
 
     return (
