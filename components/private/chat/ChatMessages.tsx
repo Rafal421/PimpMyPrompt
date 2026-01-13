@@ -23,7 +23,7 @@ export default function ChatMessages({
   chatId,
 }: ChatMessagesProps) {
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4 sm:space-y-6">
       {/* Messages */}
       {messages.map((msg, idx) => {
         const isCompare = msg.from === "bot" && msg.compareResponses;

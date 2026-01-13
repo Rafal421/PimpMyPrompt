@@ -54,7 +54,7 @@ export default function ChatInput({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-2 sm:px-6 py-2 sm:py-6 pt-0 sm:pt-0">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pt-0 sm:pt-0">
       <div className="flex gap-2 sm:gap-4 items-end">
         <div className="flex-1 relative">
           {/* Status Bar Indicators */}
@@ -99,7 +99,7 @@ export default function ChatInput({
             onKeyDown={handleKeyDown}
             onFocus={onFocus}
             rows={1}
-            className="w-full px-4 py-3 pr-24 sm:px-8 sm:py-6 sm:pr-40 bg-transparent border border-gray-700/30 rounded-xl sm:rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 text-white placeholder-gray-400 hover:border-gray-600/40 transition-all duration-200 text-sm sm:text-base font-medium resize-none overflow-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 pr-20 sm:px-8 sm:py-6 sm:pr-32 bg-transparent border border-gray-700/30 rounded-xl sm:rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 text-white placeholder-gray-400 hover:border-gray-600/40 transition-all duration-200 text-sm sm:text-base font-medium resize-none overflow-auto disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder={placeholder}
             disabled={disabled}
           />

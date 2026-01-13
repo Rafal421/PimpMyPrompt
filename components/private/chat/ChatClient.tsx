@@ -8,6 +8,7 @@ import ChatLayout from "./ChatLayout";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ChatSidePanel from "@/components/private/chat/ChatSidePanel";
+import { ChatMessagesSkeleton } from "@/components/private/chat/skeletons/ChatMessagesSkeleton";
 import QuestionBlock from "@/components/private/modes/PMP/QuestionBlock";
 import ModelSelection from "@/components/private/modes/PMP/ModelSelection";
 import CompareModelSelection from "@/components/private/modes/Compare/CompareModelSelection";
@@ -27,6 +28,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     id: string;
     title: string;
   } | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Auto scroll on phase/question changes (PMP specific)
   useEffect(() => {
@@ -214,6 +216,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
           onResetSession={chat.resetSession}
           isBotResponding={chat.isLoading}
           onCurrentChatChange={setCurrentChat}
+          onLoadingMessages={setIsLoadingMessages}
         />
       }
       header={
@@ -233,13 +236,17 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     >
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
-        <div className="w-full max-w-5xl mx-auto px-2 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
-          <ChatMessages
-            messages={chat.messages}
-            isLoading={chat.isLoading}
-            renderExtras={renderExtras}
-            chatId={chat.chatId}
-          />
+        <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
+          {isLoadingMessages ? (
+            <ChatMessagesSkeleton />
+          ) : (
+            <ChatMessages
+              messages={chat.messages}
+              isLoading={chat.isLoading}
+              renderExtras={renderExtras}
+              chatId={chat.chatId}
+            />
+          )}
           {/* Scroll target */}
           <div ref={chat.messagesEndRef} className="h-12 sm:h-20" />
         </div>

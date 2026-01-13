@@ -39,11 +39,20 @@ export default function ChatLayout({
       setIsDesktop(desktop);
       if (!desktop) {
         setIsSidebarOpen(false);
+      } else {
+        // On desktop, keep sidebar open by default
+        setIsSidebarOpen(true);
       }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Initialize sidebar state based on screen size
+  useEffect(() => {
+    const desktop = window.innerWidth >= 1024;
+    setIsSidebarOpen(desktop);
   }, []);
 
   /** handleTitleClick - Initiates title editing mode */
@@ -101,7 +110,7 @@ export default function ChatLayout({
           x: isDesktop ? 0 : isSidebarOpen ? 0 : "-100%",
         }}
         transition={{
-          duration: 0.4,
+          duration: isDesktop ? 0 : 0.4,
           ease: [0.4, 0.0, 0.2, 1],
           type: "spring",
           stiffness: 300,

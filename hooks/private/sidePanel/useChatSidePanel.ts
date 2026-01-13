@@ -28,9 +28,12 @@ export function useChatSidePanel({
   onChatCreated,
 }: UseChatSidePanelProps) {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Fetch all chats for user
   const fetchChats = useCallback(async () => {
+    setIsLoadingChats(true);
     try {
       const res = await fetch(`/api/chats`);
       if (!res.ok) throw new Error("Failed to fetch chats");
@@ -38,6 +41,8 @@ export function useChatSidePanel({
       setChats(data.chats || []);
     } catch (error) {
       console.error("Error fetching chats:", error);
+    } finally {
+      setIsLoadingChats(false);
     }
   }, []);
 
@@ -95,6 +100,7 @@ export function useChatSidePanel({
   // Fetch chat history
   const fetchChatHistory = useCallback(
     async (chatId: string) => {
+      setIsLoadingMessages(true);
       try {
         const chatRes = await fetch(`/api/chats`);
         if (!chatRes.ok) {
@@ -121,6 +127,8 @@ export function useChatSidePanel({
         setMessages(messages);
       } catch (error) {
         console.error("Error fetching chat history:", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     },
     [setMessages]
@@ -201,6 +209,8 @@ export function useChatSidePanel({
     // State
     chats,
     currentChat,
+    isLoadingChats,
+    isLoadingMessages,
 
     // Actions
     createChat,
