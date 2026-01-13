@@ -197,7 +197,9 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     (chat.mode === "pmp" &&
       ["clarifying", "improving", "model-selection", "final-response"].includes(
         chat.phase
-      ));
+      )) ||
+    (chat.mode === "compare" &&
+      (!chat.selectedProviders || chat.selectedProviders.length === 0));
 
   return (
     <ChatLayout
@@ -231,11 +233,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     >
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
-        <div
-          className={`w-full ${
-            mode === "compare" ? "max-w-5xl" : "max-w-4xl"
-          } mx-auto px-2 sm:px-1 py-2 sm:py-2`}
-        >
+        <div className="w-full max-w-5xl mx-auto px-2 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
           <ChatMessages
             messages={chat.messages}
             isLoading={chat.isLoading}
@@ -261,6 +259,19 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
         requestsRemaining={chat.requestsRemaining}
         getTimeUntilReset={chat.getTimeUntilReset}
         onFocus={chat.checkUsage}
+        showProviderSelector={chat.mode === "simple"}
+        selectedProvider={
+          chat.mode === "simple" ? chat.selectedProvider : undefined
+        }
+        selectedModel={chat.mode === "simple" ? chat.selectedModel : undefined}
+        onProviderChange={
+          chat.mode === "simple"
+            ? (p: string, m: string) => {
+                chat.setSelectedProvider(p);
+                chat.setSelectedModel(m);
+              }
+            : undefined
+        }
       />
     </ChatLayout>
   );

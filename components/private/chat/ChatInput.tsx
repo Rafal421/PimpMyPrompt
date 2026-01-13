@@ -1,5 +1,6 @@
 "use client";
 import { Send, Plus, Square } from "lucide-react";
+import SimpleProviderSelector from "@/components/private/modes/Simple/SimpleProviderSelector";
 
 interface ChatInputProps {
   value: string;
@@ -14,6 +15,10 @@ interface ChatInputProps {
   requestsRemaining?: number;
   getTimeUntilReset?: () => string | null;
   onFocus?: () => void;
+  showProviderSelector?: boolean;
+  selectedProvider?: string;
+  onProviderChange?: (provider: string, model: string) => void;
+  selectedModel?: string;
 }
 
 /**
@@ -33,6 +38,10 @@ export default function ChatInput({
   requestsRemaining,
   getTimeUntilReset,
   onFocus,
+  showProviderSelector = false,
+  selectedProvider,
+  onProviderChange,
+  selectedModel,
 }: ChatInputProps) {
   /** handleKeyDown - Sends message on Enter key press */
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -45,26 +54,44 @@ export default function ChatInput({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-2 sm:px-6 py-2 sm:py-6 pt-0 sm:pt-0">
+    <div className="w-full max-w-5xl mx-auto px-2 sm:px-6 py-2 sm:py-6 pt-0 sm:pt-0">
       <div className="flex gap-2 sm:gap-4 items-end">
         <div className="flex-1 relative">
-          {/* Usage warning pill */}
-          {typeof requestsRemaining !== "undefined" && (
-            <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-12 sm:-top-14 px-3 py-1.5 rounded-2xl shadow-lg bg-gradient-to-r from-blue-600/60 to-purple-600/60 text-white text-[10px] sm:text-xs font-medium text-center z-20 min-w-[90px] max-w-[70%] opacity-80 flex flex-col items-center">
-              {requestsRemaining > 0 ? (
-                `${requestsRemaining} requests left`
-              ) : (
-                <>
-                  <span>Daily limit reached</span>
-                  {getTimeUntilReset?.() && (
-                    <span className="text-[9px] sm:text-[10px] text-white/80 mt-0.5">
-                      {getTimeUntilReset()}
-                    </span>
-                  )}
-                </>
+          {/* Status Bar Indicators */}
+          <div className="absolute -top-12 sm:-top-14 left-0 right-0 flex items-center justify-center z-20 pointer-events-none px-2">
+            {/* Usage warning pill - Perfectly Centered */}
+            {typeof requestsRemaining !== "undefined" && (
+              <div className="pointer-events-none px-3 py-1.5 rounded-2xl shadow-lg bg-gradient-to-r from-blue-600/60 to-purple-600/60 text-white text-[10px] sm:text-xs font-medium text-center min-w-[90px] opacity-80 flex items-center justify-center">
+                {requestsRemaining > 0 ? (
+                  `${requestsRemaining} requests left`
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <span className="whitespace-nowrap">Limit reached</span>
+                    {getTimeUntilReset?.() && (
+                      <span className="text-[9px] text-white/80">
+                        {getTimeUntilReset()}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Provider selector - Right side */}
+            {showProviderSelector &&
+              selectedProvider &&
+              onProviderChange &&
+              selectedModel && (
+                <div className="absolute right-0 pointer-events-auto">
+                  <SimpleProviderSelector
+                    selectedProvider={selectedProvider}
+                    selectedModel={selectedModel}
+                    onProviderChange={onProviderChange}
+                    disabled={isLoading}
+                  />
+                </div>
               )}
-            </div>
-          )}
+          </div>
 
           <textarea
             value={value}
@@ -72,7 +99,7 @@ export default function ChatInput({
             onKeyDown={handleKeyDown}
             onFocus={onFocus}
             rows={1}
-            className="w-full px-4 py-3 pr-14 sm:px-8 sm:py-6 sm:pr-20 bg-transparent border border-gray-700/30 rounded-xl sm:rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 text-white placeholder-gray-400 hover:border-gray-600/40 transition-all duration-200 text-sm sm:text-base font-medium resize-none overflow-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 pr-24 sm:px-8 sm:py-6 sm:pr-40 bg-transparent border border-gray-700/30 rounded-xl sm:rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 text-white placeholder-gray-400 hover:border-gray-600/40 transition-all duration-200 text-sm sm:text-base font-medium resize-none overflow-auto disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder={placeholder}
             disabled={disabled}
           />

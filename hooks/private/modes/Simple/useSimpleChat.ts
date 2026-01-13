@@ -6,8 +6,10 @@ import { useChatMessages } from "@/hooks/private/chat/useChatMessages";
 import { useAutoScroll } from "@/hooks/private/chat/useAutoScroll";
 import { useUsageLimit } from "@/hooks/private/chat/useUsageLimit";
 import { ChatSidePanelHandle } from "@/components/private/chat/ChatSidePanel";
+import { PROVIDERS } from "@/lib/providers/ai-config";
 
 const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_PROVIDER = "openai";
 
 export interface SimpleChatConfig {
   user: User;
@@ -25,6 +27,9 @@ export function useSimpleChat({
   onError,
 }: SimpleChatConfig) {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+  const [selectedProvider, setSelectedProvider] =
+    useState<string>(DEFAULT_PROVIDER);
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL);
 
   // Core state
   const state = useChatState(welcomeMessage);
@@ -71,7 +76,7 @@ export function useSimpleChat({
         currentChatId =
           (await chatSidePanelRef.current?.createChat(
             state.input,
-            DEFAULT_MODEL,
+            selectedModel,
             "CHAT"
           )) || null;
         state.setChatId(currentChatId);
@@ -79,7 +84,7 @@ export function useSimpleChat({
 
       const userMessage = state.input;
 
-      const history = state.messages.slice(-4).map((msg) => ({
+      const history = state.messages.slice(-6).map((msg) => ({
         role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
         content: msg.text,
       }));
@@ -95,7 +100,7 @@ export function useSimpleChat({
         );
       }
 
-      // Send to simple chat endpoint
+      // Send to simple chat endpoint with selected provider
       const response = await fetch(`/api/modes/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,6 +108,8 @@ export function useSimpleChat({
           message: userMessage,
           chat_id: currentChatId,
           history,
+          provider: selectedProvider,
+          model: selectedModel,
         }),
       });
 
@@ -141,6 +148,12 @@ export function useSimpleChat({
 
     // Core state
     ...state,
+
+    // Provider selection
+    selectedProvider,
+    setSelectedProvider,
+    selectedModel,
+    setSelectedModel,
 
     // Refs
     chatSidePanelRef,

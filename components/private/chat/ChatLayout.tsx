@@ -116,28 +116,30 @@ export default function ChatLayout({
       <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm overflow-hidden">
         {/* Header */}
         <div className="bg-black/40 backdrop-blur-md border-b border-gray-800/50 p-2 sm:p-4 flex-shrink-0 relative z-50">
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg flex-shrink-0"
-            >
-              <div className="relative w-5 h-5">
-                <Menu
-                  className={`absolute inset-0 w-5 h-5 transition-opacity ${
-                    isSidebarOpen ? "opacity-0" : "opacity-100"
-                  }`}
-                />
-                <X
-                  className={`absolute inset-0 w-5 h-5 transition-opacity ${
-                    isSidebarOpen ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              </div>
-            </button>
+          <div className="flex lg:grid lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 h-10 sm:h-auto">
+            {/* Left side: Mobile Menu Button */}
+            <div className="flex items-center justify-start lg:w-full">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg flex-shrink-0"
+              >
+                <div className="relative w-5 h-5">
+                  <Menu
+                    className={`absolute inset-0 w-5 h-5 transition-opacity ${
+                      isSidebarOpen ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <X
+                    className={`absolute inset-0 w-5 h-5 transition-opacity ${
+                      isSidebarOpen ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </div>
+              </button>
+            </div>
 
-            {/* Title */}
-            <div className="flex-1 min-w-0 flex items-center justify-start lg:justify-center">
+            {/* Center: Title - Centered on desktop, Left-aligned on mobile */}
+            <div className="flex-1 lg:flex-initial flex items-center justify-start lg:justify-center min-w-0">
               {header ? (
                 <div className="flex items-center gap-2 min-w-0">
                   {isEditingTitle ? (
@@ -179,8 +181,8 @@ export default function ChatLayout({
               )}
             </div>
 
-            {/* Mode Selector & Provider Info */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Right side: Mode Selector & Provider Info */}
+            <div className="flex items-center justify-end gap-2 flex-shrink-0 min-w-[40px] sm:min-w-0">
               {header?.mode && (
                 <ModeToggle
                   currentMode={header.mode as ChatMode}

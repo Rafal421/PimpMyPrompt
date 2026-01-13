@@ -39,35 +39,43 @@ export default function CompareModelSelection({
               disabled={disabled}
               className={`
                 group relative flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5
-                rounded-xl border transition-all duration-300
+                rounded-xl border transition-all duration-300 min-w-[140px] sm:min-w-[170px] justify-between
                 ${
                   isSelected
                     ? `bg-gradient-to-br ${provider.colors.fadeBg} ${provider.colors.border} ${provider.colors.text}`
                     : "bg-black/40 border-gray-700/50 text-gray-400 hover:border-gray-600/50"
                 }
-                ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
+                ${
+                  disabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer hover:scale-105"
+                }
               `}
             >
-              <div
-                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-colors
-                  ${isSelected ? provider.colors.text : "text-gray-500"}`}
-              >
-                {React.createElement(provider.icon, {
-                  className: "w-4 h-4 sm:w-5 sm:h-5",
-                })}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-colors
+                    ${isSelected ? provider.colors.text : "text-gray-500"}`}
+                >
+                  {React.createElement(provider.icon, {
+                    className: "w-4 h-4 sm:w-5 sm:h-5",
+                  })}
+                </div>
+
+                <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                  {model.name}
+                </span>
               </div>
 
-              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                {model.name}
-              </span>
-
-              {isSelected && (
-                <div
-                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full ${provider.colors.bg} flex items-center justify-center`}
-                >
-                  <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                </div>
-              )}
+              <div
+                className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full ${
+                  provider.colors.bg
+                } flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
+                  isSelected ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                }`}
+              >
+                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+              </div>
             </button>
           );
         })}

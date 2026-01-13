@@ -22,17 +22,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "gpt-4o",
         name: "GPT-4o",
-        description: "Best for writing and creativity",
+        description: "Best for writing, creativity and complex instructions",
       },
       {
         id: "o3",
         name: "o3 (Reasoning)",
-        description: "Ideal for complex problems",
+        description: "Master of logic, math and complex programming",
       },
       {
         id: "gpt-4o-mini",
         name: "GPT-4o Mini",
-        description: "Fast and efficient",
+        description: "Lightning fast and ideal for simple questions",
       },
     ],
     colors: {
@@ -58,17 +58,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "claude-sonnet-4-5-20250929",
         name: "Claude Sonnet 4.5",
-        description: "Smartest model",
+        description: "Smartest model, most human-like responses",
       },
       {
         id: "claude-haiku-4-5-20251001",
         name: "Claude Haiku 4.5",
-        description: "Fastest model",
+        description: "Extremely fast analysis and answers",
       },
       {
         id: "claude-3-7-sonnet-20250219",
         name: "Sonnet 3.7",
-        description: "Precise and balanced",
+        description: "Balanced power and precision",
       },
     ],
     colors: {
@@ -94,17 +94,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "gemini-3-flash-preview",
         name: "Gemini 3.0 Flash",
-        description: "High volume tasks",
+        description: "Modern, fast and multi-modal",
       },
       {
         id: "gemini-2.5-pro",
         name: "Gemini 2.5 Pro",
-        description: "Best for long texts",
+        description: "Powerful, best for file and PDF analysis",
       },
       {
         id: "gemini-2.5-flash",
         name: "Gemini 2.5 Flash",
-        description: "Fast and cheap",
+        description: "Super fast for simple inquiries",
       },
     ],
     colors: {
@@ -130,13 +130,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "grok-4-fast-reasoning",
         name: "Grok 4 Fast",
-        description: "Complex tasks",
+        description: "Best for fast reasoning and real-time insights",
       },
-      { id: "grok-3", name: "Grok 3", description: "Intelligent choice" },
+      {
+        id: "grok-3",
+        name: "Grok 3",
+        description: "Balanced intelligence and speed",
+      },
       {
         id: "grok-3-mini",
         name: "Grok 3 Mini",
-        description: "Logical and cheap",
+        description: "Efficient and smart for everyday tasks",
       },
     ],
     colors: {
@@ -161,10 +165,14 @@ export const PROVIDERS: Record<string, AIProvider> = {
     models: [
       {
         id: "deepseek-chat",
-        name: "Chat",
-        description: "General conversations",
+        name: "DeepSeek Chat",
+        description: "Versatile model for conversations and logic",
       },
-      { id: "deepseek-coder", name: "Coder", description: "Coding tasks" },
+      {
+        id: "deepseek-coder",
+        name: "DeepSeek Coder",
+        description: "Specialist for code and technical tasks",
+      },
     ],
     colors: {
       icon: "text-cyan-400",
@@ -188,8 +196,8 @@ export const PROVIDERS: Record<string, AIProvider> = {
     models: [
       {
         id: "llama-3.1-sonar-large-128k-online",
-        name: "Sonar Large",
-        description: "Fact-checked search",
+        name: "Sonar Online",
+        description: "Best for real-time fact checking and source searching",
       },
     ],
     colors: {
