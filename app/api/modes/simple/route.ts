@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { getProviderUrl, isValidProvider } from "@/lib/api/safe-url";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,8 +19,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!isValidProvider(provider)) {
+      return NextResponse.json(
+        { error: "Invalid provider specified" },
+        { status: 400 },
+      );
+    }
+
     const cookieHeader = request.headers.get("cookie");
-    const providerUrl = new URL(`/api/providers/${provider}`, request.url);
+    const providerUrl = getProviderUrl(provider);
 
     const response = await fetch(providerUrl, {
       method: "POST",

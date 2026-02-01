@@ -212,6 +212,27 @@ export function useCompareChat({
               }
             } catch (e) {
               console.error("Error parsing SSE data:", e);
+              state.setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessage = newMessages[newMessages.length - 1];
+                if (
+                  lastMessage?.from === "bot" &&
+                  lastMessage.compareResponses
+                ) {
+                  lastMessage.compareResponses =
+                    lastMessage.compareResponses.map((r) =>
+                      r.isLoading
+                        ? {
+                            ...r,
+                            isLoading: false,
+                            success: false,
+                            response: "Failed to parse response",
+                          }
+                        : r,
+                    );
+                }
+                return newMessages;
+              });
             }
           }
         }
@@ -245,9 +266,7 @@ export function useCompareChat({
 
       messageHelpers.addBotMessage(
         state.setMessages,
-        `I encountered a problem comparing responses: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }. Please try again.`,
+        "I encountered a problem comparing responses. Please try again.",
       );
     } finally {
       state.setIsLoading(false);

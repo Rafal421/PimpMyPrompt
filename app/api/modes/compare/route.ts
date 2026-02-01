@@ -7,28 +7,25 @@ import {
 } from "@/lib/providers/ai-helpers";
 import { DatabaseResponseData, ProviderResponse } from "@/lib/shared/types";
 import { AuditLogger } from "@/lib/logging/audit-logger";
+import { getProviderUrl } from "@/lib/api/safe-url";
 
 async function callProvider(
   model: (typeof COMPARE_MODELS)[number],
   message: string,
-  reqUrl: string,
-  cookieHeader: string | null
+  cookieHeader: string | null,
 ): Promise<ProviderResponse> {
   try {
-    const response = await fetch(
-      new URL(`/api/providers/${model.provider}`, reqUrl),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-        },
-        body: JSON.stringify({
-          message,
-          model: model.id,
-        }),
-      }
-    );
+    const response = await fetch(getProviderUrl(model.provider), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      body: JSON.stringify({
+        message,
+        model: model.id,
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Provider error: ${response.status}`);
@@ -61,7 +58,7 @@ async function generateSummary(
   message: string,
   results: ProviderResponse[],
   reqUrl: string,
-  cookieHeader: string | null
+  cookieHeader: string | null,
 ): Promise<string> {
   const successfulResults = results.filter((r) => r.success);
   if (successfulResults.length < 2) {
@@ -71,7 +68,7 @@ async function generateSummary(
   try {
     const summaryPrompt = createCompareAnalysisPrompt(
       message,
-      successfulResults
+      successfulResults,
     );
 
     const response = await fetch(new URL("/api/providers/openai", reqUrl), {
@@ -103,7 +100,7 @@ function prepareResponseData(
   chatId: string | null,
   message: string,
   results: ProviderResponse[],
-  summary: string
+  summary: string,
 ): DatabaseResponseData {
   const responseData: DatabaseResponseData = {
     user_id: userId,
@@ -140,7 +137,7 @@ export async function POST(request: NextRequest) {
     if (!message?.trim()) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -151,7 +148,7 @@ export async function POST(request: NextRequest) {
     if (modelsToCompare.length === 0) {
       return NextResponse.json(
         { error: "At least one provider must be selected" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -170,17 +167,12 @@ export async function POST(request: NextRequest) {
                 model: m.name,
                 provider: m.provider,
               })),
-            })}\n\n`
-          )
+            })}\n\n`,
+          ),
         );
 
         const providerPromises = modelsToCompare.map(async (model) => {
-          const result = await callProvider(
-            model,
-            message,
-            request.url,
-            cookieHeader
-          );
+          const result = await callProvider(model, message, cookieHeader);
           results.push(result);
 
           controller.enqueue(
@@ -188,8 +180,8 @@ export async function POST(request: NextRequest) {
               `data: ${JSON.stringify({
                 type: "response",
                 response: result,
-              })}\n\n`
-            )
+              })}\n\n`,
+            ),
           );
 
           return result;
@@ -203,8 +195,8 @@ export async function POST(request: NextRequest) {
             encoder.encode(
               `data: ${JSON.stringify({
                 type: "generating_summary",
-              })}\n\n`
-            )
+              })}\n\n`,
+            ),
           );
         }
 
@@ -212,7 +204,7 @@ export async function POST(request: NextRequest) {
           message,
           results,
           request.url,
-          cookieHeader
+          cookieHeader,
         );
 
         const responseData = prepareResponseData(
@@ -220,7 +212,7 @@ export async function POST(request: NextRequest) {
           chat_id,
           message,
           results,
-          summary
+          summary,
         );
 
         const { data: sessionData, error: sessionError } = await supabase
@@ -250,8 +242,8 @@ export async function POST(request: NextRequest) {
               type: "complete",
               summary,
               session_id: sessionData?.id || null,
-            })}\n\n`
-          )
+            })}\n\n`,
+          ),
         );
 
         controller.close();

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getProviderUrl, isValidProvider } from "@/lib/api/safe-url";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,38 +8,43 @@ export async function POST(req: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { error: "Provider is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
+    if (!isValidProvider(provider)) {
+      return NextResponse.json(
+        { error: "Invalid provider specified" },
+        { status: 400 },
+      );
+    }
+
     const cookieHeader = req.headers.get("cookie");
 
-    const response = await fetch(
-      new URL(`/api/providers/${provider}`, req.url),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-        },
-        body: JSON.stringify({
-          action: "clarify",
-          ...body,
-        }),
-      }
-    );
+    const response = await fetch(getProviderUrl(provider), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      body: JSON.stringify({
+        action: "clarify",
+        ...body,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
         `Provider error (${response.status}):`,
-        errorText.substring(0, 200)
+        errorText.substring(0, 200),
       );
       return NextResponse.json(
         {
           error: `Provider returned ${response.status}: ${response.statusText}`,
           debug: errorText.substring(0, 500),
         },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -50,7 +56,7 @@ export async function POST(req: NextRequest) {
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Failed to get response from AI.", details: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
