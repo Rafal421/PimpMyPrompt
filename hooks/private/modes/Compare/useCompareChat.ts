@@ -28,15 +28,15 @@ export function useCompareChat({
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
   const [compareSessionId, setCompareSessionId] = useState<string | null>(null);
 
-  const [selectedProviders, setSelectedProviders] = useState<string[]>(() =>
-    COMPARE_MODELS.map((m) => m.provider),
+  const [selectedModels, setSelectedModels] = useState<string[]>(() =>
+    COMPARE_MODELS.map((m) => m.id),
   );
-  const toggleProvider = useCallback((providerId: string) => {
-    setSelectedProviders((prev) => {
-      if (prev.includes(providerId)) {
-        return prev.filter((p) => p !== providerId);
+  const toggleModel = useCallback((modelId: string) => {
+    setSelectedModels((prev) => {
+      if (prev.includes(modelId)) {
+        return prev.filter((id) => id !== modelId);
       }
-      return [...prev, providerId];
+      return [...prev, modelId];
     });
   }, []);
 
@@ -61,7 +61,7 @@ export function useCompareChat({
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
-    if (selectedProviders.length === 0) {
+    if (selectedModels.length === 0) {
       messageHelpers.addBotMessage(
         state.setMessages,
         "Please select at least one AI model to compare.",
@@ -81,8 +81,8 @@ export function useCompareChat({
       return;
     }
 
-    const selectedModels = COMPARE_MODELS.filter((m) =>
-      selectedProviders.includes(m.provider),
+    const modelsToCompare = COMPARE_MODELS.filter((m) =>
+      selectedModels.includes(m.id),
     );
 
     let currentChatId = state.chatId;
@@ -109,7 +109,7 @@ export function useCompareChat({
         );
       }
 
-      const loadingResponses = selectedModels.map((model) => ({
+      const loadingResponses = modelsToCompare.map((model) => ({
         modelId: model.id,
         model: model.name,
         provider: model.provider,
@@ -133,7 +133,7 @@ export function useCompareChat({
         body: JSON.stringify({
           message: userMessage,
           chat_id: currentChatId,
-          selectedProviders: selectedProviders,
+          selectedModels: selectedModels,
         }),
       });
 
@@ -149,6 +149,7 @@ export function useCompareChat({
         throw new Error("No response body");
       }
 
+      let buffer = "";
       let finalSummary = "";
       let sessionId: string | null = null;
 
@@ -156,10 +157,12 @@ export function useCompareChat({
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
 
-        for (const line of lines) {
+        for (const part of parts) {
+          const line = part.trim();
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
@@ -242,7 +245,7 @@ export function useCompareChat({
         await chatSidePanelRef.current?.sendMessage(
           currentChatId,
           "bot",
-          `Compared ${selectedModels.length} AI models${
+          `Compared ${modelsToCompare.length} AI models${
             finalSummary ? `\n\nSummary: ${finalSummary.slice(0, 100)}...` : ""
           }`,
         );
@@ -282,8 +285,8 @@ export function useCompareChat({
     ...state,
     compareSessionId,
     setCompareSessionId,
-    selectedProviders,
-    toggleProvider,
+    selectedModels,
+    toggleModel,
     chatSidePanelRef,
     messagesEndRef,
     handleSend,
