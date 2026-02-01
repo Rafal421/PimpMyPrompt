@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { AuditLogger } from "@/lib/logging/audit-logger";
 
-// GET /api/chats - Fetch all chats for authenticated user
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
@@ -36,12 +35,11 @@ export async function GET(req: NextRequest) {
     console.error("Error in GET /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// POST /api/chats - Create a new chat
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
@@ -60,21 +58,21 @@ export async function POST(req: NextRequest) {
     if (!title || typeof title !== "string") {
       return NextResponse.json(
         { error: "Missing or invalid title" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (title.trim().length === 0) {
       return NextResponse.json(
         { error: "Title cannot be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (title.trim().length > 255) {
       return NextResponse.json(
         { error: "Title too long (max 255 characters)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,12 +104,11 @@ export async function POST(req: NextRequest) {
     console.error("Error in POST /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// PUT /api/chats - Update chat title
 export async function PUT(req: NextRequest) {
   const supabase = await createClient();
 
@@ -134,21 +131,21 @@ export async function PUT(req: NextRequest) {
     if (!title || typeof title !== "string") {
       return NextResponse.json(
         { error: "Missing or invalid title" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (title.trim().length === 0) {
       return NextResponse.json(
         { error: "Title cannot be empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (title.trim().length > 255) {
       return NextResponse.json(
         { error: "Title too long (max 255 characters)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -168,7 +165,7 @@ export async function PUT(req: NextRequest) {
     if (!chat) {
       return NextResponse.json(
         { error: "Chat not found or access denied" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -182,12 +179,11 @@ export async function PUT(req: NextRequest) {
     console.error("Error in PUT /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// DELETE /api/chats - Delete a chat
 export async function DELETE(req: NextRequest) {
   const supabase = await createClient();
 
@@ -207,7 +203,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing chat_id" }, { status: 400 });
     }
 
-    // Delete the chat (messages will be deleted automatically due to cascade)
     const { error, count } = await supabase
       .from("chats")
       .delete()
@@ -222,7 +217,7 @@ export async function DELETE(req: NextRequest) {
     if (count === 0) {
       return NextResponse.json(
         { error: "Chat not found or access denied" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -235,7 +230,7 @@ export async function DELETE(req: NextRequest) {
     console.error("Error in DELETE /api/chats:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

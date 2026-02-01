@@ -20,17 +20,14 @@ interface ChatClientProps {
 export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
   useSessionTimeout();
 
-  // Get chat logic based on mode
   const chat = useChatAdapter(mode, { user });
 
-  // Local UI state
   const [currentChat, setCurrentChat] = useState<{
     id: string;
     title: string;
   } | null>(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Auto scroll on phase/question changes (PMP specific)
   useEffect(() => {
     if (chat.mode === "pmp" && chat.messagesEndRef) {
       const timer = setTimeout(() => {
@@ -43,13 +40,12 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     }
   }, [chat.mode === "pmp" ? chat.phase : null, chat.messagesEndRef]);
 
-  /** handleTitleUpdate - Updates the chat title via API */
   const handleTitleUpdate = async (newTitle: string) => {
     if (!currentChat) return;
     try {
       await chat.chatSidePanelRef.current?.updateChatTitle(
         currentChat.id,
-        newTitle
+        newTitle,
       );
       setCurrentChat({ ...currentChat, title: newTitle });
     } catch (error) {
@@ -198,7 +194,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     !chat.canMakeRequest ||
     (chat.mode === "pmp" &&
       ["clarifying", "improving", "model-selection", "final-response"].includes(
-        chat.phase
+        chat.phase,
       )) ||
     (chat.mode === "compare" &&
       (!chat.selectedProviders || chat.selectedProviders.length === 0));
@@ -234,7 +230,6 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
             }
       }
     >
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
         <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
           {isLoadingMessages ? (
@@ -247,12 +242,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
               chatId={chat.chatId}
             />
           )}
-          {/* Scroll target */}
           <div ref={chat.messagesEndRef} className="h-12 sm:h-20" />
         </div>
       </div>
 
-      {/* Input Area */}
       <ChatInput
         value={chat.input}
         onChange={chat.setInput}

@@ -29,7 +29,7 @@ export function useCompareChat({
   const [compareSessionId, setCompareSessionId] = useState<string | null>(null);
 
   const [selectedProviders, setSelectedProviders] = useState<string[]>(() =>
-    COMPARE_MODELS.map((m) => m.provider)
+    COMPARE_MODELS.map((m) => m.provider),
   );
   const toggleProvider = useCallback((providerId: string) => {
     setSelectedProviders((prev) => {
@@ -40,14 +40,11 @@ export function useCompareChat({
     });
   }, []);
 
-  // Core state
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
 
-  // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
 
-  // Usage limit
   const {
     incrementUsage,
     canMakeRequest,
@@ -67,7 +64,7 @@ export function useCompareChat({
     if (selectedProviders.length === 0) {
       messageHelpers.addBotMessage(
         state.setMessages,
-        "Please select at least one AI model to compare."
+        "Please select at least one AI model to compare.",
       );
       return;
     }
@@ -78,14 +75,14 @@ export function useCompareChat({
     if (!canMakeRequest) {
       messageHelpers.addBotMessage(
         state.setMessages,
-        "You've reached your daily limit. Please wait for the reset or upgrade your plan."
+        "You've reached your daily limit. Please wait for the reset or upgrade your plan.",
       );
       state.setIsLoading(false);
       return;
     }
 
     const selectedModels = COMPARE_MODELS.filter((m) =>
-      selectedProviders.includes(m.provider)
+      selectedProviders.includes(m.provider),
     );
 
     let currentChatId = state.chatId;
@@ -95,7 +92,7 @@ export function useCompareChat({
           (await chatSidePanelRef.current?.createChat(
             state.input,
             "compare",
-            "COMPARE"
+            "COMPARE",
           )) || null;
         state.setChatId(currentChatId);
       }
@@ -108,7 +105,7 @@ export function useCompareChat({
         await chatSidePanelRef.current?.sendMessage(
           currentChatId,
           "user",
-          userMessage
+          userMessage,
         );
       }
 
@@ -180,7 +177,7 @@ export function useCompareChat({
                       (r) =>
                         r.modelId === data.response.modelId
                           ? { ...data.response, isLoading: false }
-                          : r
+                          : r,
                     );
                     lastMessage.compareResponses = updatedResponses;
                   }
@@ -226,7 +223,7 @@ export function useCompareChat({
           "bot",
           `Compared ${selectedModels.length} AI models${
             finalSummary ? `\n\nSummary: ${finalSummary.slice(0, 100)}...` : ""
-          }`
+          }`,
         );
       }
 
@@ -250,7 +247,7 @@ export function useCompareChat({
         state.setMessages,
         `I encountered a problem comparing responses: ${
           error instanceof Error ? error.message : "Unknown error"
-        }. Please try again.`
+        }. Please try again.`,
       );
     } finally {
       state.setIsLoading(false);

@@ -35,14 +35,13 @@ export default function MarkdownTypewriter({
     }
   }, [currentIndex, text, speed, onComplete, isComplete]);
 
-  // Reset when text changes
   useEffect(() => {
     setDisplayedText("");
     setCurrentIndex(0);
     setIsComplete(false);
   }, [text]);
 
-  const textWithCursor = displayedText + (!isComplete ? "▍" : ""); // you can use "|" instead of "▍" if you prefer
+  const textWithCursor = displayedText + (!isComplete ? "▍" : "");
 
   return (
     <div className={className}>

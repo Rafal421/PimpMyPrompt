@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!message?.trim()) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    // Save bot response to database if chat_id exists
     if (chat_id && data.response) {
       const supabase = await createClient();
       const {
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
     console.error("Simple chat error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

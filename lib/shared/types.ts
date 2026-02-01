@@ -1,4 +1,3 @@
-// Shared types across the application
 import { type LucideIcon } from "lucide-react";
 
 // ========================================
@@ -80,7 +79,6 @@ export interface AIModel {
 export interface AIProvider {
   id: string;
   name: string;
-  description: string;
   icon: LucideIcon;
   emoji: string;
   recommendedModel: string;

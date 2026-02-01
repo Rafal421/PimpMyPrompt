@@ -21,10 +21,6 @@ interface ChatInputProps {
   selectedModel?: string;
 }
 
-/**
- * ChatInput - Pure presentational input component
- * Handles user input with callbacks, no business logic
- */
 export default function ChatInput({
   value,
   onChange,
@@ -43,7 +39,6 @@ export default function ChatInput({
   onProviderChange,
   selectedModel,
 }: ChatInputProps) {
-  /** handleKeyDown - Sends message on Enter key press */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -57,9 +52,7 @@ export default function ChatInput({
     <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pt-0 sm:pt-0">
       <div className="flex gap-2 sm:gap-4 items-end">
         <div className="flex-1 relative">
-          {/* Status Bar Indicators */}
           <div className="absolute -top-12 sm:-top-14 left-0 right-0 flex items-center justify-center z-20 pointer-events-none px-2">
-            {/* Usage warning pill - Perfectly Centered */}
             {typeof requestsRemaining !== "undefined" && (
               <div className="pointer-events-none px-3 py-1.5 rounded-2xl shadow-lg bg-gradient-to-r from-blue-600/60 to-purple-600/60 text-white text-[10px] sm:text-xs font-medium text-center min-w-[90px] opacity-80 flex items-center justify-center">
                 {requestsRemaining > 0 ? (
@@ -77,7 +70,6 @@ export default function ChatInput({
               </div>
             )}
 
-            {/* Provider selector - Right side */}
             {showProviderSelector &&
               selectedProvider &&
               onProviderChange &&

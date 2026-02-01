@@ -5,50 +5,42 @@ import {
   createCompareAnalysisPrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
-import OpenAI from "openai";
 import { DatabaseResponseData, ProviderResponse } from "@/lib/shared/types";
 import { AuditLogger } from "@/lib/logging/audit-logger";
-import { openAIProvider } from "@/app/api/providers/openai/route";
-import { anthropicProvider } from "@/app/api/providers/anthropic/route";
-import { geminiProvider } from "@/app/api/providers/gemini/route";
-import { deepSeekProvider } from "@/app/api/providers/deepseek/route";
-import { perplexityProvider } from "@/app/api/providers/perplexity/route";
-import { grokProvider } from "@/app/api/providers/grok/route";
-
-function getProviderInstance(providerName: string) {
-  const providers: Record<string, any> = {
-    openai: openAIProvider,
-    anthropic: anthropicProvider,
-    gemini: geminiProvider,
-    deepseek: deepSeekProvider,
-    perplexity: perplexityProvider,
-    grok: grokProvider,
-  };
-  return providers[providerName];
-}
 
 async function callProvider(
   model: (typeof COMPARE_MODELS)[number],
-  message: string
+  message: string,
+  reqUrl: string,
+  cookieHeader: string | null
 ): Promise<ProviderResponse> {
   try {
-    const provider = getProviderInstance(model.provider);
+    const response = await fetch(
+      new URL(`/api/providers/${model.provider}`, reqUrl),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+        },
+        body: JSON.stringify({
+          message,
+          model: model.id,
+        }),
+      }
+    );
 
-    if (!provider) {
-      throw new Error(`Unknown provider: ${model.provider}`);
+    if (!response.ok) {
+      throw new Error(`Provider error: ${response.status}`);
     }
 
-    const response = await provider.generateResponse(
-      message,
-      model.id,
-      TOKEN_LIMITS.GENERAL
-    );
+    const data = await response.json();
 
     return {
       model: model.name,
       modelId: model.id,
       provider: model.provider,
-      response: response || "No response",
+      response: data.response || "No response",
       success: true,
     };
   } catch (error) {
@@ -67,7 +59,9 @@ async function callProvider(
 
 async function generateSummary(
   message: string,
-  results: ProviderResponse[]
+  results: ProviderResponse[],
+  reqUrl: string,
+  cookieHeader: string | null
 ): Promise<string> {
   const successfulResults = results.filter((r) => r.success);
   if (successfulResults.length < 2) {
@@ -75,22 +69,29 @@ async function generateSummary(
   }
 
   try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const summaryPrompt = createCompareAnalysisPrompt(
       message,
       successfulResults
     );
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: summaryPrompt }],
-      max_tokens: TOKEN_LIMITS.GENERAL,
+    const response = await fetch(new URL("/api/providers/openai", reqUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      body: JSON.stringify({
+        message: summaryPrompt,
+        model: "gpt-4o-mini",
+      }),
     });
 
-    return completion.choices[0]?.message?.content || "";
+    if (!response.ok) {
+      throw new Error("Failed to generate summary");
+    }
+
+    const data = await response.json();
+    return data.response || "";
   } catch (error) {
     console.error("[CompareChat] Error generating summary:", error);
     return "";
@@ -154,6 +155,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cookieHeader = request.headers.get("cookie");
     const encoder = new TextEncoder();
     const results: ProviderResponse[] = [];
 
@@ -173,9 +175,13 @@ export async function POST(request: NextRequest) {
         );
 
         const providerPromises = modelsToCompare.map(async (model) => {
-          const result = await callProvider(model, message);
+          const result = await callProvider(
+            model,
+            message,
+            request.url,
+            cookieHeader
+          );
           results.push(result);
-
 
           controller.enqueue(
             encoder.encode(
@@ -202,7 +208,12 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const summary = await generateSummary(message, results);
+        const summary = await generateSummary(
+          message,
+          results,
+          request.url,
+          cookieHeader
+        );
 
         const responseData = prepareResponseData(
           user.id,

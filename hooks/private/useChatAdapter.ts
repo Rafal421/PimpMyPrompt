@@ -10,10 +10,7 @@ export type ChatMode = "pmp" | "simple" | "compare";
 
 type ChatConfig = PMPChatConfig | SimpleChatConfig | CompareChatConfig;
 
-/**
- * useChatAdapter - Routes to appropriate chat mode hook
- * Selects and returns the correct chat hook based on the current mode
- */
+// {kom} Adapter wybierający odpowiedni hook na podstawie trybu czatu
 export function useChatAdapter(mode: ChatMode, config: ChatConfig) {
   switch (mode) {
     case "pmp":

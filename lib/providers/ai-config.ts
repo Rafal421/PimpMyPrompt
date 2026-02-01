@@ -13,8 +13,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   openai: {
     id: "openai",
     name: "OpenAI",
-    description:
-      "Perfect for creative writing, storytelling, and natural conversations. Excels at generating engaging content and brainstorming ideas.",
     icon: Brain,
     emoji: "🧠",
     recommendedModel: "gpt-4o-mini",
@@ -49,8 +47,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
-    description:
-      "Specializes in deep analysis, complex reasoning, and thoughtful responses. Best choice for research and detailed explanations.",
     icon: Cloud,
     emoji: "☁️",
     recommendedModel: "claude-sonnet-4-5-20250929",
@@ -85,8 +81,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
-    description:
-      "Advanced multimodal AI that processes text, images, and data seamlessly. Ideal for complex analysis and structured information tasks.",
     icon: Sparkles,
     emoji: "✨",
     recommendedModel: "gemini-2.5-flash",
@@ -121,8 +115,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   grok: {
     id: "grok",
     name: "Grok",
-    description:
-      "Provides real-time information with a witty, conversational style. Great for current events and engaging discussions.",
     icon: Zap,
     emoji: "⚡",
     recommendedModel: "grok-3-mini",
@@ -157,8 +149,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   deepseek: {
     id: "deepseek",
     name: "DeepSeek",
-    description:
-      "Engineering-focused AI that excels in coding, debugging, and technical problem-solving. Your go-to for development challenges.",
     icon: Code,
     emoji: "💻",
     recommendedModel: "deepseek-chat",
@@ -188,8 +178,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
   perplexity: {
     id: "perplexity",
     name: "Perplexity",
-    description:
-      "Research-powered AI that provides accurate, fact-checked information. Perfect for academic work and factual inquiries.",
     icon: Search,
     emoji: "🔍",
     recommendedModel: "llama-3.1-sonar-large-128k-online",

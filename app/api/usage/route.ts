@@ -15,7 +15,6 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check current usage without incrementing
     const { data, error } = await supabase.rpc("check_user_request_count", {
       p_user_id: user.id,
     });
@@ -24,7 +23,7 @@ export async function GET() {
       console.error("Error checking usage:", error);
       return NextResponse.json(
         { error: "Failed to check usage" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -33,7 +32,7 @@ export async function GET() {
     console.error("Usage check error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -51,7 +50,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Increment usage count (this happens when user selects final model)
     const { data, error } = await supabase.rpc("increment_user_request_count", {
       p_user_id: user.id,
     });
@@ -60,7 +58,7 @@ export async function POST() {
       console.error("Error incrementing usage:", error);
       return NextResponse.json(
         { error: "Failed to update usage" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -72,7 +70,7 @@ export async function POST() {
     console.error("Usage increment error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

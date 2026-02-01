@@ -12,10 +12,6 @@ interface ChatMessagesProps {
   chatId?: string | null;
 }
 
-/**
- * ChatMessages - Pure presentational component for chat messages
- * Renders message list with loading indicator and optional extras
- */
 export default function ChatMessages({
   messages,
   isLoading,
@@ -51,8 +47,8 @@ export default function ChatMessages({
                   msg.from === "user"
                     ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white ml-auto px-3 py-3 sm:px-6 sm:py-4 rounded-2xl shadow-lg"
                     : isCompare
-                    ? ""
-                    : "bg-black/40 backdrop-blur-sm border border-gray-800/50 text-gray-100"
+                      ? ""
+                      : "bg-black/40 backdrop-blur-sm border border-gray-800/50 text-gray-100"
                 }`}
               >
                 <div className="leading-relaxed font-medium text-sm sm:text-base prose prose-invert max-w-none">

@@ -17,10 +17,6 @@ export interface SimpleChatConfig {
   onError?: (error: unknown, context?: string) => void;
 }
 
-/**
- * Hook dla prostego czatu bez PMP flow
- * Prosty question-answer bez dodatkowych kroków
- */
 export function useSimpleChat({
   user,
   welcomeMessage = "Hi! How can I help you today?",
@@ -31,14 +27,11 @@ export function useSimpleChat({
     useState<string>(DEFAULT_PROVIDER);
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL);
 
-  // Core state
   const state = useChatState(welcomeMessage);
   const messageHelpers = useChatMessages();
 
-  // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
 
-  // Usage limit
   const {
     incrementUsage,
     canMakeRequest,
@@ -47,29 +40,25 @@ export function useSimpleChat({
     checkUsage,
   } = useUsageLimit();
 
-  // Reset session
   const resetSession = () => {
     state.reset(welcomeMessage);
   };
 
-  // Simple send handler
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
     state.setIsLoading(true);
 
-    // Check usage limit
     await checkUsage();
     if (!canMakeRequest) {
       messageHelpers.addBotMessage(
         state.setMessages,
-        "You've reached your daily limit. Please wait for the reset or upgrade your plan."
+        "You've reached your daily limit. Please wait for the reset or upgrade your plan.",
       );
       state.setIsLoading(false);
       return;
     }
 
-    // Create or get chat ID
     let currentChatId = state.chatId;
     try {
       if (!currentChatId) {
@@ -77,7 +66,7 @@ export function useSimpleChat({
           (await chatSidePanelRef.current?.createChat(
             state.input,
             selectedModel,
-            "CHAT"
+            "CHAT",
           )) || null;
         state.setChatId(currentChatId);
       }
@@ -96,11 +85,10 @@ export function useSimpleChat({
         await chatSidePanelRef.current?.sendMessage(
           currentChatId,
           "user",
-          userMessage
+          userMessage,
         );
       }
 
-      // Send to simple chat endpoint with selected provider
       const response = await fetch(`/api/modes/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +118,7 @@ export function useSimpleChat({
       onError?.(error, "sending message");
       messageHelpers.addBotMessage(
         state.setMessages,
-        "I encountered a problem processing your message. Please try again."
+        "I encountered a problem processing your message. Please try again.",
       );
     } finally {
       state.setIsLoading(false);
@@ -139,32 +127,25 @@ export function useSimpleChat({
 
   const stopGeneration = () => {
     state.setIsLoading(false);
-    // Note: We could add AbortController here for API requests if needed
   };
 
   return {
-    // Mode identifier
     mode: "simple" as const,
 
-    // Core state
     ...state,
 
-    // Provider selection
     selectedProvider,
     setSelectedProvider,
     selectedModel,
     setSelectedModel,
 
-    // Refs
     chatSidePanelRef,
     messagesEndRef,
 
-    // Actions
     handleSend,
     stopGeneration,
     resetSession,
 
-    // Usage limits
     canMakeRequest,
     requestsRemaining,
     getTimeUntilReset,
