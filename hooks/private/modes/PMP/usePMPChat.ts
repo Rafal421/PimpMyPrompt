@@ -19,10 +19,10 @@ const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
 const TYPING_DELAYS = {
   FIRST_QUESTION: 400,
-  NEXT_QUESTION: 300,
-  IMPROVED_PROMPT: 300,
+  NEXT_QUESTION: 400,
+  IMPROVED_PROMPT: 400,
   FINAL_RESPONSE: 300,
-  ANSWER_PROCESSING: 400,
+  ANSWER_PROCESSING: 500,
 } as const;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -299,7 +299,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     await sendToSidePanel("user", choiceText);
 
     setPhase("final-response");
-    await delay(700);
+    await delay(500);
     state.setIsLoading(true);
 
     try {

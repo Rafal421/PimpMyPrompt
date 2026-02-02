@@ -93,20 +93,12 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                   opacity: 0,
                   height: 0,
                   marginTop: 0,
-                  scale: 0.98,
+                  scale: 0.95,
                   transition: {
-                    opacity: { duration: 0.4, ease: "easeIn" },
-                    scale: { duration: 0.4, ease: "easeIn" },
-                    height: {
-                      duration: 0.45,
-                      ease: [0.4, 0.0, 0.2, 1],
-                      delay: 0.15,
-                    },
-                    marginTop: {
-                      duration: 0.45,
-                      ease: [0.4, 0.0, 0.2, 1],
-                      delay: 0.15,
-                    },
+                    height: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
+                    opacity: { duration: 0.2, delay: 0.1, ease: "easeOut" },
+                    marginTop: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
+                    scale: { duration: 0.3, delay: 0.1, ease: "easeOut" },
                   },
                 }}
                 className="w-full overflow-hidden"
@@ -146,20 +138,12 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                 opacity: 0,
                 height: 0,
                 marginTop: 0,
-                scale: 0.98,
+                scale: 0.95,
                 transition: {
-                  opacity: { duration: 0.4, ease: "easeOut" },
-                  scale: { duration: 0.4, ease: "easeOut" },
-                  height: {
-                    duration: 0.45,
-                    ease: [0.4, 0.0, 0.2, 1],
-                    delay: 0.15,
-                  },
-                  marginTop: {
-                    duration: 0.45,
-                    ease: [0.4, 0.0, 0.2, 1],
-                    delay: 0.15,
-                  },
+                  height: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
+                  opacity: { duration: 0.2, delay: 0.1, ease: "easeOut" },
+                  marginTop: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
+                  scale: { duration: 0.3, delay: 0.1, ease: "easeOut" },
                 },
               }}
               className="flex justify-center overflow-hidden"
