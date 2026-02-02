@@ -1,14 +1,16 @@
-// Helper functions for managing message animations and sequencing
-
 import type { Message } from "@/lib/shared/types";
 
 export const addTypingMessage = (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   text: string,
   onComplete?: () => void,
-  onStartTyping?: () => void
+  onStartTyping?: () => void,
+  fullWidth?: boolean
 ): void => {
-  setMessages((prev) => [...prev, { from: "bot", text, isTyping: true }]);
+  setMessages((prev) => [
+    ...prev,
+    { from: "bot", text, isTyping: true, fullWidth },
+  ]);
 
   if (onStartTyping) {
     onStartTyping();

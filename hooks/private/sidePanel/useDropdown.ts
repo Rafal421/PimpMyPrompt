@@ -19,7 +19,6 @@ export function useDropdown(options: UseDropdownOptions = {}) {
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen(!isOpen), [isOpen]);
 
-  // Handle escape key
   useEffect(() => {
     if (!closeOnEscape || !isOpen) return;
 
@@ -33,7 +32,6 @@ export function useDropdown(options: UseDropdownOptions = {}) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, closeOnEscape, close]);
 
-  // Handle click outside
   useEffect(() => {
     if (!closeOnClickOutside || !isOpen) return;
 

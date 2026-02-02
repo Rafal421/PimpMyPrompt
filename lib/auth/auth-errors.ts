@@ -1,9 +1,3 @@
-// lib/auth-errors.ts
-/**
- * Error messages and utilities for authentication
- * This is a client/server shared utility, NOT a Server Action
- */
-
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
   EMAIL_NOT_CONFIRMED: "Please check your email and confirm your account",

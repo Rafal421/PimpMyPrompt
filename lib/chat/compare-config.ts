@@ -1,4 +1,3 @@
-// Configuration for Compare mode models
 import type { DatabaseResponseData } from "@/lib/shared/types";
 
 export interface CompareModel {
@@ -10,8 +9,8 @@ export interface CompareModel {
 export const COMPARE_MODELS: CompareModel[] = [
   { id: "gpt-4o-mini", name: "GPT-4o-mini", provider: "openai" },
   {
-    id: "claude-3-haiku-20240307",
-    name: "Claude Haiku 3",
+    id: "claude-3-7-sonnet-20250219",
+    name: "Claude Sonnet 3.7",
     provider: "anthropic",
   },
   {

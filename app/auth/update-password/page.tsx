@@ -68,7 +68,6 @@ export default function UpdatePasswordPage() {
     };
   }, [supabase.auth, router]);
 
-  // Password validation using the shared validation logic
   const passwordStrength = validatePassword(password);
   const passwordMatch =
     password === confirmPassword &&

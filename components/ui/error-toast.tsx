@@ -14,7 +14,6 @@ export function ErrorToast({
   onClose,
   isVisible,
 }: ErrorToastProps) {
-  // Auto-hide after 5 seconds
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {

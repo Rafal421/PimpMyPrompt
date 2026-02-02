@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { AuditLogger } from "@/lib/logging/audit-logger";
 
-// Helper function for consistent error responses
 const errorResponse = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-// Helper function for validation
 const validateRequired = (fields: Record<string, unknown>) => {
   for (const [key, value] of Object.entries(fields)) {
     if (!value?.toString().trim()) {
@@ -31,7 +29,6 @@ export async function POST(req: NextRequest) {
 
     const { title } = await req.json();
 
-    // Enhanced validation
     if (!title || typeof title !== "string") {
       return errorResponse("Missing or invalid title", 400);
     }
@@ -106,7 +103,6 @@ export async function DELETE(req: NextRequest) {
 
     const { chat_id } = await req.json();
 
-    // Enhanced validation
     if (!chat_id || typeof chat_id !== "string") {
       return errorResponse("Missing or invalid chat_id", 400);
     }
@@ -121,7 +117,7 @@ export async function DELETE(req: NextRequest) {
         error.message.includes("not found")
           ? "Chat not found"
           : "Failed to delete chat",
-        error.message.includes("not found") ? 404 : 500
+        error.message.includes("not found") ? 404 : 500,
       );
     }
 
@@ -147,7 +143,6 @@ export async function PUT(req: NextRequest) {
 
     const { chat_id, title } = await req.json();
 
-    // Enhanced validation
     if (!chat_id || typeof chat_id !== "string") {
       return errorResponse("Missing or invalid chat_id", 400);
     }

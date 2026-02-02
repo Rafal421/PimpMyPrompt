@@ -18,10 +18,6 @@ interface ChatLayoutProps {
   children: ReactNode;
 }
 
-/**
- * ChatLayout - Pure layout component for chat interface
- * Handles sidebar, header, responsiveness without business logic
- */
 export default function ChatLayout({
   sidebar,
   header,
@@ -32,13 +28,14 @@ export default function ChatLayout({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(header?.title || "");
 
-  // Responsiveness
   useEffect(() => {
     const handleResize = () => {
       const desktop = window.innerWidth >= 1024;
       setIsDesktop(desktop);
       if (!desktop) {
         setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
       }
     };
     handleResize();
@@ -46,7 +43,11 @@ export default function ChatLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  /** handleTitleClick - Initiates title editing mode */
+  useEffect(() => {
+    const desktop = window.innerWidth >= 1024;
+    setIsSidebarOpen(desktop);
+  }, []);
+
   const handleTitleClick = () => {
     if (header?.onTitleEdit && header?.canEditTitle) {
       setIsEditingTitle(true);
@@ -54,7 +55,6 @@ export default function ChatLayout({
     }
   };
 
-  /** handleTitleSave - Saves the edited title */
   const handleTitleSave = async () => {
     if (!editTitle.trim() || editTitle.trim() === header?.title) {
       setIsEditingTitle(false);
@@ -64,13 +64,11 @@ export default function ChatLayout({
     setIsEditingTitle(false);
   };
 
-  /** handleTitleCancel - Cancels title editing without saving */
   const handleTitleCancel = () => {
     setIsEditingTitle(false);
     setEditTitle(header?.title || "");
   };
 
-  /** handleTitleKeyDown - Handles keyboard shortcuts for title editing */
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleTitleSave();
     else if (e.key === "Escape") handleTitleCancel();
@@ -80,7 +78,6 @@ export default function ChatLayout({
     <div className="fixed inset-0 flex h-[100svh] bg-black overflow-hidden overscroll-none">
       <Background />
 
-      {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
@@ -94,14 +91,13 @@ export default function ChatLayout({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.div
         initial={false}
         animate={{
           x: isDesktop ? 0 : isSidebarOpen ? 0 : "-100%",
         }}
         transition={{
-          duration: 0.4,
+          duration: isDesktop ? 0 : 0.4,
           ease: [0.4, 0.0, 0.2, 1],
           type: "spring",
           stiffness: 300,
@@ -112,32 +108,30 @@ export default function ChatLayout({
         {sidebar}
       </motion.div>
 
-      {/* Main Content */}
       <div className="relative z-10 flex-1 flex flex-col bg-black/20 backdrop-blur-sm overflow-hidden">
-        {/* Header */}
         <div className="bg-black/40 backdrop-blur-md border-b border-gray-800/50 p-2 sm:p-4 flex-shrink-0 relative z-50">
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg flex-shrink-0"
-            >
-              <div className="relative w-5 h-5">
-                <Menu
-                  className={`absolute inset-0 w-5 h-5 transition-opacity ${
-                    isSidebarOpen ? "opacity-0" : "opacity-100"
-                  }`}
-                />
-                <X
-                  className={`absolute inset-0 w-5 h-5 transition-opacity ${
-                    isSidebarOpen ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              </div>
-            </button>
+          <div className="flex lg:grid lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 h-10 sm:h-auto">
+            <div className="flex items-center justify-start lg:w-full">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg flex-shrink-0"
+              >
+                <div className="relative w-5 h-5">
+                  <Menu
+                    className={`absolute inset-0 w-5 h-5 transition-opacity ${
+                      isSidebarOpen ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <X
+                    className={`absolute inset-0 w-5 h-5 transition-opacity ${
+                      isSidebarOpen ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </div>
+              </button>
+            </div>
 
-            {/* Title */}
-            <div className="flex-1 min-w-0 flex items-center justify-start lg:justify-center">
+            <div className="flex-1 lg:flex-initial flex items-center justify-start lg:justify-center min-w-0">
               {header ? (
                 <div className="flex items-center gap-2 min-w-0">
                   {isEditingTitle ? (
@@ -179,8 +173,7 @@ export default function ChatLayout({
               )}
             </div>
 
-            {/* Mode Selector & Provider Info */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center justify-end gap-2 flex-shrink-0 min-w-[40px] sm:min-w-0">
               {header?.mode && (
                 <ModeToggle
                   currentMode={header.mode as ChatMode}
@@ -198,7 +191,6 @@ export default function ChatLayout({
           </div>
         </div>
 
-        {/* Content (messages + input) */}
         {children}
       </div>
     </div>

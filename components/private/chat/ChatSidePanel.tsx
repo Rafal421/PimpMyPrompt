@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useChatSidePanel } from "@/hooks/private/sidePanel/useChatSidePanel";
+import { ChatListSkeleton } from "@/components/private/chat/skeletons/ChatListSkeleton";
 import type { User, Message, Phase } from "@/lib/shared/types";
 import { logout } from "@/app/auth/logout/actions";
 import {
@@ -48,6 +49,7 @@ interface ChatSidePanelProps {
   isBotResponding: boolean;
   onChatCreated?: (chatId: string) => void;
   onCurrentChatChange?: (chat: { id: string; title: string } | null) => void;
+  onLoadingMessages?: (isLoading: boolean) => void;
 }
 
 const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
@@ -55,12 +57,23 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
     const router = useRouter();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
-    const { chats, currentChat, selectChat, deleteChat, chatSidePanelActions } =
-      useChatSidePanel(props);
+    const {
+      chats,
+      currentChat,
+      isLoadingChats,
+      isLoadingMessages,
+      selectChat,
+      deleteChat,
+      chatSidePanelActions,
+    } = useChatSidePanel(props);
 
     useEffect(() => {
       props.onCurrentChatChange?.(currentChat || null);
     }, [currentChat, props]);
+
+    useEffect(() => {
+      props.onLoadingMessages?.(isLoadingMessages);
+    }, [isLoadingMessages, props]);
 
     useImperativeHandle(ref, () => chatSidePanelActions, [
       chatSidePanelActions,
@@ -147,50 +160,54 @@ const ChatSidePanel = forwardRef<ChatSidePanelHandle, ChatSidePanelProps>(
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
             Recent Chats
           </h3>
-          <div className="space-y-3">
-            {chats.map((chat) => (
-              <div
-                key={chat.id}
-                className={`relative group w-full rounded-xl border ${
-                  props.chatId === chat.id
-                    ? "bg-gray-800/50 border-gray-700/50 shadow-lg"
-                    : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50 hover:shadow-md"
-                }`}
-              >
+          {isLoadingChats ? (
+            <ChatListSkeleton />
+          ) : (
+            <div className="space-y-3">
+              {chats.map((chat) => (
                 <div
-                  className="w-full text-left p-4 rounded-xl cursor-pointer"
-                  onClick={() => !props.isBotResponding && selectChat(chat)}
+                  key={chat.id}
+                  className={`relative group w-full rounded-xl border ${
+                    props.chatId === chat.id
+                      ? "bg-gray-800/50 border-gray-700/50 shadow-lg"
+                      : "bg-black/20 border-gray-800/30 hover:bg-gray-800/30 hover:border-gray-700/50 hover:shadow-md"
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <button
-                      className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
-                      onClick={(e) => handleDeleteChat(chat.id, e)}
-                      title="Delete chat"
-                      disabled={props.isBotResponding}
-                    >
-                      <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden" />
-                      <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
-                        {chat.title || "Untitled"}
-                      </p>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-gray-500 group-hover:text-gray-400">
-                          {formatChatDate(chat.created_at)}
+                  <div
+                    className="w-full text-left p-4 rounded-xl cursor-pointer"
+                    onClick={() => !props.isBotResponding && selectChat(chat)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-red-500/20 hover:border-red-500/50 disabled:bg-gray-600/20 disabled:border-gray-700/50 disabled:cursor-not-allowed"
+                        onClick={(e) => handleDeleteChat(chat.id, e)}
+                        title="Delete chat"
+                        disabled={props.isBotResponding}
+                      >
+                        <MessageSquare className="w-4 h-4 text-gray-400 group-hover:hidden" />
+                        <Trash2 className="w-4 h-4 text-red-400 hidden group-hover:block" />
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-300 group-hover:text-white truncate leading-5">
+                          {chat.title || "Untitled"}
                         </p>
-                        {chat.mode && (
-                          <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white/90 shadow-sm">
-                            {chat.mode}
-                          </span>
-                        )}
+                        <div className="flex items-center justify-between mt-0.5">
+                          <p className="text-xs text-gray-500 group-hover:text-gray-400">
+                            {formatChatDate(chat.created_at)}
+                          </p>
+                          {chat.mode && (
+                            <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-white/90 shadow-sm">
+                              {chat.mode}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* User Section */}

@@ -24,7 +24,7 @@ class GeminiProvider extends BaseAIProvider {
     prompt: string,
     model: string,
     maxTokens: number,
-    history?: { role: "user" | "assistant"; content: string }[]
+    history?: { role: "user" | "assistant"; content: string }[],
   ): Promise<string> {
     const contents: any[] = [];
 
@@ -37,7 +37,6 @@ class GeminiProvider extends BaseAIProvider {
       });
     }
 
-    // Add current prompt
     contents.push({ role: "user", parts: [{ text: prompt }] });
 
     const response = await this.client.models.generateContent({

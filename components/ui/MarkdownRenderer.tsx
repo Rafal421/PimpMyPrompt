@@ -147,7 +147,6 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const [sanitizedContent, setSanitizedContent] = useState(content);
 
   useEffect(() => {
-    // Dynamic import to avoid SSR issues with DOMPurify
     import("dompurify").then((module) => {
       const DOMPurify = module.default;
       const sanitized = DOMPurify.sanitize(content, {

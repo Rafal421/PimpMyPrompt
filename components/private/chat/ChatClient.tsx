@@ -4,39 +4,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { User } from "@/lib/shared/types";
 import { useSessionTimeout } from "@/hooks/auth/useSessionTimeout";
 import { useChatAdapter, type ChatMode } from "@/hooks/private/useChatAdapter";
-
-// Layout & Core Components
 import ChatLayout from "./ChatLayout";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ChatSidePanel from "@/components/private/chat/ChatSidePanel";
-
-// PMP-specific components
+import { ChatMessagesSkeleton } from "@/components/private/chat/skeletons/ChatMessagesSkeleton";
 import QuestionBlock from "@/components/private/modes/PMP/QuestionBlock";
 import ModelSelection from "@/components/private/modes/PMP/ModelSelection";
+import CompareModelSelection from "@/components/private/modes/Compare/CompareModelSelection";
 
 interface ChatClientProps {
   user: User;
   mode?: ChatMode;
 }
-
-/**
- * ChatClient - Main chat container component
- * Connects layout, components, and logic from the appropriate mode hook
- */
 export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
   useSessionTimeout();
 
-  // Get chat logic based on mode
   const chat = useChatAdapter(mode, { user });
 
-  // Local UI state
   const [currentChat, setCurrentChat] = useState<{
     id: string;
     title: string;
   } | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Auto scroll on phase/question changes (PMP specific)
   useEffect(() => {
     if (chat.mode === "pmp" && chat.messagesEndRef) {
       const timer = setTimeout(() => {
@@ -49,13 +40,12 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     }
   }, [chat.mode === "pmp" ? chat.phase : null, chat.messagesEndRef]);
 
-  /** handleTitleUpdate - Updates the chat title via API */
   const handleTitleUpdate = async (newTitle: string) => {
     if (!currentChat) return;
     try {
       await chat.chatSidePanelRef.current?.updateChatTitle(
         currentChat.id,
-        newTitle
+        newTitle,
       );
       setCurrentChat({ ...currentChat, title: newTitle });
     } catch (error) {
@@ -63,8 +53,19 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     }
   };
 
-  /** renderExtras - Renders mode-specific UI elements (QuestionBlock, ModelSelection) */
   const renderExtras = () => {
+    if (chat.mode === "compare") {
+      return (
+        <div className="w-full px-2 py-4">
+          <CompareModelSelection
+            selectedModels={chat.selectedModels || []}
+            onToggleModel={chat.toggleModel || (() => {})}
+            disabled={chat.isLoading}
+          />
+        </div>
+      );
+    }
+
     if (chat.mode !== "pmp") return null;
 
     return (
@@ -193,8 +194,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
     !chat.canMakeRequest ||
     (chat.mode === "pmp" &&
       ["clarifying", "improving", "model-selection", "final-response"].includes(
-        chat.phase
-      ));
+        chat.phase,
+      )) ||
+    (chat.mode === "compare" &&
+      (!chat.selectedModels || chat.selectedModels.length === 0));
 
   return (
     <ChatLayout
@@ -209,6 +212,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
           onResetSession={chat.resetSession}
           isBotResponding={chat.isLoading}
           onCurrentChatChange={setCurrentChat}
+          onLoadingMessages={setIsLoadingMessages}
         />
       }
       header={
@@ -226,25 +230,22 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
             }
       }
     >
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto overflow-x-visible scroll-smooth">
-        <div
-          className={`w-full ${
-            mode === "compare" ? "max-w-5xl" : "max-w-4xl"
-          } mx-auto px-2 sm:px-1 py-2 sm:py-2`}
-        >
-          <ChatMessages
-            messages={chat.messages}
-            isLoading={chat.isLoading}
-            renderExtras={renderExtras}
-            chatId={chat.chatId}
-          />
-          {/* Scroll target */}
+        <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6">
+          {isLoadingMessages ? (
+            <ChatMessagesSkeleton />
+          ) : (
+            <ChatMessages
+              messages={chat.messages}
+              isLoading={chat.isLoading}
+              renderExtras={renderExtras}
+              chatId={chat.chatId}
+            />
+          )}
           <div ref={chat.messagesEndRef} className="h-12 sm:h-20" />
         </div>
       </div>
 
-      {/* Input Area */}
       <ChatInput
         value={chat.input}
         onChange={chat.setInput}
@@ -258,6 +259,19 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
         requestsRemaining={chat.requestsRemaining}
         getTimeUntilReset={chat.getTimeUntilReset}
         onFocus={chat.checkUsage}
+        showProviderSelector={chat.mode === "simple"}
+        selectedProvider={
+          chat.mode === "simple" ? chat.selectedProvider : undefined
+        }
+        selectedModel={chat.mode === "simple" ? chat.selectedModel : undefined}
+        onProviderChange={
+          chat.mode === "simple"
+            ? (p: string, m: string) => {
+                chat.setSelectedProvider(p);
+                chat.setSelectedModel(m);
+              }
+            : undefined
+        }
       />
     </ChatLayout>
   );

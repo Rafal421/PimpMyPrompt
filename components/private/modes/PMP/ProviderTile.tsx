@@ -7,22 +7,25 @@ interface ProviderTileProps {
   providerConfig: AIProvider;
   onSelect: (provider: Provider, model: string) => void;
   disabled: boolean;
+  isExpanded: boolean;
+  onToggleExpand: (isExpanded: boolean) => void;
 }
 
 export default function ProviderTile({
   providerConfig,
   onSelect,
   disabled,
+  isExpanded,
+  onToggleExpand,
 }: ProviderTileProps) {
   const [selectedModel, setSelectedModel] = useState(
     providerConfig.recommendedModel
   );
-  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsExpanded(false);
+        onToggleExpand(false);
       }
     };
 
@@ -30,7 +33,7 @@ export default function ProviderTile({
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isExpanded]);
+  }, [isExpanded, onToggleExpand]);
 
   return (
     <div
@@ -72,7 +75,7 @@ export default function ProviderTile({
         <div className="space-y-2 sm:space-y-4">
           <div className="relative">
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => onToggleExpand(!isExpanded)}
               className="w-full flex items-center justify-between px-2.5 py-2 sm:px-4 sm:py-3 bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-medium text-gray-200 hover:bg-gray-800/50 hover:border-gray-600/50 transition-all duration-200"
               disabled={disabled}
             >
@@ -96,7 +99,7 @@ export default function ProviderTile({
                     key={modelOption.id}
                     onClick={() => {
                       setSelectedModel(modelOption.id);
-                      setIsExpanded(false);
+                      onToggleExpand(false);
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-gray-800/60 flex items-center justify-between text-gray-200 hover:text-white transition-all duration-200 first:rounded-t-xl last:rounded-b-xl"
                   >
@@ -122,7 +125,7 @@ export default function ProviderTile({
             {isExpanded && (
               <div
                 className="fixed inset-0 z-[998]"
-                onClick={() => setIsExpanded(false)}
+                onClick={() => onToggleExpand(false)}
               />
             )}
           </div>

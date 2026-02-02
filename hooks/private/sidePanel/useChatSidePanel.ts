@@ -28,9 +28,11 @@ export function useChatSidePanel({
   onChatCreated,
 }: UseChatSidePanelProps) {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Fetch all chats for user
   const fetchChats = useCallback(async () => {
+    setIsLoadingChats(true);
     try {
       const res = await fetch(`/api/chats`);
       if (!res.ok) throw new Error("Failed to fetch chats");
@@ -38,15 +40,16 @@ export function useChatSidePanel({
       setChats(data.chats || []);
     } catch (error) {
       console.error("Error fetching chats:", error);
+    } finally {
+      setIsLoadingChats(false);
     }
   }, []);
 
-  // Create new chat
   const createChat = useCallback(
     async (
       title: string,
       usedModel: string,
-      chatMode?: "PMP" | "CHAT" | "COMPARE"
+      chatMode?: "PMP" | "CHAT" | "COMPARE",
     ) => {
       try {
         const res = await fetch("/api/chats", {
@@ -68,10 +71,9 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [setChatId, fetchChats]
+    [setChatId, fetchChats],
   );
 
-  // Send message
   const sendMessage = useCallback(
     async (chatId: string, from: string, content: string) => {
       try {
@@ -89,12 +91,12 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    []
+    [],
   );
 
-  // Fetch chat history
   const fetchChatHistory = useCallback(
     async (chatId: string) => {
+      setIsLoadingMessages(true);
       try {
         const chatRes = await fetch(`/api/chats`);
         if (!chatRes.ok) {
@@ -121,9 +123,11 @@ export function useChatSidePanel({
         setMessages(messages);
       } catch (error) {
         console.error("Error fetching chat history:", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     },
-    [setMessages]
+    [setMessages],
   );
 
   const selectChat = useCallback(
@@ -134,10 +138,9 @@ export function useChatSidePanel({
         setPhase("done");
       }
     },
-    [fetchChatHistory, setChatId, setPhase]
+    [fetchChatHistory, setChatId, setPhase],
   );
 
-  // Delete chat
   const deleteChat = useCallback(
     async (chatIdToDelete: string) => {
       try {
@@ -159,10 +162,9 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [chatId, onResetSession, fetchChats]
+    [chatId, onResetSession, fetchChats],
   );
 
-  // Update chat title
   const updateChatTitle = useCallback(
     async (chatId: string, newTitle: string) => {
       try {
@@ -177,8 +179,8 @@ export function useChatSidePanel({
 
         setChats((prev) =>
           prev.map((chat) =>
-            chat.id === chatId ? { ...chat, title: newTitle } : chat
-          )
+            chat.id === chatId ? { ...chat, title: newTitle } : chat,
+          ),
         );
 
         await fetchChats();
@@ -187,10 +189,9 @@ export function useChatSidePanel({
         throw error;
       }
     },
-    [fetchChats]
+    [fetchChats],
   );
 
-  // Fetch chats on component mount
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
@@ -198,11 +199,11 @@ export function useChatSidePanel({
   const currentChat = chats.find((chat) => chat.id === chatId);
 
   return {
-    // State
     chats,
     currentChat,
+    isLoadingChats,
+    isLoadingMessages,
 
-    // Actions
     createChat,
     sendMessage,
     selectChat,
@@ -210,7 +211,6 @@ export function useChatSidePanel({
     updateChatTitle,
     fetchChats,
 
-    // Exposed for useImperativeHandle
     chatSidePanelActions: {
       createChat,
       sendMessage,

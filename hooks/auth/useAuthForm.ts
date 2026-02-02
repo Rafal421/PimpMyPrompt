@@ -1,4 +1,3 @@
-// hooks/useAuthForm.ts - Custom hook for auth form state
 import { useState, useCallback, useMemo } from "react";
 import {
   validateEmailReal,
@@ -19,21 +18,19 @@ export function useAuthForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
 
-  // Memoized computed values
   const passwordMatch = useMemo(
     () =>
       password === confirmPassword &&
       password.length > 0 &&
       confirmPassword.length > 0,
-    [password, confirmPassword]
+    [password, confirmPassword],
   );
 
   const passwordStrength = useMemo(
     () => validatePassword(password),
-    [password]
+    [password],
   );
 
-  // Real-time validation
   const validateField = useCallback(
     (field: string, value: string) => {
       let error = "";
@@ -43,7 +40,6 @@ export function useAuthForm() {
           error = validateEmailReal(value) || "";
           break;
         case "password":
-          // Nie pokazuj błędu walidacji hasła - tylko dla pustego pola
           if (mode === "signup" && value.length === 0) {
             error = "Hasło jest wymagane";
           } else if (mode === "login" && value.length === 0) {
@@ -62,12 +58,12 @@ export function useAuthForm() {
         if (error) {
           newErrors[field] = error;
         } else {
-          delete newErrors[field]; // Usuń puste błędy
+          delete newErrors[field];
         }
         return newErrors;
       });
     },
-    [mode, password]
+    [mode, password],
   );
 
   const clearErrors = useCallback(() => {
@@ -87,7 +83,7 @@ export function useAuthForm() {
       setMode(newMode);
       resetForm();
     },
-    [resetForm]
+    [resetForm],
   );
 
   const handleServerResponse = useCallback((result: ActionResult | void) => {
@@ -97,7 +93,9 @@ export function useAuthForm() {
         errors[field] = message;
       });
       setValidationErrors(errors);
+      setError(null);
     } else if (result?.error) {
+      setValidationErrors({});
       setError(result.error);
     }
     setIsLoading(false);
@@ -114,7 +112,6 @@ export function useAuthForm() {
       );
     }
 
-    // Dla signup - wszystkie pola muszą być wypełnione i prawidłowe
     return (
       email.length > 0 &&
       password.length > 0 &&
@@ -136,7 +133,6 @@ export function useAuthForm() {
   ]);
 
   return {
-    // State
     mode,
     showPassword,
     showConfirmPassword,
@@ -150,7 +146,6 @@ export function useAuthForm() {
     passwordStrength,
     isFormValid,
 
-    // Actions
     setMode,
     setShowPassword,
     setShowConfirmPassword,
