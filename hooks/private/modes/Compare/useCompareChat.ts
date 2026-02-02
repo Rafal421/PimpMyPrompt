@@ -69,6 +69,9 @@ export function useCompareChat({
       return;
     }
 
+    const userMessage = state.input;
+    messageHelpers.addUserMessage(state.setMessages, userMessage);
+    state.setInput("");
     state.setIsLoading(true);
 
     await checkUsage();
@@ -90,19 +93,15 @@ export function useCompareChat({
       if (!currentChatId) {
         currentChatId =
           (await chatSidePanelRef.current?.createChat(
-            state.input,
+            userMessage,
             "compare",
             "COMPARE",
           )) || null;
         state.setChatId(currentChatId);
       }
 
-      const userMessage = state.input;
-      messageHelpers.addUserMessage(state.setMessages, userMessage);
-      state.setInput("");
-
       if (currentChatId) {
-        await chatSidePanelRef.current?.sendMessage(
+        chatSidePanelRef.current?.sendMessage(
           currentChatId,
           "user",
           userMessage,

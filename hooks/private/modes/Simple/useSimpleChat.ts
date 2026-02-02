@@ -47,6 +47,9 @@ export function useSimpleChat({
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    const userMessage = state.input;
+    messageHelpers.addUserMessage(state.setMessages, userMessage);
+    state.setInput("");
     state.setIsLoading(true);
 
     await checkUsage();
@@ -61,35 +64,20 @@ export function useSimpleChat({
 
     let currentChatId = state.chatId;
     try {
-      if (!currentChatId) {
-        currentChatId =
-          (await chatSidePanelRef.current?.createChat(
-            state.input,
+      const chatPromise = !currentChatId
+        ? chatSidePanelRef.current?.createChat(
+            userMessage,
             selectedModel,
             "CHAT",
-          )) || null;
-        state.setChatId(currentChatId);
-      }
-
-      const userMessage = state.input;
+          )
+        : Promise.resolve(currentChatId);
 
       const history = state.messages.slice(-6).map((msg) => ({
         role: msg.from === "bot" ? ("assistant" as const) : ("user" as const),
         content: msg.text,
       }));
 
-      messageHelpers.addUserMessage(state.setMessages, userMessage);
-      state.setInput("");
-
-      if (currentChatId) {
-        await chatSidePanelRef.current?.sendMessage(
-          currentChatId,
-          "user",
-          userMessage,
-        );
-      }
-
-      const response = await fetch(`/api/modes/simple`, {
+      const responsePromise = fetch(`/api/modes/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,6 +88,22 @@ export function useSimpleChat({
           model: selectedModel,
         }),
       });
+
+      // Wait for chat creation and update state
+      currentChatId = (await chatPromise) || null;
+      if (currentChatId && !state.chatId) {
+        state.setChatId(currentChatId);
+      }
+
+      if (currentChatId) {
+        chatSidePanelRef.current?.sendMessage(
+          currentChatId,
+          "user",
+          userMessage,
+        );
+      }
+
+      const response = await responsePromise;
 
       if (!response.ok) {
         const errorData = await response.json();

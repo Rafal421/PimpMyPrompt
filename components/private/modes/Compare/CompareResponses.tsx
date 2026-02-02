@@ -83,9 +83,9 @@ export function CompareResponses({
         return (
           <motion.div
             key={response.modelId}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
+            transition={{ duration: 0.15, delay: index * 0.03 }}
             className="w-full bg-black/40 backdrop-blur-md border border-gray-800/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:border-gray-700/50 transition-all duration-300"
           >
             <button
@@ -137,7 +137,7 @@ export function CompareResponses({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                   className="overflow-hidden border-t border-gray-800/50"
                 >
                   <div className="px-4 pb-4 sm:px-6 sm:pb-6 pt-2">
@@ -182,9 +182,9 @@ export function CompareResponses({
 
       {summaryLoading && (
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          initial={{ opacity: 0, y: 15, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4 shadow-2xl shadow-blue-500/10"
         >
           <div className="flex items-center gap-2 mb-3">
@@ -212,9 +212,9 @@ export function CompareResponses({
 
       {summary && !isLoading && !summaryLoading && (
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          initial={{ opacity: 0, y: 15, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+          transition={{ duration: 0.2, delay: 0.1, ease: "easeOut" }}
           className="w-full bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-md border border-blue-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4 shadow-2xl shadow-blue-500/10"
         >
           <div className="flex items-center gap-2 mb-3">

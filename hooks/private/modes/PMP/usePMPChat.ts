@@ -18,11 +18,11 @@ import { addTypingMessage } from "@/lib/chat/messageHelpers";
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
 const TYPING_DELAYS = {
-  FIRST_QUESTION: 500,
-  NEXT_QUESTION: 300,
-  IMPROVED_PROMPT: 500,
-  FINAL_RESPONSE: 500,
-  ANSWER_PROCESSING: 1000,
+  FIRST_QUESTION: 200,
+  NEXT_QUESTION: 100,
+  IMPROVED_PROMPT: 200,
+  FINAL_RESPONSE: 200,
+  ANSWER_PROCESSING: 300,
 } as const;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -260,16 +260,16 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     if (!state.chatId || !answer.trim() || phase === "improving") return;
 
     addUserMessage(answer);
-    await sendToSidePanel("user", answer);
     setClarifyingAnswers([...clarifyingAnswers, answer]);
     setCustomAnswer("");
-    await delay(100);
     setPhase("improving");
-    await delay(700);
     state.setIsLoading(true);
 
+    // Send to side panel in background (don't wait)
+    sendToSidePanel("user", answer);
+
     try {
-      await delay(Math.max(0, TYPING_DELAYS.ANSWER_PROCESSING - 700));
+      await delay(TYPING_DELAYS.ANSWER_PROCESSING);
       await proceedToNextQuestion();
     } catch (error) {
       onError?.(error, "submitting answer");
@@ -359,6 +359,9 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
+    const userMessage = state.input;
+    addUserMessage(userMessage);
+    state.setInput("");
     state.setIsLoading(true);
 
     await checkUsage();
@@ -375,18 +378,17 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       if (!currentChatId) {
         currentChatId =
           (await chatSidePanelRef.current?.createChat(
-            state.input,
+            userMessage,
             DEFAULT_MODEL,
             "PMP",
           )) || null;
         state.setChatId(currentChatId);
       }
 
-      addUserMessage(state.input);
-      await sendToSidePanel("user", state.input);
+      sendToSidePanel("user", userMessage);
 
       if (phase === "init") {
-        await startQuestionFlow(state.input, currentChatId);
+        await startQuestionFlow(userMessage, currentChatId);
       }
     } catch (error) {
       onError?.(error, "sending message");
