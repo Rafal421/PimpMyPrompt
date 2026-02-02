@@ -2,18 +2,18 @@
 
 import React from "react";
 import { Check } from "lucide-react";
-import { COMPARE_MODELS, type CompareModel } from "@/lib/chat/compare-config";
+import { COMPARE_MODELS, CompareModel } from "@/lib/chat/compare-config";
 import { getProvider } from "@/lib/providers/ai-config";
 
 interface CompareModelSelectionProps {
-  selectedProviders: string[];
-  onToggleProvider: (providerId: string) => void;
+  selectedModels: string[];
+  onToggleModel: (modelId: string) => void;
   disabled?: boolean;
 }
 
 export default function CompareModelSelection({
-  selectedProviders,
-  onToggleProvider,
+  selectedModels,
+  onToggleModel,
   disabled = false,
 }: CompareModelSelectionProps) {
   return (
@@ -30,12 +30,12 @@ export default function CompareModelSelection({
       <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
         {COMPARE_MODELS.map((model) => {
           const provider = getProvider(model.provider);
-          const isSelected = selectedProviders.includes(model.provider);
+          const isSelected = selectedModels.includes(model.id);
 
           return (
             <button
               key={model.id}
-              onClick={() => onToggleProvider(model.provider)}
+              onClick={() => onToggleModel(model.id)}
               disabled={disabled}
               className={`
                 group relative flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5
@@ -82,14 +82,13 @@ export default function CompareModelSelection({
       </div>
 
       <div className="text-center text-xs sm:text-sm text-gray-500">
-        {selectedProviders.length === 0 ? (
+        {selectedModels.length === 0 ? (
           <span className="text-amber-400">
-            Select at least one provider to compare
+            Select at least one model to compare
           </span>
         ) : (
           <span>
-            {selectedProviders.length} of {COMPARE_MODELS.length} models
-            selected
+            {selectedModels.length} of {COMPARE_MODELS.length} models selected
           </span>
         )}
       </div>

@@ -58,8 +58,8 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
       return (
         <div className="w-full px-2 py-4">
           <CompareModelSelection
-            selectedProviders={chat.selectedProviders || []}
-            onToggleProvider={chat.toggleProvider || (() => {})}
+            selectedModels={chat.selectedModels || []}
+            onToggleModel={chat.toggleModel || (() => {})}
             disabled={chat.isLoading}
           />
         </div>
@@ -197,7 +197,7 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
         chat.phase,
       )) ||
     (chat.mode === "compare" &&
-      (!chat.selectedProviders || chat.selectedProviders.length === 0));
+      (!chat.selectedModels || chat.selectedModels.length === 0));
 
   return (
     <ChatLayout

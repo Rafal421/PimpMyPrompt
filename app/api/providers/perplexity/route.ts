@@ -9,7 +9,7 @@ class PerplexityProvider extends BaseAIProvider {
   constructor() {
     super({
       name: "Perplexity",
-      defaultModel: "sonar-pro",
+      defaultModel: "sonar",
       allowedModels: getAllowedModelsForProvider("perplexity"),
     });
 
@@ -23,17 +23,26 @@ class PerplexityProvider extends BaseAIProvider {
     prompt: string,
     model: string,
     maxTokens: number,
-    history?: { role: "user" | "assistant"; content: string }[]
+    history?: { role: "user" | "assistant"; content: string }[],
   ): Promise<string> {
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
     if (history && history.length > 0) {
-      history.forEach((msg) => {
+      let lastRole: string | null = null;
+      for (const msg of history) {
+        if (msg.role === lastRole) continue;
         messages.push({
           role: msg.role,
           content: msg.content,
         });
-      });
+        lastRole = msg.role;
+      }
+      while (
+        messages.length > 0 &&
+        messages[messages.length - 1].role === "user"
+      ) {
+        messages.pop();
+      }
     }
 
     messages.push({ role: "user", content: prompt });

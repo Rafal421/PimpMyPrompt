@@ -23,11 +23,6 @@ export const PROVIDERS: Record<string, AIProvider> = {
         description: "Best for writing, creativity and complex instructions",
       },
       {
-        id: "o3",
-        name: "o3 (Reasoning)",
-        description: "Master of logic, math and complex programming",
-      },
-      {
         id: "gpt-4o-mini",
         name: "GPT-4o Mini",
         description: "Lightning fast and ideal for simple questions",
@@ -180,12 +175,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
     name: "Perplexity",
     icon: Search,
     emoji: "🔍",
-    recommendedModel: "llama-3.1-sonar-large-128k-online",
+    recommendedModel: "sonar",
     models: [
       {
-        id: "llama-3.1-sonar-large-128k-online",
-        name: "Sonar Online",
-        description: "Best for real-time fact checking and source searching",
+        id: "sonar",
+        name: "Sonar",
+        description: "Fast search-powered answers",
+      },
+      {
+        id: "sonar-pro",
+        name: "Sonar Pro",
+        description: "Advanced search with deeper analysis",
       },
     ],
     colors: {
