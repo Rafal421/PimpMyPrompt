@@ -37,7 +37,7 @@ export function CompareResponses({
         console.error("Failed to load expanded state:", e);
       }
       return new Set();
-    }
+    },
   );
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function CompareResponses({
     try {
       localStorage.setItem(
         storageKey,
-        JSON.stringify(Array.from(expandedResponses))
+        JSON.stringify(Array.from(expandedResponses)),
       );
     } catch (e) {
       console.error("Failed to save expanded state:", e);

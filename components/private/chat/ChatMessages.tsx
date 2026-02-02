@@ -69,7 +69,7 @@ export default function ChatMessages({
                   ) : msg.from === "bot" && msg.isTyping ? (
                     <MarkdownTypewriter
                       text={msg.text}
-                      speed={25}
+                      speed={18}
                       className="leading-relaxed whitespace-pre-wrap font-medium text-sm sm:text-base"
                     />
                   ) : msg.from === "bot" ? (

@@ -13,7 +13,7 @@ interface MarkdownTypewriterProps {
 
 export default function MarkdownTypewriter({
   text,
-  speed = 45,
+  speed = 18,
   onComplete,
   className = "",
 }: MarkdownTypewriterProps) {

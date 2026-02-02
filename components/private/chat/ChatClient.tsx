@@ -93,12 +93,20 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                   opacity: 0,
                   height: 0,
                   marginTop: 0,
-                  scale: 0.95,
+                  scale: 0.98,
                   transition: {
-                    opacity: { duration: 0.1, ease: "easeIn" },
-                    scale: { duration: 0.1, ease: "easeIn" },
-                    height: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
-                    marginTop: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
+                    opacity: { duration: 0.4, ease: "easeIn" },
+                    scale: { duration: 0.4, ease: "easeIn" },
+                    height: {
+                      duration: 0.45,
+                      ease: [0.4, 0.0, 0.2, 1],
+                      delay: 0.15,
+                    },
+                    marginTop: {
+                      duration: 0.45,
+                      ease: [0.4, 0.0, 0.2, 1],
+                      delay: 0.15,
+                    },
                   },
                 }}
                 className="w-full overflow-hidden"
@@ -138,12 +146,20 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                 opacity: 0,
                 height: 0,
                 marginTop: 0,
-                scale: 0.95,
+                scale: 0.98,
                 transition: {
-                  opacity: { duration: 0.1, ease: "easeIn" },
-                  scale: { duration: 0.1, ease: "easeIn" },
-                  height: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
-                  marginTop: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
+                  opacity: { duration: 0.4, ease: "easeOut" },
+                  scale: { duration: 0.4, ease: "easeOut" },
+                  height: {
+                    duration: 0.45,
+                    ease: [0.4, 0.0, 0.2, 1],
+                    delay: 0.15,
+                  },
+                  marginTop: {
+                    duration: 0.45,
+                    ease: [0.4, 0.0, 0.2, 1],
+                    delay: 0.15,
+                  },
                 },
               }}
               className="flex justify-center overflow-hidden"

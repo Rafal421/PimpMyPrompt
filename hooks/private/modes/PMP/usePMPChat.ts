@@ -18,11 +18,11 @@ import { addTypingMessage } from "@/lib/chat/messageHelpers";
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
 const TYPING_DELAYS = {
-  FIRST_QUESTION: 200,
-  NEXT_QUESTION: 100,
-  IMPROVED_PROMPT: 200,
-  FINAL_RESPONSE: 200,
-  ANSWER_PROCESSING: 300,
+  FIRST_QUESTION: 400,
+  NEXT_QUESTION: 300,
+  IMPROVED_PROMPT: 300,
+  FINAL_RESPONSE: 300,
+  ANSWER_PROCESSING: 400,
 } as const;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
