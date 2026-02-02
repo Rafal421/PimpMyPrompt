@@ -83,10 +83,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                   marginTop: 16,
                   scale: 1,
                   transition: {
-                    height: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
-                    opacity: { duration: 0.15, ease: "easeOut" },
-                    marginTop: { duration: 0.15, ease: [0.4, 0.0, 0.2, 1] },
-                    scale: { duration: 0.15, ease: "easeOut" },
+                    height: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] },
+                    opacity: { duration: 0.4, delay: 0.15, ease: "easeOut" },
+                    marginTop: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] },
+                    scale: { duration: 0.4, delay: 0.15, ease: "easeOut" },
                   },
                 }}
                 exit={{
@@ -95,10 +95,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                   marginTop: 0,
                   scale: 0.95,
                   transition: {
-                    height: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
-                    opacity: { duration: 0.2, delay: 0.1, ease: "easeOut" },
-                    marginTop: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
-                    scale: { duration: 0.3, delay: 0.1, ease: "easeOut" },
+                    opacity: { duration: 0.5, ease: "easeOut" },
+                    scale: { duration: 0.5, ease: "easeOut" },
+                    height: { duration: 0.55, delay: 0.2, ease: [0.4, 0.0, 0.2, 1] },
+                    marginTop: { duration: 0.55, delay: 0.2, ease: [0.4, 0.0, 0.2, 1] },
                   },
                 }}
                 className="w-full overflow-hidden"
@@ -128,10 +128,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                 marginTop: 16,
                 scale: 1,
                 transition: {
-                  height: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
-                  opacity: { duration: 0.15, ease: "easeOut" },
-                  marginTop: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
-                  scale: { duration: 0.15, ease: "easeOut" },
+                  height: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] },
+                  opacity: { duration: 0.4, delay: 0.15, ease: "easeOut" },
+                  marginTop: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] },
+                  scale: { duration: 0.4, delay: 0.15, ease: "easeOut" },
                 },
               }}
               exit={{
@@ -140,10 +140,10 @@ export default function ChatClient({ user, mode = "pmp" }: ChatClientProps) {
                 marginTop: 0,
                 scale: 0.95,
                 transition: {
-                  height: { duration: 0.2, ease: [0.4, 0.0, 0.2, 1] },
-                  opacity: { duration: 0.2, delay: 0.1, ease: "easeOut" },
-                  marginTop: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
-                  scale: { duration: 0.3, delay: 0.1, ease: "easeOut" },
+                  opacity: { duration: 0.5, ease: "easeOut" },
+                  scale: { duration: 0.5, ease: "easeOut" },
+                  height: { duration: 0.55, delay: 0.2, ease: [0.4, 0.0, 0.2, 1] },
+                  marginTop: { duration: 0.55, delay: 0.2, ease: [0.4, 0.0, 0.2, 1] },
                 },
               }}
               className="flex justify-center overflow-hidden"
