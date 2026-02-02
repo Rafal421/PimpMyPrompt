@@ -17,12 +17,13 @@ import { addTypingMessage } from "@/lib/chat/messageHelpers";
 
 const DEFAULT_MODEL = "claude-3-5-sonnet-20241022";
 
+// Timing constants
 const TYPING_DELAYS = {
   FIRST_QUESTION: 500,
   NEXT_QUESTION: 300,
   IMPROVED_PROMPT: 500,
   FINAL_RESPONSE: 500,
-  ANSWER_PROCESSING: 1000,
+  ANSWER_PROCESSING: 1000, // Zmniejszone z 1600 dla lepszego UX
 } as const;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,9 +33,17 @@ export interface PMPChatConfig {
   onError?: (error: unknown, context?: string) => void;
 }
 
+/**
+ * Hook dla trybu PMP (Prompt Improvement Flow)
+ * Zawiera całą logikę question flow, prompt improvement i model selection
+ */
 export function usePMPChat({ user, onError }: PMPChatConfig) {
   const chatSidePanelRef = useRef<ChatSidePanelHandle>(null);
+
+  // Podstawowy stan z core hooka
   const state = useChatState("Ask a question and I'll help you refine it!");
+
+  // PMP-specific state
   const [provider, setProvider] = useState<Provider>(DEFAULT_QUESTION_PROVIDER);
   const [phase, setPhase] = useState<Phase>("init");
   const [originalQuestion, setOriginalQuestion] = useState("");
@@ -43,8 +52,11 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionsData, setQuestionsData] = useState<QuestionData[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
+
+  // Auto scroll
   const messagesEndRef = useAutoScroll(state.messages, 200);
 
+  // Usage limit
   const {
     incrementUsage,
     canMakeRequest,
@@ -53,6 +65,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     checkUsage,
   } = useUsageLimit();
 
+  // ============= HELPER FUNCTIONS =============
   const addBotMessage = (text: string) => {
     state.setMessages((prev) => [...prev, { from: "bot", text }]);
   };
@@ -67,10 +80,11 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     }
   };
 
+  // Generic async handler with loading state and error handling
   const withLoadingAndErrorHandling = <T extends unknown[]>(
     handler: (...args: T) => Promise<void>,
     errorMessage: string,
-    errorContext: string,
+    errorContext: string
   ) => {
     return async (...args: T) => {
       if (state.isLoading) return;
@@ -87,6 +101,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     };
   };
 
+  // ============= CLARIFYING QUESTIONS =============
   const generateClarifyingQuestions = async (question: string) => {
     try {
       const questionProvider = getQuestionProviderById(provider);
@@ -110,10 +125,12 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
       const data = await response.json();
 
+      // Check if questions are already parsed by the provider
       if (data.questions && Array.isArray(data.questions)) {
         return data.questions;
       }
 
+      // Fallback to content parsing for legacy responses
       const content = data.response || data.content;
       if (!content) {
         throw new Error("No content in response");
@@ -122,7 +139,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       const questionsWithOptions = parseQuestionsWithOptions(content);
       if (questionsWithOptions.length === 0) {
         throw new Error(
-          "Unable to generate clarifying questions. Please try rephrasing your question with more detail.",
+          "Unable to generate clarifying questions. Please try rephrasing your question with more detail."
         );
       }
 
@@ -135,7 +152,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
   const startQuestionFlow = async (
     question: string,
-    currentChatId: string | null,
+    currentChatId: string | null
   ) => {
     setOriginalQuestion(question);
     state.setInput("");
@@ -158,9 +175,9 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
           () =>
             setTimeout(
               () => setPhase("clarifying"),
-              TYPING_DELAYS.NEXT_QUESTION,
+              TYPING_DELAYS.NEXT_QUESTION
             ),
-          () => state.setIsLoading(false),
+          () => state.setIsLoading(false)
         );
 
         await sendToSidePanel("bot", firstQuestion);
@@ -168,16 +185,17 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     } catch (error) {
       onError?.(error, "generating clarifying questions");
       addBotMessage(
-        "I encountered a problem while generating clarifying questions. Please try rephrasing your question or try again.",
+        "I encountered a problem while generating clarifying questions. Please try rephrasing your question or try again."
       );
     }
   };
 
+  // ============= PROMPT IMPROVEMENT =============
   const generateImprovedPrompt = async () => {
     if (!state.chatId) return;
 
     setPhase("improving");
-    await delay(700);
+    await delay(700); // Czekamy na dłuższą animację exit (0.6s)
     state.setIsLoading(true);
 
     const questionProvider = getQuestionProviderById(provider);
@@ -198,7 +216,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Failed to generate improved prompt",
+          errorData.error || "Failed to generate improved prompt"
         );
       }
 
@@ -217,11 +235,11 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         () => {
           setTimeout(
             () => setPhase("model-selection"),
-            TYPING_DELAYS.IMPROVED_PROMPT,
+            TYPING_DELAYS.IMPROVED_PROMPT
           );
         },
         undefined,
-        true,
+        true
       );
 
       await sendToSidePanel("bot", prompt);
@@ -230,7 +248,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       state.setIsLoading(false);
       onError?.(error, "generating improved prompt");
       addBotMessage(
-        "I encountered a problem while generating the improved prompt. Please try again or modify your answers.",
+        "I encountered a problem while generating the improved prompt. Please try again or modify your answers."
       );
     }
   };
@@ -247,7 +265,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
         nextQuestion,
         () =>
           setTimeout(() => setPhase("clarifying"), TYPING_DELAYS.NEXT_QUESTION),
-        () => state.setIsLoading(false),
+        () => state.setIsLoading(false)
       );
 
       await sendToSidePanel("bot", nextQuestion);
@@ -263,9 +281,12 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     await sendToSidePanel("user", answer);
     setClarifyingAnswers([...clarifyingAnswers, answer]);
     setCustomAnswer("");
+
+    // Krótkie opóźnienie, aby wiadomość użytkownika "osiadła" w DOM
     await delay(100);
+
     setPhase("improving");
-    await delay(700);
+    await delay(700); // Czekamy na dłuższą animację exit (0.6s)
     state.setIsLoading(true);
 
     try {
@@ -274,7 +295,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     } catch (error) {
       onError?.(error, "submitting answer");
       addBotMessage(
-        "I encountered a problem processing your answer. Please try again.",
+        "I encountered a problem processing your answer. Please try again."
       );
       state.setIsLoading(false);
     }
@@ -282,14 +303,14 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
   const handleModelSelect = async (
     selectedProvider: Provider,
-    selectedModel: string,
+    selectedModel: string
   ) => {
     if (!state.chatId || !improvedPrompt) return;
 
     const canProceed = await incrementUsage();
     if (!canProceed) {
       addBotMessage(
-        "You've reached your hourly limit of 20 requests. Please wait for the next hour or upgrade your plan.",
+        "You've reached your hourly limit of 20 requests. Please wait for the next hour or upgrade your plan."
       );
       return;
     }
@@ -299,7 +320,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     await sendToSidePanel("user", choiceText);
 
     setPhase("final-response");
-    await delay(700);
+    await delay(700); // Czekamy na dłuższą animację exit (0.6s)
     state.setIsLoading(true);
 
     try {
@@ -331,7 +352,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
           setTimeout(() => setPhase("done"), TYPING_DELAYS.FINAL_RESPONSE);
         },
         undefined,
-        true,
+        true
       );
 
       await sendToSidePanel("bot", finalResponse);
@@ -340,11 +361,12 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
       state.setIsLoading(false);
       onError?.(error, "generating final response");
       addBotMessage(
-        "I encountered a problem while generating the final response. Please try selecting a different model or try again.",
+        "I encountered a problem while generating the final response. Please try selecting a different model or try again."
       );
     }
   };
 
+  // Reset session
   const resetSession = () => {
     state.reset("Ask a question and I'll help you refine it!");
     setPhase("init");
@@ -356,6 +378,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     setCustomAnswer("");
   };
 
+  // ============= MAIN MESSAGE HANDLING =============
   const handleSend = async () => {
     if (!state.input.trim() || state.isLoading) return;
 
@@ -364,7 +387,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     await checkUsage();
     if (!canMakeRequest) {
       addBotMessage(
-        "You've reached your daily limit. Please wait for the reset or upgrade your plan.",
+        "You've reached your daily limit. Please wait for the reset or upgrade your plan."
       );
       state.setIsLoading(false);
       return;
@@ -377,7 +400,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
           (await chatSidePanelRef.current?.createChat(
             state.input,
             DEFAULT_MODEL,
-            "PMP",
+            "PMP"
           )) || null;
         state.setChatId(currentChatId);
       }
@@ -391,7 +414,7 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     } catch (error) {
       onError?.(error, "sending message");
       addBotMessage(
-        "I encountered a problem processing your message. Please try again.",
+        "I encountered a problem processing your message. Please try again."
       );
     } finally {
       state.setIsLoading(false);
@@ -400,11 +423,17 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
 
   const stopGeneration = () => {
     state.setIsLoading(false);
+    // Note: We could add AbortController here for API requests if needed
   };
 
   return {
+    // Mode identifier
     mode: "pmp" as const,
+
+    // Core state
     ...state,
+
+    // PMP-specific state
     phase,
     setPhase,
     questionsData,
@@ -412,17 +441,23 @@ export function usePMPChat({ user, onError }: PMPChatConfig) {
     customAnswer,
     setCustomAnswer,
     provider,
+
+    // Refs
     chatSidePanelRef,
     messagesEndRef,
+
+    // Actions
     handleSend,
     stopGeneration,
     handleAnswerSubmit,
     handleModelSelect: withLoadingAndErrorHandling(
       handleModelSelect,
       "I encountered a problem generating the response. Please try a different model.",
-      "selecting model",
+      "selecting model"
     ),
     resetSession,
+
+    // Usage limits
     canMakeRequest,
     requestsRemaining,
     getTimeUntilReset,

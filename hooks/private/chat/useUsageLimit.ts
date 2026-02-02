@@ -5,7 +5,7 @@ interface UsageInfo {
   requests_remaining: number;
   daily_limit: number;
   can_make_request: boolean;
-  reset_time: string;
+  reset_time: string; // Changed from reset_date to reset_time
 }
 
 export const useUsageLimit = () => {
@@ -47,6 +47,7 @@ export const useUsageLimit = () => {
       setUsageInfo(data);
       setError(null);
 
+      // Return true if the request was allowed (check current state after increment)
       return data.can_make_request && data.requests_made <= data.daily_limit;
     } catch (err) {
       console.error("Error incrementing usage:", err);
@@ -57,6 +58,7 @@ export const useUsageLimit = () => {
   useEffect(() => {
     checkUsage();
 
+    // Check usage every 30 seconds to keep it up to date
     const interval = setInterval(() => {
       checkUsage();
     }, 30000);

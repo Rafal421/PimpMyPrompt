@@ -5,39 +5,52 @@ import {
   createCompareAnalysisPrompt,
   TOKEN_LIMITS,
 } from "@/lib/providers/ai-helpers";
+import OpenAI from "openai";
 import { DatabaseResponseData, ProviderResponse } from "@/lib/shared/types";
 import { AuditLogger } from "@/lib/logging/audit-logger";
-import { getProviderUrl } from "@/lib/api/safe-url";
+import { openAIProvider } from "@/app/api/providers/openai/route";
+import { anthropicProvider } from "@/app/api/providers/anthropic/route";
+import { geminiProvider } from "@/app/api/providers/gemini/route";
+import { deepSeekProvider } from "@/app/api/providers/deepseek/route";
+import { perplexityProvider } from "@/app/api/providers/perplexity/route";
+import { grokProvider } from "@/app/api/providers/grok/route";
 
+function getProviderInstance(providerName: string) {
+  const providers: Record<string, any> = {
+    openai: openAIProvider,
+    anthropic: anthropicProvider,
+    gemini: geminiProvider,
+    deepseek: deepSeekProvider,
+    perplexity: perplexityProvider,
+    grok: grokProvider,
+  };
+  return providers[providerName];
+}
+
+// ✅ Helper: Call a single provider directly (no HTTP overhead)
 async function callProvider(
   model: (typeof COMPARE_MODELS)[number],
-  message: string,
-  cookieHeader: string | null,
+  message: string
 ): Promise<ProviderResponse> {
   try {
-    const response = await fetch(getProviderUrl(model.provider), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({
-        message,
-        model: model.id,
-      }),
-    });
+    const provider = getProviderInstance(model.provider);
 
-    if (!response.ok) {
-      throw new Error(`Provider error: ${response.status}`);
+    if (!provider) {
+      throw new Error(`Unknown provider: ${model.provider}`);
     }
 
-    const data = await response.json();
+    // Direct method call - no HTTP request!
+    const response = await provider.generateResponse(
+      message,
+      model.id,
+      TOKEN_LIMITS.GENERAL
+    );
 
     return {
       model: model.name,
       modelId: model.id,
       provider: model.provider,
-      response: data.response || "No response",
+      response: response || "No response",
       success: true,
     };
   } catch (error) {
@@ -56,39 +69,22 @@ async function callProvider(
 
 async function generateSummary(
   message: string,
-  results: ProviderResponse[],
-  reqUrl: string,
-  cookieHeader: string | null,
+  results: ProviderResponse[]
 ): Promise<string> {
-  const successfulResults = results.filter((r) => r.success);
-  if (successfulResults.length < 2) {
-    return "";
-  }
-
   try {
-    const summaryPrompt = createCompareAnalysisPrompt(
-      message,
-      successfulResults,
-    );
-
-    const response = await fetch(new URL("/api/providers/openai", reqUrl), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({
-        message: summaryPrompt,
-        model: "gpt-4o-mini",
-      }),
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to generate summary");
-    }
+    const summaryPrompt = createCompareAnalysisPrompt(message, results);
 
-    const data = await response.json();
-    return data.response || "";
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: summaryPrompt }],
+      max_tokens: TOKEN_LIMITS.GENERAL,
+    });
+
+    return completion.choices[0]?.message?.content || "";
   } catch (error) {
     console.error("[CompareChat] Error generating summary:", error);
     return "";
@@ -100,7 +96,7 @@ function prepareResponseData(
   chatId: string | null,
   message: string,
   results: ProviderResponse[],
-  summary: string,
+  summary: string
 ): DatabaseResponseData {
   const responseData: DatabaseResponseData = {
     user_id: userId,
@@ -123,6 +119,7 @@ function prepareResponseData(
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check
     const supabase = await createClient();
     const {
       data: { user },
@@ -132,130 +129,72 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message, chat_id, selectedProviders } = await request.json();
+    const { message, chat_id } = await request.json();
 
     if (!message?.trim()) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    const modelsToCompare = selectedProviders?.length
-      ? COMPARE_MODELS.filter((m) => selectedProviders.includes(m.provider))
-      : COMPARE_MODELS;
+    const responses = await Promise.allSettled(
+      COMPARE_MODELS.map((model) => callProvider(model, message))
+    );
 
-    if (modelsToCompare.length === 0) {
-      return NextResponse.json(
-        { error: "At least one provider must be selected" },
-        { status: 400 },
-      );
-    }
-
-    const cookieHeader = request.headers.get("cookie");
-    const encoder = new TextEncoder();
-    const results: ProviderResponse[] = [];
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: "init",
-              models: modelsToCompare.map((m) => ({
-                modelId: m.id,
-                model: m.name,
-                provider: m.provider,
-              })),
-            })}\n\n`,
-          ),
-        );
-
-        const providerPromises = modelsToCompare.map(async (model) => {
-          const result = await callProvider(model, message, cookieHeader);
-          results.push(result);
-
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "response",
-                response: result,
-              })}\n\n`,
-            ),
-          );
-
-          return result;
-        });
-
-        await Promise.allSettled(providerPromises);
-
-        const successfulResults = results.filter((r) => r.success);
-        if (successfulResults.length >= 2) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "generating_summary",
-              })}\n\n`,
-            ),
-          );
-        }
-
-        const summary = await generateSummary(
-          message,
-          results,
-          request.url,
-          cookieHeader,
-        );
-
-        const responseData = prepareResponseData(
-          user.id,
-          chat_id,
-          message,
-          results,
-          summary,
-        );
-
-        const { data: sessionData, error: sessionError } = await supabase
-          .from("compare_sessions")
-          .insert(responseData)
-          .select("id")
-          .single();
-
-        if (sessionError) {
-          console.error("[CompareChat] Error saving session:", sessionError);
-          await AuditLogger.log("COMPARE_SESSION_FAILED", user.id, {
-            reason: "Database insert failed",
-            chat_id,
-          });
-        } else {
-          await AuditLogger.log("COMPARE_SESSION_CREATED", user.id, {
-            session_id: sessionData.id,
-            chat_id,
-            providers_count: results.length,
-            successful_providers: results.filter((r) => r.success).length,
-          });
-        }
-
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: "complete",
-              summary,
-              session_id: sessionData?.id || null,
-            })}\n\n`,
-          ),
-        );
-
-        controller.close();
-      },
+    const results: ProviderResponse[] = responses.map((result, index) => {
+      const model = COMPARE_MODELS[index];
+      if (result.status === "fulfilled") {
+        return result.value;
+      } else {
+        return {
+          model: model.name,
+          modelId: model.id,
+          provider: model.provider,
+          response: `Failed to get response: ${result.reason}`,
+          success: false,
+        };
+      }
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
+    const summary = await generateSummary(message, results);
+
+    // Prepare and save response data
+    const responseData = prepareResponseData(
+      user.id,
+      chat_id,
+      message,
+      results,
+      summary
+    );
+
+    const { data: sessionData, error: sessionError } = await supabase
+      .from("compare_sessions")
+      .insert(responseData)
+      .select("id")
+      .single();
+
+    if (sessionError) {
+      console.error("[CompareChat] Error saving session:", sessionError);
+      await AuditLogger.log("COMPARE_SESSION_FAILED", user.id, {
+        reason: "Database insert failed",
+        chat_id,
+      });
+      throw new Error(`Failed to save session: ${sessionError.message}`);
+    }
+
+    await AuditLogger.log("COMPARE_SESSION_CREATED", user.id, {
+      session_id: sessionData.id,
+      chat_id,
+      providers_count: results.length,
+      successful_providers: results.filter((r) => r.success).length,
+    });
+
+    return NextResponse.json({
+      success: true,
+      responses: results,
+      summary,
+      session_id: sessionData.id,
     });
   } catch (error) {
     console.error("[CompareChat] Error:", error);

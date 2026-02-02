@@ -72,7 +72,7 @@ export default function OptimizedAuthPage({
       const newPath = newMode === "login" ? "/sign-in" : "/sign-up";
       router.push(newPath);
     },
-    [originalSwitchMode, router],
+    [originalSwitchMode, router]
   );
 
   const handleLogin = useCallback(
@@ -89,7 +89,7 @@ export default function OptimizedAuthPage({
         handleServerResponse({ error: "An unexpected error occurred" });
       }
     },
-    [setIsLoading, handleServerResponse],
+    [setIsLoading, handleServerResponse]
   );
 
   const handleSignup = useCallback(
@@ -126,7 +126,7 @@ export default function OptimizedAuthPage({
       setEmail,
       setSuccessMessage,
       switchMode,
-    ],
+    ]
   );
 
   return (
@@ -183,25 +183,32 @@ export default function OptimizedAuthPage({
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
             <AnimatePresence mode="wait">
-              {(successMessage || error) && (
+              {/* Success message display */}
+              {successMessage && (
                 <motion.div
-                  key={successMessage ? "success" : "error"}
                   initial={{ opacity: 0, y: -10, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: "auto" }}
                   exit={{ opacity: 0, y: -10, height: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {successMessage ? (
-                    <Alert className="bg-green-900/20 backdrop-blur-sm border border-green-800/50 text-green-400">
-                      <CheckCircle className="h-4 w-4" />
-                      <AlertDescription>{successMessage}</AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert className="bg-red-900/20 backdrop-blur-sm border border-red-800/50 text-red-400">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
+                  <Alert className="bg-green-900/20 backdrop-blur-sm border border-green-800/50 text-green-400">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>{successMessage}</AlertDescription>
+                  </Alert>
+                </motion.div>
+              )}
+              {/* Error message display */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Alert className="bg-red-900/20 backdrop-blur-sm border border-red-800/50 text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 </motion.div>
               )}
             </AnimatePresence>

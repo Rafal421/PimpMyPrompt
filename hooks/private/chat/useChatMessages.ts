@@ -1,34 +1,42 @@
 "use client";
 import type { Message } from "@/lib/shared/types";
 
+/**
+ * useChatMessages - Message manipulation utilities
+ * Provides helper functions for adding, updating, and removing messages
+ */
 export function useChatMessages() {
+  /** addMessage - Adds a new message to the chat */
   const addMessage = (
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
     text: string,
     from: "user" | "bot",
-    isTyping: boolean = false,
+    isTyping: boolean = false
   ) => {
     setMessages((prev) => [...prev, { from, text, isTyping }]);
   };
 
+  /** addUserMessage - Adds a user message */
   const addUserMessage = (
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-    text: string,
+    text: string
   ) => {
     addMessage(setMessages, text, "user", false);
   };
 
+  /** addBotMessage - Adds a bot message with optional typing animation */
   const addBotMessage = (
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
     text: string,
-    isTyping: boolean = false,
+    isTyping: boolean = false
   ) => {
     addMessage(setMessages, text, "bot", isTyping);
   };
 
+  /** updateLastMessage - Updates the text of the last message in the list */
   const updateLastMessage = (
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-    text: string,
+    text: string
   ) => {
     setMessages((prev) => {
       if (prev.length === 0) return prev;
@@ -41,8 +49,9 @@ export function useChatMessages() {
     });
   };
 
+  /** removeLastMessage - Removes the last message from the list */
   const removeLastMessage = (
-    setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>
   ) => {
     setMessages((prev) => prev.slice(0, -1));
   };

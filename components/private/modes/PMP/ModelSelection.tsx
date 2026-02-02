@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { RESPONSE_PROVIDERS } from "@/lib/providers/ai-config";
 import type { Provider } from "@/lib/shared/types";
 import ProviderTile from "./ProviderTile";
@@ -14,10 +13,6 @@ export default function ModelSelection({
   onModelSelect,
   isBotResponding,
 }: ModelSelectionProps) {
-  const [expandedProviderId, setExpandedProviderId] = useState<string | null>(
-    null
-  );
-
   return (
     <div className="w-full max-w-4xl mx-auto px-2 pb-2 space-y-4 sm:space-y-8">
       <div className="text-center">
@@ -29,21 +24,13 @@ export default function ModelSelection({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 [@media(min-width:1325px)]:grid-cols-3 gap-4 sm:gap-6 relative">
         {RESPONSE_PROVIDERS.map((providerConfig) => (
           <ProviderTile
             key={providerConfig.id}
             providerConfig={providerConfig}
             onSelect={onModelSelect}
             disabled={isBotResponding}
-            isExpanded={expandedProviderId === providerConfig.id}
-            onToggleExpand={() =>
-              setExpandedProviderId(
-                expandedProviderId === providerConfig.id
-                  ? null
-                  : providerConfig.id
-              )
-            }
           />
         ))}
       </div>

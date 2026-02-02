@@ -1,3 +1,5 @@
+// Helper functions for managing message animations and sequencing
+
 import type { Message } from "@/lib/shared/types";
 
 export const addTypingMessage = (

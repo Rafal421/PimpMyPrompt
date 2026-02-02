@@ -1,3 +1,4 @@
+// Helper function to parse questions with options from AI responses
 export function parseQuestionsWithOptions(content: string) {
   const questions = [];
   const lines = content
@@ -10,6 +11,7 @@ export function parseQuestionsWithOptions(content: string) {
   for (const line of lines) {
     const trimmedLine = line.trim();
 
+    // Enhanced question detection - support multiple formats
     const questionPatterns = [
       /^(\*\*)?QUESTION\s+\d+(\*\*)?:/i,
       /^(\d+\.\s*)/,
@@ -19,7 +21,7 @@ export function parseQuestionsWithOptions(content: string) {
     ];
 
     const isQuestion = questionPatterns.some((pattern) =>
-      pattern.test(trimmedLine),
+      pattern.test(trimmedLine)
     );
 
     if (isQuestion) {
@@ -66,6 +68,7 @@ export function parseQuestionsWithOptions(content: string) {
     }
   }
 
+  // Don't forget the last question
   if (currentQuestion && currentOptions.length > 0) {
     questions.push({
       question: currentQuestion,
@@ -80,7 +83,7 @@ export function parseQuestionsWithOptions(content: string) {
 export const TOKEN_LIMITS = {
   CLARIFY: 512,
   IMPROVE: 512,
-  GENERAL: 1000,
+  GENERAL: 1000, // For general message processing (Anthropic, Gemini, DeepSeek)
 } as const;
 
 // Template for clarification prompt with structured output
@@ -117,7 +120,7 @@ Generate clarifying questions that will help create the most effective AI prompt
 
 export function createImprovePrompt(
   question: string,
-  answers: string[],
+  answers: string[]
 ): string {
   const answersFormatted = answers
     .map((answer, index) => `${index + 1}. ${answer}`)
@@ -149,6 +152,7 @@ Create the final optimized prompt that incorporates all clarifying information. 
 Respond with ONLY the final improved prompt - no explanations or meta-commentary.`;
 }
 
+// Template for compare analysis prompt
 export function createCompareAnalysisPrompt(
   question: string,
   responses: Array<{
@@ -157,7 +161,7 @@ export function createCompareAnalysisPrompt(
     provider: string;
     response: string;
     success: boolean;
-  }>,
+  }>
 ): string {
   const responsesText = responses
     .map((resp) => {

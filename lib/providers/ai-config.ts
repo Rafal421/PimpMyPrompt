@@ -13,6 +13,8 @@ export const PROVIDERS: Record<string, AIProvider> = {
   openai: {
     id: "openai",
     name: "OpenAI",
+    description:
+      "Perfect for creative writing, storytelling, and natural conversations. Excels at generating engaging content and brainstorming ideas.",
     icon: Brain,
     emoji: "🧠",
     recommendedModel: "gpt-4o-mini",
@@ -20,12 +22,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "gpt-4o",
         name: "GPT-4o",
-        description: "Best for writing, creativity and complex instructions",
+        description: "Best for writing and creativity",
+      },
+      {
+        id: "o3",
+        name: "o3 (Reasoning)",
+        description: "Ideal for complex problems",
       },
       {
         id: "gpt-4o-mini",
         name: "GPT-4o Mini",
-        description: "Lightning fast and ideal for simple questions",
+        description: "Fast and efficient",
       },
     ],
     colors: {
@@ -42,6 +49,8 @@ export const PROVIDERS: Record<string, AIProvider> = {
   anthropic: {
     id: "anthropic",
     name: "Anthropic",
+    description:
+      "Specializes in deep analysis, complex reasoning, and thoughtful responses. Best choice for research and detailed explanations.",
     icon: Cloud,
     emoji: "☁️",
     recommendedModel: "claude-sonnet-4-5-20250929",
@@ -49,17 +58,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "claude-sonnet-4-5-20250929",
         name: "Claude Sonnet 4.5",
-        description: "Smartest model, most human-like responses",
+        description: "Smartest model",
       },
       {
         id: "claude-haiku-4-5-20251001",
         name: "Claude Haiku 4.5",
-        description: "Extremely fast analysis and answers",
+        description: "Fastest model",
       },
       {
         id: "claude-3-7-sonnet-20250219",
         name: "Sonnet 3.7",
-        description: "Balanced power and precision",
+        description: "Precise and balanced",
       },
     ],
     colors: {
@@ -76,6 +85,8 @@ export const PROVIDERS: Record<string, AIProvider> = {
   gemini: {
     id: "gemini",
     name: "Google Gemini",
+    description:
+      "Advanced multimodal AI that processes text, images, and data seamlessly. Ideal for complex analysis and structured information tasks.",
     icon: Sparkles,
     emoji: "✨",
     recommendedModel: "gemini-2.5-flash",
@@ -83,17 +94,17 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "gemini-3-flash-preview",
         name: "Gemini 3.0 Flash",
-        description: "Modern, fast and multi-modal",
+        description: "High volume tasks",
       },
       {
         id: "gemini-2.5-pro",
         name: "Gemini 2.5 Pro",
-        description: "Powerful, best for file and PDF analysis",
+        description: "Best for long texts",
       },
       {
         id: "gemini-2.5-flash",
         name: "Gemini 2.5 Flash",
-        description: "Super fast for simple inquiries",
+        description: "Fast and cheap",
       },
     ],
     colors: {
@@ -110,6 +121,8 @@ export const PROVIDERS: Record<string, AIProvider> = {
   grok: {
     id: "grok",
     name: "Grok",
+    description:
+      "Provides real-time information with a witty, conversational style. Great for current events and engaging discussions.",
     icon: Zap,
     emoji: "⚡",
     recommendedModel: "grok-3-mini",
@@ -117,17 +130,13 @@ export const PROVIDERS: Record<string, AIProvider> = {
       {
         id: "grok-4-fast-reasoning",
         name: "Grok 4 Fast",
-        description: "Best for fast reasoning and real-time insights",
+        description: "Complex tasks",
       },
-      {
-        id: "grok-3",
-        name: "Grok 3",
-        description: "Balanced intelligence and speed",
-      },
+      { id: "grok-3", name: "Grok 3", description: "Intelligent choice" },
       {
         id: "grok-3-mini",
         name: "Grok 3 Mini",
-        description: "Efficient and smart for everyday tasks",
+        description: "Logical and cheap",
       },
     ],
     colors: {
@@ -144,20 +153,18 @@ export const PROVIDERS: Record<string, AIProvider> = {
   deepseek: {
     id: "deepseek",
     name: "DeepSeek",
+    description:
+      "Engineering-focused AI that excels in coding, debugging, and technical problem-solving. Your go-to for development challenges.",
     icon: Code,
     emoji: "💻",
     recommendedModel: "deepseek-chat",
     models: [
       {
         id: "deepseek-chat",
-        name: "DeepSeek Chat",
-        description: "Versatile model for conversations and logic",
+        name: "Chat",
+        description: "General conversations",
       },
-      {
-        id: "deepseek-coder",
-        name: "DeepSeek Coder",
-        description: "Specialist for code and technical tasks",
-      },
+      { id: "deepseek-coder", name: "Coder", description: "Coding tasks" },
     ],
     colors: {
       icon: "text-cyan-400",
@@ -173,19 +180,16 @@ export const PROVIDERS: Record<string, AIProvider> = {
   perplexity: {
     id: "perplexity",
     name: "Perplexity",
+    description:
+      "Research-powered AI that provides accurate, fact-checked information. Perfect for academic work and factual inquiries.",
     icon: Search,
     emoji: "🔍",
-    recommendedModel: "sonar",
+    recommendedModel: "llama-3.1-sonar-large-128k-online",
     models: [
       {
-        id: "sonar",
-        name: "Sonar",
-        description: "Fast search-powered answers",
-      },
-      {
-        id: "sonar-pro",
-        name: "Sonar Pro",
-        description: "Advanced search with deeper analysis",
+        id: "llama-3.1-sonar-large-128k-online",
+        name: "Sonar Large",
+        description: "Fact-checked search",
       },
     ],
     colors: {

@@ -1,3 +1,4 @@
+// components/AuthInput.tsx - Optimized input component
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
@@ -33,7 +34,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
       onBlur,
       ...props
     },
-    ref,
+    ref
   ) => {
     const [showPassword, setShowPassword] = useState(false);
     const inputType = showPasswordToggle
@@ -84,7 +85,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
         {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
       </div>
     );
-  },
+  }
 );
 
 AuthInput.displayName = "AuthInput";

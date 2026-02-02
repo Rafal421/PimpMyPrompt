@@ -2,11 +2,15 @@
 import { useState } from "react";
 import type { Message } from "@/lib/shared/types";
 
+/**
+ * useChatState - Core chat state management
+ * Manages messages, input, loading state, and chatId for any chat mode
+ */
 export function useChatState(initialMessage?: string) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessage
       ? [{ from: "bot", text: initialMessage, isTyping: false }]
-      : [],
+      : []
   );
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +20,7 @@ export function useChatState(initialMessage?: string) {
     setMessages(
       welcomeMessage
         ? [{ from: "bot", text: welcomeMessage, isTyping: false }]
-        : [],
+        : []
     );
     setInput("");
     setIsLoading(false);
@@ -24,14 +28,17 @@ export function useChatState(initialMessage?: string) {
   };
 
   return {
+    // State
     messages,
     input,
     isLoading,
     chatId,
+    // Setters
     setMessages,
     setInput,
     setIsLoading,
     setChatId,
+    // Actions
     reset,
   };
 }

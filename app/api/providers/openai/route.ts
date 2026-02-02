@@ -22,10 +22,11 @@ class OpenAIProvider extends BaseAIProvider {
     prompt: string,
     model: string,
     maxTokens: number,
-    history?: { role: "user" | "assistant"; content: string }[],
+    history?: { role: "user" | "assistant"; content: string }[]
   ): Promise<string> {
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
+    // Add history if available
     if (history && history.length > 0) {
       history.forEach((msg) => {
         messages.push({
@@ -35,6 +36,7 @@ class OpenAIProvider extends BaseAIProvider {
       });
     }
 
+    // Add current prompt
     messages.push({ role: "user", content: prompt });
 
     const completion = await this.openai.chat.completions.create({
